@@ -86,11 +86,10 @@ plot_anova_barplot_meanse <- function(data,
       
       if (length(stratum_plots) > 0) {
         strata_panel_count <- max(strata_panel_count, length(stratum_plots))
-        current_layout <- adjust_grid_layout(length(stratum_plots), context$strata_layout)
         combined <- patchwork::wrap_plots(
           plotlist = stratum_plots,
-          nrow = current_layout$nrow,
-          ncol = current_layout$ncol
+          nrow = context$strata_layout$nrow,
+          ncol = context$strata_layout$ncol
         )
 
         title_plot <- ggplot() +

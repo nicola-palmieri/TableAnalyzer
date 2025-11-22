@@ -137,11 +137,7 @@ finalize_anova_plot_result <- function(response_plots,
   if (has_strata && strata_panel_count == 0L) {
     strata_panel_count <- context$n_expected_strata
   }
-  
-  if (has_strata) {
-    strata_layout <- adjust_grid_layout(max(1L, strata_panel_count), strata_layout)
-  }
-  
+
   response_defaults <- compute_default_grid(length(response_plots))
   response_layout <- basic_grid_layout(
     rows = context$layout_input$resp_rows,
@@ -149,8 +145,7 @@ finalize_anova_plot_result <- function(response_plots,
     default_rows = response_defaults$rows,
     default_cols = response_defaults$cols
   )
-  response_layout <- adjust_grid_layout(length(response_plots), response_layout)
-  
+
   strata_validation <- if (has_strata) {
     validate_grid(max(1L, strata_panel_count), strata_layout$nrow, strata_layout$ncol)
   } else {
