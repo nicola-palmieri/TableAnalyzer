@@ -167,7 +167,12 @@ bind_single_model_outputs <- function(output, summary_id, download_id,
       if (is.null(results$anova_table)) {
         stop("ANOVA results are unavailable for export.")
       }
-      write_anova_docx(file, results, model_entry$model, response_name, stratum_label)
+      write_anova_docx(
+        file = file,
+        content = results,
+        response_name = response_name,
+        stratum_label = stratum_label
+      )
     }
   )
 }
