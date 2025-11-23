@@ -354,7 +354,7 @@ build_two_factor_barplot <- function(stats_df,
   }
   group_levels <- group_levels[!is.na(group_levels)]
   palette <- resolve_palette_for_levels(group_levels, custom = line_colors)
-  dodge <- position_dodge(width = 0.7)
+  dodge <- position_dodge(width = 0.7, preserve = "single")
   
   plot_obj <- ggplot(stats_df, aes(x = !!sym(factor1), y = mean, fill = !!sym(factor2))) +
     geom_col(position = dodge, width = 0.6, alpha = 0.85) +
