@@ -109,6 +109,10 @@ two_way_anova_server <- function(id, filtered_data) {
       resp_vals <- responses()
       validate(
         need(length(resp_vals) > 0, "Please select at least one response variable."),
+        need(
+          !identical(input$factor1, input$factor2),
+          "Categorical predictor 1 and 2 must be different variables."
+        ),
         need(all(input$order1 %in% unique(df[[input$factor1]])), "Invalid level order for first factor."),
         need(all(input$order2 %in% unique(df[[input$factor2]])), "Invalid level order for second factor.")
       )
