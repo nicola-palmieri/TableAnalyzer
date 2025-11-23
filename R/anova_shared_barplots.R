@@ -593,6 +593,8 @@ add_nested_significance_annotations <- function(plot_obj,
   )
   if (is.null(prep)) return(plot_obj)
 
+  dodge <- position_dodge(width = dodge_width, preserve = "single")
+
   plot_obj <- plot_obj + geom_text(
     data = prep$data,
     aes(x = !!sym(factor1), y = y_position, label = annotations, group = !!sym(factor2)),
@@ -600,7 +602,7 @@ add_nested_significance_annotations <- function(plot_obj,
     color = "gray30",
     size = 4,
     fontface = "bold",
-    position = position_dodge(width = dodge_width)
+    position = dodge
   )
 
   if (isTRUE(allow_scale_expansion)) {
