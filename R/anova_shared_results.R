@@ -78,36 +78,30 @@ prepare_anova_outputs <- function(model_obj, factor_names) {
 
     f1_spec <- anova_protect_vars(f1)
     f2_spec <- anova_protect_vars(f2)
-    
-    # --- main-effect Tukey for both factors (averaged) ---
-    for (ff in c(f1, f2)) {
-      if (ff %in% names(model_obj$model)) {
-        ff_spec <- anova_protect_vars(ff)
-        res_main <- tryCatch({
-          emm_main <- emmeans::emmeans(model_obj, specs = as.formula(paste("~", ff_spec)))
-          contrasts_main <- emmeans::contrast(emm_main, method = "pairwise", adjust = "tukey")
-          as.data.frame(summary(contrasts_main))
-        }, error = function(e) list(error = e$message))
-        
-        if (is.data.frame(res_main)) {
-          res_main$Factor <- ff
-          posthoc_details[[ff]] <- list(table = res_main, error = NULL)
-          posthoc_combined <- dplyr::bind_rows(posthoc_combined, res_main)
-        } else {
-          posthoc_details[[ff]] <- list(table = NULL, error = res_main$error)
-        }
-      }
-    }
 
-    # --- nested contrasts of factor2 within each level of factor1 ---
+    # --- nested contrasts: keep ONLY comparisons vs the reference level of factor2 ---
     res_nested <- tryCatch({
       formula_nested <- as.formula(paste("pairwise ~", f2_spec, "|", f1_spec))
       emm_nested <- emmeans::emmeans(model_obj, specs = formula_nested, adjust = "tukey")
       contrasts_df <- as.data.frame(summary(emm_nested$contrasts))
+      
+      # Identify reference level (first level of factor2)
+      lev2 <- levels(model_obj$model[[f2]])
+      reference <- lev2[1]
+      
+      # Keep only contrasts involving the reference
+      contrasts_df <- contrasts_df[
+        grepl(paste0(reference, " - "), contrasts_df$contrast) |
+          grepl(paste0(" - ", reference), contrasts_df$contrast),
+        ,
+      ]
+      
+      # Add metadata
       contrasts_df$Factor <- paste0(f2, "_within_", f1)
       contrasts_df[[f1]] <- as.character(contrasts_df[[f1]])
       contrasts_df
     }, error = function(e) list(error = e$message))
+    
     
     if (is.data.frame(res_nested)) {
       posthoc_details[[paste0(f2, "_within_", f1)]] <- list(table = res_nested, error = NULL)
@@ -295,7 +289,7 @@ write_anova_docx <- function(results, file) {
     }
   }
   
-  # ===== Journal-style borders =====
+  # Journal-style borders
   ft <- border_remove(ft)
   black <- fp_border(color = "black", width = 1)
   thin <- fp_border(color = "black", width = 0.5)
@@ -331,9 +325,4 @@ write_anova_docx <- function(results, file) {
   doc <- body_add_par(doc, "Significant p-values (< 0.05) in bold.", style = "Normal")
   print(doc, target = file)
 }
-
-
-#### Plotting ####
-
-#### Section: Plot Context Initialization ####
 
