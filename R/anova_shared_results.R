@@ -295,7 +295,8 @@ write_anova_docx <- function(file, content, response_name = NULL, stratum_label 
   ft <- apply_publication_style(ft, combined, merge_cols, which(combined$sig), "PrF_label")
 
   doc <- read_docx()
-  doc <- body_add_par(doc, "Type III ANOVA", style = "heading 1")
+  doc <- body_add_par(doc, "Type III ANOVA", style = "Normal")
+  doc <- body_add_par(doc, "", style = "Normal")
   doc <- body_add_flextable(doc, ft)
 
   if (!is.null(combined_contrasts) && length(combined_contrasts) > 0) {
@@ -339,7 +340,8 @@ write_anova_docx <- function(file, content, response_name = NULL, stratum_label 
       )
 
       doc <- body_add_par(doc, "", style = "Normal")
-      doc <- body_add_par(doc, "Tukey contrasts", style = "heading 1")
+      doc <- body_add_par(doc, "Tukey contrasts", style = "Normal")
+      doc <- body_add_par(doc, "", style = "Normal")
       doc <- body_add_flextable(doc, contrast_ft)
     }
   }
