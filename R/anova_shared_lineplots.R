@@ -86,13 +86,11 @@ plot_anova_lineplot_meanse <- function(data,
           use_dodge = use_dodge
         )
       })
-      
-      current_layout <- adjust_grid_layout(length(stratum_stats), context$strata_layout)
-      
+
       combined <- patchwork::wrap_plots(
         plotlist = strata_plot_list,
-        nrow = current_layout$nrow,
-        ncol = current_layout$ncol
+        nrow = context$strata_layout$nrow,
+        ncol = context$strata_layout$ncol
       )
       
       if (isTRUE(common_legend)) {
