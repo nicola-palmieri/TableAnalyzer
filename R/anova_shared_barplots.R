@@ -401,36 +401,68 @@ build_two_factor_barplot <- function(stats_df,
 
 prepare_significance_annotations_data <- function(stats_df, factor1, posthoc_entry) {
   if (is.null(posthoc_entry) || !is.data.frame(posthoc_entry)) return(NULL)
-  
+  if (is.null(factor1) || !factor1 %in% names(stats_df)) return(NULL)
+
+  # Identify reference level (first level on the plot)
+  level_values <- levels(stats_df[[factor1]])
+  if (is.null(level_values)) level_values <- unique(as.character(stats_df[[factor1]]))
+  level_values <- level_values[!is.na(level_values)]
+  if (length(level_values) < 2) return(NULL)
+  reference_level <- level_values[1]
+
+  # Clean p-values
   signif_df <- posthoc_entry
-  
   signif_df$p.value <- as.character(signif_df$p.value)
   signif_df$p.value <- gsub("[[:space:]]", "", signif_df$p.value)
   signif_df$p.value <- gsub("^<\\.?0*", "0.", signif_df$p.value)
   signif_df$p.value <- suppressWarnings(as.numeric(signif_df$p.value))
-  
-  signif_df <- signif_df |> dplyr::filter(!is.na(p.value) & p.value < 0.05)
+  signif_df <- signif_df |> dplyr::filter(!is.na(p.value))
   if (nrow(signif_df) == 0) return(NULL)
-  
-  signif_df <- signif_df |> dplyr::mutate(
-    xmin = gsub(" - .*", "", contrast),
-    xmax = gsub(".*- ", "", contrast),
-    annotations = dplyr::case_when(
-      p.value < 0.001 ~ "***",
-      p.value < 0.01  ~ "**",
-      p.value < 0.05  ~ "*",
+
+  bar_heights <- stats_df$mean + stats_df$se
+  bar_heights <- bar_heights[is.finite(bar_heights)]
+  height_span <- diff(range(bar_heights))
+  if (!is.finite(height_span) || height_span == 0) {
+    height_span <- if (length(bar_heights) > 0) max(bar_heights) else 0
+  }
+  offset <- if (is.finite(height_span) && height_span > 0) height_span * 0.08 else 0.1
+
+  level_lookup <- stats_df |> dplyr::mutate(.height = mean + se)
+  level_lookup <- setNames(level_lookup$.height, as.character(level_lookup[[factor1]]))
+
+  markers <- list()
+  for (lvl in level_values[level_values != reference_level]) {
+    contrasts <- c(paste0(lvl, " - ", reference_level), paste0(reference_level, " - ", lvl))
+    match_row <- signif_df[signif_df$contrast %in% contrasts, , drop = FALSE]
+    if (nrow(match_row) == 0) next
+
+    pval <- match_row$p.value[1]
+    if (is.na(pval) || pval >= 0.05) next
+
+    annotation <- dplyr::case_when(
+      pval < 0.001 ~ "***",
+      pval < 0.01  ~ "**",
+      pval < 0.05  ~ "*",
       TRUE ~ ""
     )
-  )
-  
-  max_y <- max(stats_df$mean + stats_df$se, na.rm = TRUE)
-  step <- abs(max_y) * 0.15
-  signif_df$y_position <- seq(from = max_y + step, by = step, length.out = nrow(signif_df))
-  signif_df$.group_id <- seq_len(nrow(signif_df))
-  
+
+    y_base <- unname(level_lookup[[as.character(lvl)]])
+    if (!is.finite(y_base)) next
+
+    markers[[length(markers) + 1]] <- tibble::tibble(
+      !!factor1 := factor(lvl, levels = level_values),
+      y_position = y_base + offset,
+      annotations = annotation
+    )
+  }
+
+  if (length(markers) == 0) return(NULL)
+
+  marker_df <- dplyr::bind_rows(markers)
+
   list(
-    data = signif_df,
-    max_y = max(signif_df$y_position, na.rm = TRUE) * 1.1
+    data = marker_df,
+    max_y = max(marker_df$y_position, na.rm = TRUE) * 1.05
   )
 }
 
@@ -441,30 +473,23 @@ add_significance_annotations <- function(plot_obj,
                                          allow_scale_expansion = TRUE) {
   prep <- prepare_significance_annotations_data(stats_df, factor1, posthoc_entry)
   if (is.null(prep)) return(plot_obj)
-  
-  plot_obj <- plot_obj + ggsignif::geom_signif(
+
+  plot_obj <- plot_obj + geom_text(
     data = prep$data,
-    aes(
-      xmin = xmin,
-      xmax = xmax,
-      annotations = annotations,
-      y_position = y_position,
-      group = .group_id
-    ),
-    manual = TRUE,
+    aes(x = !!sym(factor1), y = y_position, label = annotations),
     inherit.aes = FALSE,
-    textsize = 3.5,
-    tip_length = 0.01,
-    color = "gray30"
+    color = "gray30",
+    size = 4,
+    fontface = "bold"
   )
-  
+
   if (isTRUE(allow_scale_expansion)) {
     plot_obj <- plot_obj + scale_y_continuous(
-      expand = expansion(mult = c(0, 0.10)),
+      expand = expansion(mult = c(0, 0.08)),
       limits = c(NA, prep$max_y)
     )
   }
-  
+
   plot_obj
 }
 
@@ -474,7 +499,7 @@ prepare_nested_significance_annotations_data <- function(stats_df,
                                                          nested_posthoc,
                                                          dodge_width = 0.7) {
   nested_name <- paste0(factor2, "_within_", factor1)
-  
+
   # Accept both a flat data.frame or a list entry
   df <- NULL
   if (is.data.frame(nested_posthoc)) {
@@ -486,78 +511,74 @@ prepare_nested_significance_annotations_data <- function(stats_df,
     return(NULL)
   }
   if (is.null(df) || nrow(df) == 0) return(NULL)
-  if (!all(c("contrast","p.value", factor1) %in% names(df))) return(NULL)
-  
-  # Clean p-values, keep only significant
+  if (!all(c("contrast", "p.value", factor1) %in% names(df))) return(NULL)
+
+  # Clean p-values, keep all non-missing rows for filtering against the reference
   df$p.value <- as.character(df$p.value)
   df$p.value <- gsub("[[:space:]]", "", df$p.value)
-  df$p.value <- gsub("^<\\.?0*", "0.", df$p.value)  # <.0001, <0.001 -> numeric-ish
+  df$p.value <- gsub("^<\\.?0*", "0.", df$p.value)
   df$p.value <- suppressWarnings(as.numeric(df$p.value))
-  df <- dplyr::filter(df, !is.na(.data$p.value) & .data$p.value < 0.05)
+  df <- dplyr::filter(df, !is.na(.data$p.value))
   if (nrow(df) == 0) return(NULL)
-  
-  # Parse pair labels from "A - B"
-  df$g1 <- sub(" - .*", "", df$contrast)
-  df$g2 <- sub(".*- ",  "", df$contrast)
-  
-  # Factor levels on the plot
+
   lev1 <- levels(stats_df[[factor1]])
   lev2 <- levels(stats_df[[factor2]])
   if (is.null(lev1)) lev1 <- unique(as.character(stats_df[[factor1]]))
   if (is.null(lev2)) lev2 <- unique(as.character(stats_df[[factor2]]))
-  
-  # Compute dodge offsets for factor2 groups (centred around x)
-  k <- length(lev2)
-  # offsets range roughly within [-dodge_width/2, +dodge_width/2]
-  offsets <- seq_len(k)
-  offsets <- (offsets - (k + 1)/2) * (dodge_width / max(1, k))
-  
-  # Helper: numeric x for a (factor1 level, factor2 level) bar center
-  idx2 <- function(g) match(g, lev2)
-  x_center <- function(xlvl, glvl) {
-    as.numeric(match(xlvl, lev1)) + offsets[idx2(glvl)]
+  lev1 <- lev1[!is.na(lev1)]
+  lev2 <- lev2[!is.na(lev2)]
+  if (length(lev2) < 2) return(NULL)
+  reference_level <- lev2[1]
+
+  bar_heights <- stats_df |> dplyr::mutate(bar_height = mean + se)
+  height_lookup <- function(xlvl, glvl) {
+    row <- dplyr::filter(bar_heights, .data[[factor1]] == xlvl & .data[[factor2]] == glvl)
+    if (nrow(row) == 0) return(NA_real_)
+    row$bar_height[1]
   }
-  
-  # Build numeric xmin/xmax for each contrast row
-  df$x_base  <- as.numeric(match(df[[factor1]], lev1))
-  df$xmin    <- mapply(x_center, df[[factor1]], df$g1)
-  df$xmax    <- mapply(x_center, df[[factor1]], df$g2)
-  
-  # Per-treatment y position just above its local bars
-  local_max <- dplyr::summarise(
-    dplyr::group_by(stats_df, .data[[factor1]]),
-    ymax = max(mean + se, na.rm = TRUE),
-    .groups = "drop"
-  )
-  y_lookup <- setNames(local_max$ymax, as.character(local_max[[factor1]]))
-  df$y0 <- unname(y_lookup[as.character(df[[factor1]])])
-  
-  # Stack multiple brackets within the same treatment a bit
-  step <- diff(range(stats_df$mean + stats_df$se, na.rm = TRUE))
-  if (!is.finite(step) || step == 0) step <- max(stats_df$mean + stats_df$se, na.rm = TRUE) * 0.05
-  step <- step * 0.12
-  base_offset <- step * 0.6
-  df <- dplyr::group_by(df, .data[[factor1]])
-  df <- dplyr::mutate(
-    df,
-    row_id = dplyr::row_number(),
-    y_position = y0 + base_offset + row_id * step
-  )
-  df <- dplyr::ungroup(df)
-  
-  # Stars
-  df$annotations <- dplyr::case_when(
-    df$p.value < 0.001 ~ "***",
-    df$p.value < 0.01  ~ "**",
-    df$p.value < 0.05  ~ "*",
-    TRUE ~ ""
-  )
-  df$.group_id <- seq_len(nrow(df))
-  
-  # One layer total (manual=TRUE expects numeric x’s on the data)
+
+  values <- bar_heights$bar_height[is.finite(bar_heights$bar_height)]
+  span <- diff(range(values))
+  if (!is.finite(span) || span == 0) {
+    span <- if (length(values) > 0) max(values) else 0
+  }
+  offset <- if (is.finite(span) && span > 0) span * 0.08 else 0.1
+
+  markers <- list()
+  for (g1 in lev1) {
+    for (lvl in lev2[lev2 != reference_level]) {
+      contrasts <- c(paste0(lvl, " - ", reference_level), paste0(reference_level, " - ", lvl))
+      match_row <- df[df[[factor1]] == g1 & df$contrast %in% contrasts, , drop = FALSE]
+      if (nrow(match_row) == 0) next
+
+      pval <- match_row$p.value[1]
+      if (is.na(pval) || pval >= 0.05) next
+
+      annotation <- dplyr::case_when(
+        pval < 0.001 ~ "***",
+        pval < 0.01  ~ "**",
+        pval < 0.05  ~ "*",
+        TRUE ~ ""
+      )
+
+      y_base <- height_lookup(g1, lvl)
+      if (!is.finite(y_base)) next
+
+      markers[[length(markers) + 1]] <- tibble::tibble(
+        !!factor1 := factor(g1, levels = lev1),
+        !!factor2 := factor(lvl, levels = lev2),
+        y_position = y_base + offset,
+        annotations = annotation
+      )
+    }
+  }
+
+  if (length(markers) == 0) return(NULL)
+  marker_df <- dplyr::bind_rows(markers)
+
   list(
-    data = df,
-    max_y = max(df$y_position, na.rm = TRUE) * 1.1
+    data = marker_df,
+    max_y = max(marker_df$y_position, na.rm = TRUE) * 1.05
   )
 }
 
@@ -572,27 +593,25 @@ add_nested_significance_annotations <- function(plot_obj,
     stats_df, factor1, factor2, nested_posthoc, dodge_width
   )
   if (is.null(prep)) return(plot_obj)
-  
-  plot_obj <- plot_obj + ggsignif::geom_signif(
-    data        = prep$data,
-    aes(xmin = xmin,
-        xmax = xmax,
-        annotations = annotations,
-        y_position = y_position,
-        group = .group_id),
-    manual      = TRUE,
+
+  dodge <- position_dodge(width = dodge_width, preserve = "single")
+
+  plot_obj <- plot_obj + geom_text(
+    data = prep$data,
+    aes(x = !!sym(factor1), y = y_position, label = annotations, group = !!sym(factor2)),
     inherit.aes = FALSE,
-    textsize    = 3.5,
-    tip_length  = 0.01,
-    color       = "gray30"
+    color = "gray30",
+    size = 4,
+    fontface = "bold",
+    position = dodge
   )
-  
+
   if (isTRUE(allow_scale_expansion)) {
     plot_obj <- plot_obj + scale_y_continuous(
-      expand = expansion(mult = c(0, 0.10)),
+      expand = expansion(mult = c(0, 0.08)),
       limits = c(NA, prep$max_y)
     )
   }
-  
+
   plot_obj
 }
