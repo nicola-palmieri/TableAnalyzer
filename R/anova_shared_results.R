@@ -106,24 +106,6 @@ prepare_anova_outputs <- function(model_obj, factor_names) {
       contrasts_df <- as.data.frame(summary(emm_nested$contrasts))
       contrasts_df$Factor <- paste0(f2, "_within_", f1)
       contrasts_df[[f1]] <- as.character(contrasts_df[[f1]])
-      factor2_levels <- if (f2 %in% names(model_obj$model)) levels(model_obj$model[[f2]]) else NULL
-      factor2_levels <- factor2_levels[!is.na(factor2_levels)]
-      if (is.null(factor2_levels) || length(factor2_levels) == 0) {
-        factor2_levels <- unique(as.character(model_obj$model[[f2]]))
-      }
-
-      if (!is.null(factor2_levels) && length(factor2_levels) > 0) {
-        reference_lvl <- factor2_levels[1]
-        nested_contrasts <- unlist(lapply(
-          factor2_levels[factor2_levels != reference_lvl],
-          function(lvl) c(
-            paste0(lvl, " - ", reference_lvl),
-            paste0(reference_lvl, " - ", lvl)
-          )
-        ))
-        contrasts_df <- contrasts_df |>
-          dplyr::filter(.data$contrast %in% nested_contrasts)
-      }
       contrasts_df
     }, error = function(e) list(error = e$message))
     
