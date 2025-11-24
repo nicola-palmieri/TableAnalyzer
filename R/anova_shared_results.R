@@ -309,8 +309,7 @@ write_anova_docx <- function(content, file, response_name = NULL, stratum_label 
     black <- fp_border(color = "black", width = 1)
     thin <- fp_border(color = "black", width = 0.5)
 
-    ft <- border(ft, part = "header", border.top = black)
-    ft <- border(ft, part = "header", border.bottom = black)
+    ft <- border(ft, part = "header", border.top = black, border.bottom = black)
 
     if ("Response" %in% names(df)) {
       resp_index <- which(diff(as.numeric(factor(df$Response))) != 0)
