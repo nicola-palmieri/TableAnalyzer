@@ -9,15 +9,6 @@ two_way_anova_ui <- function(id) {
       uiOutput(ns("inputs")),
       uiOutput(ns("level_order_1")),
       uiOutput(ns("level_order_2")),
-      with_help_tooltip(
-        selectInput(
-          ns("p_adjust"),
-          "P-value adjustment for contrasts",
-          choices = get_emmeans_adjustment_choices(),
-          selected = "none"
-        ),
-        "Choose how to adjust p-values for post-hoc contrasts."
-      ),
       tags$details(
         tags$summary(strong("Advanced options")),
         stratification_ui("strat", ns)
@@ -134,8 +125,7 @@ two_way_anova_server <- function(id, filtered_data) {
         factor1_order = input$order1,
         factor2_var = input$factor2,
         factor2_order = input$order2,
-        stratification = strat_info(),
-        p_adjust_method = input$p_adjust
+        stratification = strat_info()
       )
     })
 
@@ -192,8 +182,7 @@ two_way_anova_server <- function(id, filtered_data) {
         responses = mod$responses,
         strata = mod$strata,
         factors = mod$factors,
-        orders = mod$orders,
-        p_adjust_method = mod$p_adjust_method
+        orders = mod$orders
       )
     })
 
