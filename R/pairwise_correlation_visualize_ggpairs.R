@@ -108,7 +108,8 @@ pairwise_correlation_visualize_ggpairs_server <- function(
           panel.grid.major = ggplot2::element_blank(),
           panel.grid.minor = ggplot2::element_blank(),
           axis.line = ggplot2::element_line(color = "#9ca3af"),
-          axis.ticks = ggplot2::element_line(color = "#9ca3af")
+          axis.ticks = ggplot2::element_line(color = "#9ca3af"),
+          plot.margin = ggplot2::margin(t = 10, r = 14, b = 10, l = 14, unit = "pt")
         )
 
       if (!is.null(title)) p <- p + ggplot2::labs(title = title)
