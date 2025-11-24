@@ -278,6 +278,10 @@ download_all_anova_results <- function(models_info, file) {
 write_anova_docx <- function(content, file, response_name = NULL, stratum_label = NULL) {
   if (is.null(content)) stop("No ANOVA results available to export.")
 
+  add_blank_line <- function(doc, text = "", style = "Normal") {
+    body_add_par(doc, text, style = style)
+  }
+
   # Helper to format p-values consistently
   format_p <- function(df, p_col) {
     if (is.null(p_col) || !p_col %in% names(df)) return(df)
@@ -288,38 +292,40 @@ write_anova_docx <- function(content, file, response_name = NULL, stratum_label 
     df
   }
 
-  # Shared styling for all tables
-  style_table <- function(df, visible_cols, merge_cols, header_labels, p_label_col = NULL, sig_col = "sig") {
+  # Shared styling for all tables (aligned with LM/LMM exports)
+  format_table <- function(df, visible_cols, header_labels, merge_cols = NULL, p_label_col = NULL, sig_col = "sig") {
     ft <- flextable(df[, visible_cols, drop = FALSE])
     ft <- set_header_labels(ft, values = header_labels)
-    ft <- merge_v(ft, j = intersect(merge_cols, ft$col_keys))
+
+    if (!is.null(merge_cols)) {
+      ft <- merge_v(ft, j = intersect(merge_cols, ft$col_keys))
+    }
+
     ft <- fontsize(ft, part = "all", size = 10)
     ft <- bold(ft, part = "header", bold = TRUE)
     ft <- color(ft, part = "header", color = "black")
     ft <- align(ft, align = "center", part = "all")
+    ft <- border_remove(ft)
+
+    black <- fp_border(color = "black", width = 1)
+    ft <- border(ft, part = "header", border.top = black, border.bottom = black)
+
+    if ("Response" %in% names(df)) {
+      change_rows <- which(diff(as.numeric(factor(df$Response))) != 0)
+      if (length(change_rows) > 0) {
+        ft <- border(ft, i = change_rows, part = "body", border.bottom = fp_border(color = "black", width = 0.5))
+      }
+    }
+
+    if (nrow(df) > 0) {
+      ft <- border(ft, i = nrow(df), part = "body", border.bottom = black)
+    }
 
     if (!is.null(sig_col) && sig_col %in% names(df) && !is.null(p_label_col) && p_label_col %in% ft$col_keys) {
       sig_rows <- which(df[[sig_col]] %in% TRUE)
       if (length(sig_rows) > 0) {
         ft <- bold(ft, i = sig_rows, j = p_label_col, bold = TRUE)
       }
-    }
-
-    ft <- border_remove(ft)
-    black <- fp_border(color = "black", width = 1)
-    thin <- fp_border(color = "black", width = 0.5)
-
-    ft <- border(ft, part = "header", border.top = black, border.bottom = black)
-
-    if ("Response" %in% names(df)) {
-      resp_index <- which(diff(as.numeric(factor(df$Response))) != 0)
-      if (length(resp_index) > 0) {
-        ft <- border(ft, i = resp_index, part = "body", border.bottom = thin)
-      }
-    }
-
-    if (nrow(df) > 0) {
-      ft <- border(ft, i = nrow(df), part = "body", border.bottom = black)
     }
 
     ft <- set_table_properties(ft, layout = "autofit", width = 0.9)
@@ -393,15 +399,31 @@ write_anova_docx <- function(content, file, response_name = NULL, stratum_label 
   )
 
   doc <- read_docx()
-  doc <- body_add_par(doc, "ANOVA table", style = "heading 1")
-  doc <- body_add_par(doc, "", style = "Normal")
+
+  title_text <- if (length(unique(combined_anova$Response)) == 1) {
+    sprintf("ANOVA Results — %s", unique(combined_anova$Response))
+  } else {
+    "ANOVA Results"
+  }
+
+  doc <- body_add_fpar(doc, fpar(ftext(title_text, prop = fp_text(bold = TRUE, font.size = 12))))
+
+  # Optional subtitle when there is a single stratum label present
+  if (!show_strata && !is.null(stratum_label) && nzchar(stratum_label) && !identical(stratum_label, "None")) {
+    doc <- body_add_fpar(doc, fpar(ftext(stratum_label, prop = fp_text(bold = TRUE, font.size = 11))))
+  }
+
+  doc <- add_blank_line(doc)
+
+  doc <- body_add_fpar(doc, fpar(ftext("ANOVA Table", prop = fp_text(bold = TRUE))))
+  doc <- add_blank_line(doc)
   doc <- body_add_flextable(
     doc,
-    style_table(
+    format_table(
       combined_anova,
       visible_cols = anova_visible,
-      merge_cols = anova_merge,
       header_labels = anova_headers,
+      merge_cols = anova_merge,
       p_label_col = "PrF_label"
     )
   )
@@ -430,23 +452,24 @@ write_anova_docx <- function(content, file, response_name = NULL, stratum_label 
     header_labels <- setNames(gsub("_", " ", contrast_visible), contrast_visible)
     if (!is.null(p_display_col)) header_labels[[p_display_col]] <- "p-value"
 
-    doc <- body_add_par(doc, "Post-hoc contrasts", style = "heading 1")
-    doc <- body_add_par(doc, "", style = "Normal")
+    doc <- add_blank_line(doc)
+    doc <- body_add_fpar(doc, fpar(ftext("Post-hoc Contrasts", prop = fp_text(bold = TRUE))))
+    doc <- add_blank_line(doc)
     doc <- body_add_flextable(
       doc,
-      style_table(
+      format_table(
         combined_contrasts,
         visible_cols = contrast_visible,
-        merge_cols = base_cols,
         header_labels = header_labels,
+        merge_cols = base_cols,
         p_label_col = p_display_col
       )
     )
   }
 
-  doc <- body_add_par(doc, "")
-  doc <- body_add_par(doc, sprintf("Generated by Table Analyzer on %s", Sys.Date()))
-  doc <- body_add_par(doc, "Significant p-values (< 0.05) in bold.", style = "Normal")
+  doc <- add_blank_line(doc)
+  doc <- add_blank_line(doc, "Significance level: p < 0.05 (bold values).")
+  doc <- add_blank_line(doc, sprintf("Generated by Table Analyzer on %s", Sys.Date()))
   print(doc, target = file)
 }
 
