@@ -46,7 +46,7 @@ metric_panel_ui <- function(id, default_width = 400, default_height = 300,
 
 
 visualize_cv_ui <- visualize_outliers_ui <- visualize_missing_ui <- function(id) {
-  metric_panel_ui(id, default_width = 400, default_height = 320, default_rows = 2, default_cols = 3)
+  metric_panel_ui(id, default_width = 800, default_height = 600, default_rows = 2, default_cols = 3)
 }
 
 metric_plot_ui <- function(id) {
