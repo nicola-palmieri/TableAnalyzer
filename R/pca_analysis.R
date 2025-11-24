@@ -310,17 +310,22 @@ pca_server <- function(id, filtered_data) {
     output$excluded_table <- DT::renderDT({
       results <- pca_result()
       req(results)
-
+      
       entry <- results$result
       req(entry$excluded_rows)
-
+      
       DT::datatable(
         entry$excluded_rows,
-        options = list(scrollX = TRUE, pageLength = 5),
+        options = list(
+          scrollX = TRUE,
+          pageLength = 5,
+          columnDefs = list(list(targets = "_all", className = "dt-nowrap"))
+        ),
         rownames = FALSE,
         class = "compact stripe"
       )
     })
+    
 
     analysis_result
   })

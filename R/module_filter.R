@@ -138,9 +138,17 @@ filter_server <- function(id, uploaded_data) {
     })
 
     # --- 4. Preview table ---
-    output$filtered_preview <- renderDT({
-      datatable(filtered_df(), options = list(scrollX = TRUE, pageLength = 10))
-    })
+    output$filtered_preview <- renderDT(
+      filtered_df(),
+      options = list(
+        scrollX = TRUE,
+        pageLength = 10,
+        columnDefs = list(
+          list(targets = "_all", className = "dt-nowrap")
+        )
+      ),
+      class = "display nowrap"
+    )
 
     # --- 5. Return filtered data downstream ---
     filtered_df

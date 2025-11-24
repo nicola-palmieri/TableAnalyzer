@@ -64,7 +64,17 @@ upload_server <- function(id) {
 
       data <- processed$result
       df(data)
-      output$preview <- renderDT(data, options = list(scrollX = TRUE, pageLength = 10))
+      output$preview <- renderDT(
+        data,
+        options = list(
+          scrollX = TRUE,
+          pageLength = 10,
+          columnDefs = list(
+            list(targets = "_all", className = "dt-nowrap")
+          )
+        ),
+        class = "display nowrap"
+      )
       create_type_selectors(data)
       if (!is.null(success_message)) {
         render_validation(success_message)
@@ -92,7 +102,7 @@ upload_server <- function(id) {
       output$preview <- renderDT(data.frame())
 
       if (input$data_source == "example") {
-        path <- "data/toy_animal_trial_data_long.xlsx"
+        path <- "data/Data at necropsy_all groups_all days_Table Analyzer.xlsx"
         validate(need(file.exists(path), "⚠️ Example dataset not found in data folder."))
         safe_result <- safe_call(readxl::read_excel, path)
         if (!handle_safe_result(
