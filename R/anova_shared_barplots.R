@@ -586,11 +586,12 @@ add_significance_after_build <- function(p,
   if (is.null(ann) || nrow(ann) == 0) return(p)
   
   max_y_text <- max(ann$y, na.rm = TRUE)
-  
+
   p_build <- ggplot_build(p)
   current_limits <- p_build$layout$panel_params[[1]]$y.range
-  
-  new_upper <- max(current_limits[2], max_y_text * 1.05)
+
+  padding <- compute_annotation_offset(barpos$y, offset_mult = 0.12)
+  new_upper <- max(current_limits[2], max_y_text + padding)
   
   p +
     scale_y_continuous(
