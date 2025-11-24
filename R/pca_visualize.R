@@ -444,7 +444,6 @@ visualize_pca_server <- function(id, filtered_data, model_fit) {
       label_size <- ifelse(is.null(input$pca_label_size) || is.na(input$pca_label_size), 2, input$pca_label_size)
       show_loadings <- isTRUE(input$show_loadings)
       loading_scale <- ifelse(is.null(input$loading_scale) || is.na(input$loading_scale), 1.2, input$loading_scale)
-      color_levels <- validate_levels(color_var)
 
       max_levels <- if (exists("MAX_STRATIFICATION_LEVELS")) MAX_STRATIFICATION_LEVELS else 10L
 
