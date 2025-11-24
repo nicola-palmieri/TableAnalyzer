@@ -115,12 +115,19 @@ prepare_anova_outputs <- function(model_obj, factor_names) {
       
       df <- as.data.frame(summary(contrasts_nested))
       df$Factor <- paste0(f2, "_within_", f1)
-      
+
       # Ensure f1 column exists (grouping variable)
       if (!f1 %in% names(df)) {
         df[[f1]] <- df$comparison # fallback: emmeans puts group there
       }
-      
+
+      # Preserve the user-specified order of the grouping factor
+      f1_levels <- levels(model_obj$model[[f1]])
+      if (!is.null(f1_levels)) {
+        df[[f1]] <- factor(df[[f1]], levels = f1_levels)
+        df <- df[order(df[[f1]]), , drop = FALSE]
+      }
+
       df[[f1]] <- as.character(df[[f1]])
       df
       
