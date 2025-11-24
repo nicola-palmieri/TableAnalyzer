@@ -54,79 +54,85 @@ prepare_anova_outputs <- function(model_obj, factor_names) {
   posthoc_combined <- NULL
   posthoc_significant <- numeric(0)
   
-  # --- Post-hoc Tukey (one-way or two-way specific) ---
+  # ONE-WAY POSTHOC (reference vs all)
   if (length(factor_names) == 1) {
     f1 <- factor_names[1]
     f1_spec <- anova_protect_vars(f1)
+    
     if (f1 %in% names(model_obj$model)) {
       res <- tryCatch({
+        
         emm <- emmeans::emmeans(model_obj, specs = as.formula(paste("~", f1_spec)))
-        contrasts <- emmeans::contrast(emm, method = "pairwise", adjust = "tukey")
-        res_df <- as.data.frame(summary(contrasts))
+        
         ref_lvl <- levels(model_obj$model[[f1]])[1]
-
-        if (!is.null(ref_lvl) && length(ref_lvl) == 1 && !is.na(ref_lvl) && "contrast" %in% names(res_df)) {
-          res_df <- res_df[vapply(
-            strsplit(res_df$contrast, " - "),
-            function(parts) ref_lvl %in% parts,
-            logical(1)
-          ), , drop = FALSE]
-        }
-
+        ref_idx <- which(levels(model_obj$model[[f1]]) == ref_lvl)
+        
+        # Only reference-vs-others contrasts (clean, robust)
+        contrasts <- emmeans::contrast(emm, method = "trt.vs.ctrl", ref = ref_idx)
+        res_df <- as.data.frame(summary(contrasts))
+        
+        res_df$Factor <- f1
         res_df
+        
       }, error = function(e) list(error = e$message))
-
+      
       if (is.data.frame(res)) {
-        res$Factor <- rep(f1, nrow(res))
         posthoc_details[[f1]] <- list(table = res, error = NULL)
         posthoc_combined <- res
       } else {
         posthoc_details[[f1]] <- list(table = NULL, error = res$error)
       }
     }
+  } 
+  ### TWO-WAY POSTHOC (nested reference-vs-all)
+  else if (length(factor_names) == 2) {
     
-  } else if (length(factor_names) == 2) {
     f1 <- factor_names[1]
     f2 <- factor_names[2]
     
     f1_spec <- anova_protect_vars(f1)
     f2_spec <- anova_protect_vars(f2)
     
-    # --- main-effect Tukey for both factors (averaged) ---
-    for (ff in c(f1, f2)) {
-      if (ff %in% names(model_obj$model)) {
-        ff_spec <- anova_protect_vars(ff)
-        res_main <- tryCatch({
-          emm_main <- emmeans::emmeans(model_obj, specs = as.formula(paste("~", ff_spec)))
-          contrasts_main <- emmeans::contrast(emm_main, method = "pairwise", adjust = "tukey")
-          as.data.frame(summary(contrasts_main))
-        }, error = function(e) list(error = e$message))
-        
-        if (is.data.frame(res_main)) {
-          res_main$Factor <- ff
-          posthoc_details[[ff]] <- list(table = res_main, error = NULL)
-          posthoc_combined <- dplyr::bind_rows(posthoc_combined, res_main)
-        } else {
-          posthoc_details[[ff]] <- list(table = NULL, error = res_main$error)
-        }
-      }
-    }
+    # Identify reference level of f2
+    f2_levels <- levels(model_obj$model[[f2]])
+    ref_lvl <- f2_levels[1]
+    ref_idx <- which(f2_levels == ref_lvl)
     
-    # --- nested contrasts of factor2 within each level of factor1 ---
+    # Compute nested emmeans: f2 within each f1 level
     res_nested <- tryCatch({
-      formula_nested <- as.formula(paste("pairwise ~", f2_spec, "|", f1_spec))
-      emm_nested <- emmeans::emmeans(model_obj, specs = formula_nested, adjust = "tukey")
-      contrasts_df <- as.data.frame(summary(emm_nested$contrasts))
-      contrasts_df$Factor <- paste0(f2, "_within_", f1)
-      contrasts_df[[f1]] <- as.character(contrasts_df[[f1]])
-      contrasts_df
+      
+      emm_nested <- emmeans::emmeans(
+        model_obj,
+        specs = as.formula(paste("~", f2_spec, "|", f1_spec))
+      )
+      
+      # Reference-vs-all inside each f1 group
+      contrasts_nested <- emmeans::contrast(
+        emm_nested,
+        method = "trt.vs.ctrl",
+        ref = ref_idx
+      )
+      
+      df <- as.data.frame(summary(contrasts_nested))
+      df$Factor <- paste0(f2, "_within_", f1)
+      
+      # Ensure f1 column exists (grouping variable)
+      if (!f1 %in% names(df)) {
+        df[[f1]] <- df$comparison # fallback: emmeans puts group there
+      }
+      
+      df[[f1]] <- as.character(df[[f1]])
+      df
+      
     }, error = function(e) list(error = e$message))
     
     if (is.data.frame(res_nested)) {
-      posthoc_details[[paste0(f2, "_within_", f1)]] <- list(table = res_nested, error = NULL)
+      key <- paste0(f2, "_within_", f1)
+      posthoc_details[[key]] <- list(table = res_nested, error = NULL)
       posthoc_combined <- dplyr::bind_rows(posthoc_combined, res_nested)
     } else {
-      posthoc_details[[paste0(f2, "_within_", f1)]] <- list(table = NULL, error = res_nested$error)
+      key <- paste0(f2, "_within_", f1)
+      posthoc_details[[key]] <- list(table = NULL, error = res_nested$error)
     }
   }
   
