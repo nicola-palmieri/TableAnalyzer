@@ -278,39 +278,48 @@ download_all_anova_results <- function(models_info, file) {
 write_anova_docx <- function(content, file, response_name = NULL, stratum_label = NULL) {
   if (is.null(content)) stop("No ANOVA results available to export.")
 
-  add_blank_line <- function(doc, text = "", style = "Normal") {
-    body_add_par(doc, text, style = style)
+  # Helper to format p-values consistently
+  format_p <- function(df, p_col) {
+    if (is.null(p_col) || !p_col %in% names(df)) return(df)
+    p_vals <- as.numeric(df[[p_col]])
+    df[[p_col]] <- p_vals
+    df[[paste0(p_col, "_label")]] <- ifelse(p_vals < 0.001, "<0.001", sprintf("%.3f", p_vals))
+    df$sig <- p_vals < 0.05
+    df
   }
 
-  # Helper for consistent table formatting (matches LM/LMM exports)
-  format_table <- function(df, bold_p = TRUE) {
-    ft <- flextable(df)
+  # Shared styling for all tables
+  style_table <- function(df, visible_cols, merge_cols, header_labels, p_label_col = NULL, sig_col = "sig") {
+    ft <- flextable(df[, visible_cols, drop = FALSE])
+    ft <- set_header_labels(ft, values = header_labels)
+    ft <- merge_v(ft, j = intersect(merge_cols, ft$col_keys))
     ft <- fontsize(ft, part = "all", size = 10)
     ft <- bold(ft, part = "header", bold = TRUE)
     ft <- color(ft, part = "header", color = "black")
     ft <- align(ft, align = "center", part = "all")
-    ft <- border_remove(ft)
-    black <- fp_border(color = "black", width = 1)
-    ft <- border(ft, part = "header", border.top = black)
-    ft <- border(ft, part = "header", border.bottom = black)
-    if (nrow(df) > 0) {
-      ft <- border(ft, i = nrow(df), part = "body", border.bottom = black)
+
+    if (!is.null(sig_col) && sig_col %in% names(df) && !is.null(p_label_col) && p_label_col %in% ft$col_keys) {
+      sig_rows <- which(df[[sig_col]] %in% TRUE)
+      if (length(sig_rows) > 0) {
+        ft <- bold(ft, i = sig_rows, j = p_label_col, bold = TRUE)
+      }
     }
 
-    # Bold significant p-values
-    if (bold_p) {
-      p_cols <- names(df)[grepl("Pr|p\\.?value|p-value", names(df), ignore.case = TRUE)]
-      for (pcol in p_cols) {
-        if (is.numeric(df[[pcol]]) || all(grepl("^[0-9.<]+$", df[[pcol]]))) {
-          sig_rows <- suppressWarnings(which(as.numeric(df[[pcol]]) < 0.05))
-          if (length(sig_rows) == 0) {
-            sig_rows <- grep("<0\\.0*1", df[[pcol]])
-          }
-          if (length(sig_rows) > 0 && pcol %in% ft$col_keys) {
-            ft <- bold(ft, i = sig_rows, j = pcol, bold = TRUE)
-          }
-        }
+    ft <- border_remove(ft)
+    black <- fp_border(color = "black", width = 1)
+    thin <- fp_border(color = "black", width = 0.5)
+
+    ft <- border(ft, part = "header", border.top = black, border.bottom = black)
+
+    if ("Response" %in% names(df)) {
+      resp_index <- which(diff(as.numeric(factor(df$Response))) != 0)
+      if (length(resp_index) > 0) {
+        ft <- border(ft, i = resp_index, part = "body", border.bottom = thin)
       }
+    }
+
+    if (nrow(df) > 0) {
+      ft <- border(ft, i = nrow(df), part = "body", border.bottom = black)
     }
 
     ft <- set_table_properties(ft, layout = "autofit", width = 0.9)
@@ -357,62 +366,52 @@ write_anova_docx <- function(content, file, response_name = NULL, stratum_label 
   combined_anova <- combined_anova %>%
     mutate(
       SumSq = round(SumSq, 3),
-      Fvalue = round(Fvalue, 3),
-      PrF = as.numeric(PrF),
-      `Pr(>F)` = round(PrF, 3)
+      Fvalue = round(Fvalue, 3)
     ) %>%
+    format_p("PrF") %>%
     arrange(Response, Stratum, Term)
 
   show_strata <- !(length(unique(combined_anova$Stratum)) == 1 && unique(combined_anova$Stratum) == "None")
 
-  if (!show_strata) {
-    combined_anova$Stratum <- NULL
-  }
-
-  anova_cols <- c("Response", if (show_strata) "Stratum", "Term", "SumSq", "Df", "Fvalue", "Pr(>F)")
-  combined_anova <- combined_anova[, anova_cols, drop = FALSE]
-
-  # Document shell --------------------------------------------------------
-  unique_responses <- unique(combined_anova$Response)
-  title_text <- if (!is.null(response_name)) {
-    sprintf("ANOVA Results — %s", response_name)
-  } else if (length(unique_responses) == 1) {
-    sprintf("ANOVA Results — %s", unique_responses)
+  if (show_strata) {
+    anova_visible <- c("Response", "Stratum", "Term", "SumSq", "Df", "Fvalue", "PrF_label")
+    anova_merge <- c("Response", "Stratum")
   } else {
-    "ANOVA Results — Multiple Responses"
+    combined_anova$Stratum <- NULL
+    anova_visible <- c("Response", "Term", "SumSq", "Df", "Fvalue", "PrF_label")
+    anova_merge <- c("Response")
   }
 
-  doc <- read_docx()
-  doc <- body_add_fpar(
-    doc,
-    fpar(ftext(title_text, prop = fp_text(bold = TRUE, font.size = 12)))
+  anova_headers <- c(
+    Response = "Response",
+    Stratum = if (show_strata) "Stratum" else NULL,
+    Term = "Term",
+    SumSq = "Sum Sq",
+    Df = "Df",
+    Fvalue = "F value",
+    PrF_label = "Pr(>F)"
   )
 
-  if (!is.null(stratum_label) && nzchar(stratum_label) && !identical(stratum_label, "None")) {
-    doc <- body_add_fpar(
-      doc,
-      fpar(ftext(stratum_label, prop = fp_text(bold = TRUE, font.size = 11)))
+  doc <- read_docx()
+  doc <- body_add_par(doc, "ANOVA table", style = "heading 1")
+  doc <- body_add_par(doc, "", style = "Normal")
+  doc <- body_add_flextable(
+    doc,
+    style_table(
+      combined_anova,
+      visible_cols = anova_visible,
+      merge_cols = anova_merge,
+      header_labels = anova_headers,
+      p_label_col = "PrF_label"
     )
-  }
+  )
 
-  doc <- add_blank_line(doc)
-
-  # ANOVA table -----------------------------------------------------------
-  doc <- body_add_fpar(doc, fpar(ftext("ANOVA (Type III)", prop = fp_text(bold = TRUE))))
-  doc <- add_blank_line(doc)
-  doc <- body_add_flextable(doc, format_table(combined_anova))
-  doc <- add_blank_line(doc)
-
-  # Post-hoc contrasts ----------------------------------------------------
   if (!is.null(contrast_entries) && length(contrast_entries) > 0) {
     combined_contrasts <- bind_rows(contrast_entries)
 
     p_col <- intersect(c("p.value", "p.value."), names(combined_contrasts))
     p_col <- if (length(p_col) > 0) p_col[1] else NULL
-    if (!is.null(p_col)) {
-      combined_contrasts[[p_col]] <- as.numeric(combined_contrasts[[p_col]])
-      combined_contrasts[[p_col]] <- round(combined_contrasts[[p_col]], 3)
-    }
+    combined_contrasts <- format_p(combined_contrasts, p_col)
 
     has_stratum_contrast <- "Stratum" %in% names(combined_contrasts)
     show_strata_contrast <- has_stratum_contrast && !(length(unique(combined_contrasts$Stratum)) == 1 && unique(combined_contrasts$Stratum) == "None")
@@ -424,18 +423,30 @@ write_anova_docx <- function(content, file, response_name = NULL, stratum_label 
     }
 
     base_cols <- c("Response", if (show_strata_contrast) "Stratum")
-    contrast_visible <- unique(c(base_cols, setdiff(names(combined_contrasts), base_cols)))
+    detail_cols <- setdiff(names(combined_contrasts), c(base_cols, "sig", if (!is.null(p_col)) c(p_col, paste0(p_col, "_label"))))
+    p_display_col <- if (!is.null(p_col)) paste0(p_col, "_label") else NULL
+    contrast_visible <- unique(c(base_cols, detail_cols, p_display_col))
 
-    doc <- body_add_fpar(doc, fpar(ftext("Post-hoc Contrasts", prop = fp_text(bold = TRUE))))
-    doc <- add_blank_line(doc)
-    doc <- body_add_flextable(doc, format_table(combined_contrasts[, contrast_visible, drop = FALSE]))
-    doc <- add_blank_line(doc)
+    header_labels <- setNames(gsub("_", " ", contrast_visible), contrast_visible)
+    if (!is.null(p_display_col)) header_labels[[p_display_col]] <- "p-value"
+
+    doc <- body_add_par(doc, "Post-hoc contrasts", style = "heading 1")
+    doc <- body_add_par(doc, "", style = "Normal")
+    doc <- body_add_flextable(
+      doc,
+      style_table(
+        combined_contrasts,
+        visible_cols = contrast_visible,
+        merge_cols = base_cols,
+        header_labels = header_labels,
+        p_label_col = p_display_col
+      )
+    )
   }
 
-  # Footer ---------------------------------------------------------------
-  doc <- add_blank_line(doc, "Significance level: p < 0.05 (bold values).")
-  doc <- add_blank_line(doc, sprintf("Generated by Table Analyzer on %s", Sys.Date()))
-
+  doc <- body_add_par(doc, "")
+  doc <- body_add_par(doc, sprintf("Generated by Table Analyzer on %s", Sys.Date()))
+  doc <- body_add_par(doc, "Significant p-values (< 0.05) in bold.", style = "Normal")
   print(doc, target = file)
 }
 
