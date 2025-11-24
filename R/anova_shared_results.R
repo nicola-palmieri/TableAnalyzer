@@ -395,6 +395,7 @@ write_anova_docx <- function(content, file, response_name = NULL, stratum_label 
 
   doc <- read_docx()
   doc <- body_add_par(doc, "ANOVA table", style = "heading 1")
+  doc <- body_add_par(doc, "", style = "Normal")
   doc <- body_add_flextable(
     doc,
     style_table(
@@ -431,6 +432,7 @@ write_anova_docx <- function(content, file, response_name = NULL, stratum_label 
     if (!is.null(p_display_col)) header_labels[[p_display_col]] <- "p-value"
 
     doc <- body_add_par(doc, "Post-hoc contrasts", style = "heading 1")
+    doc <- body_add_par(doc, "", style = "Normal")
     doc <- body_add_flextable(
       doc,
       style_table(
