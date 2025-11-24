@@ -45,45 +45,36 @@ plot_anova_barplot_meanse <- function(data,
   
   response_plots <- list()
   strata_panel_count <- context$initial_strata_panels
-  
+
   for (resp in context$responses) {
-    posthoc_entry <- NULL
-    if (!is.null(posthoc_all) && !is.null(posthoc_all[[resp]])) {
-      posthoc_entry <- posthoc_all[[resp]]
-    }
-    
+    posthoc_entry <- get_posthoc_entry_for_response(posthoc_all, resp)
+    stats_entries <- generate_anova_stats_entries(
+      context = context,
+      data = data,
+      resp = resp,
+      factor1 = factor1,
+      factor2 = factor2,
+      posthoc_entry = posthoc_entry
+    )
+
     if (context$has_strata && !is.null(context$strat_var) && context$strat_var %in% names(data)) {
       stratum_plots <- list()
-      
-      for (stratum in context$strata_levels) {
-        subset_rows <- !is.na(data[[context$strat_var]]) & data[[context$strat_var]] == stratum
-        subset_data <- data[subset_rows, , drop = FALSE]
-        if (nrow(subset_data) == 0) next
-        
-        stats_df <- anova_summarise_stats(subset_data, resp, factor1, factor2)
-        if (nrow(stats_df) == 0) next
-        
-        stats_df <- apply_anova_factor_levels(stats_df, factor1, factor2, context$order1, context$order2)
-        
-        stratum_posthoc <- NULL
-        if (!is.null(posthoc_entry) && !is.null(posthoc_entry[[stratum]])) {
-          stratum_posthoc <- posthoc_entry[[stratum]]
-        }
-        
-        stratum_plots[[stratum]] <- build_bar_plot_panel(
-          stats_df = stats_df,
-          title_text = stratum,
+
+      for (entry in stats_entries) {
+        stratum_plots[[entry$label]] <- build_bar_plot_panel(
+          stats_df = entry$stats_df,
+          title_text = entry$label,
           factor1 = factor1,
           factor2 = factor2,
           line_colors = line_colors,
           base_fill = base_fill,
           base_size = base_size,
-          posthoc_entry = stratum_posthoc,
-          nested_posthoc = stratum_posthoc,
+          posthoc_entry = entry$posthoc,
+          nested_posthoc = entry$posthoc,
           y_limits = shared_y_limits
         )
       }
-      
+
       if (length(stratum_plots) > 0) {
         strata_panel_count <- max(strata_panel_count, length(stratum_plots))
         combined <- patchwork::wrap_plots(
@@ -91,30 +82,26 @@ plot_anova_barplot_meanse <- function(data,
           nrow = context$strata_layout$nrow,
           ncol = context$strata_layout$ncol
         )
-        
+
         title_plot <- ggplot() +
           ta_plot_theme_void() +
           ggtitle(resp) +
           theme(plot.title = element_text(size = base_size, face = "bold", hjust = 0.5))
-        
+
         response_plots[[resp]] <- title_plot / combined + patchwork::plot_layout(heights = c(0.08, 1))
       }
-    } else {
-      stats_df <- anova_summarise_stats(data, resp, factor1, factor2)
-      if (nrow(stats_df) == 0) next
-      
-      stats_df <- apply_anova_factor_levels(stats_df, factor1, factor2, context$order1, context$order2)
-      
+    } else if (length(stats_entries) > 0) {
+      entry <- stats_entries[[1]]
       response_plots[[resp]] <- build_bar_plot_panel(
-        stats_df = stats_df,
-        title_text = resp,
+        stats_df = entry$stats_df,
+        title_text = entry$label,
         factor1 = factor1,
         factor2 = factor2,
         line_colors = line_colors,
         base_fill = base_fill,
         base_size = base_size,
-        posthoc_entry = posthoc_entry,
-        nested_posthoc = posthoc_entry,
+        posthoc_entry = entry$posthoc,
+        nested_posthoc = entry$posthoc,
         y_limits = shared_y_limits
       )
     }
@@ -135,48 +122,30 @@ compute_barplot_shared_limits <- function(context,
                                           factor2,
                                           posthoc_all = NULL) {
   combined <- NULL
-  
+
   for (resp in context$responses) {
-    posthoc_entry <- NULL
-    if (!is.null(posthoc_all) && !is.null(posthoc_all[[resp]])) {
-      posthoc_entry <- posthoc_all[[resp]]
-    }
-    
-    if (context$has_strata && !is.null(context$strat_var) && context$strat_var %in% names(data)) {
-      for (stratum in context$strata_levels) {
-        subset_rows <- !is.na(data[[context$strat_var]]) & data[[context$strat_var]] == stratum
-        subset_data <- data[subset_rows, , drop = FALSE]
-        if (nrow(subset_data) == 0) next
-        
-        stats_df <- anova_summarise_stats(subset_data, resp, factor1, factor2)
-        if (nrow(stats_df) == 0) next
-        stats_df <- apply_anova_factor_levels(stats_df, factor1, factor2, context$order1, context$order2)
-        
-        rng <- compute_barplot_panel_range(
-          stats_df,
-          factor1,
-          factor2,
-          posthoc_entry = posthoc_entry,
-          nested_posthoc = posthoc_entry
-        )
-        combined <- update_numeric_range(combined, rng)
-      }
-    } else {
-      stats_df <- anova_summarise_stats(data, resp, factor1, factor2)
-      if (nrow(stats_df) == 0) next
-      stats_df <- apply_anova_factor_levels(stats_df, factor1, factor2, context$order1, context$order2)
-      
+    posthoc_entry <- get_posthoc_entry_for_response(posthoc_all, resp)
+    stats_entries <- generate_anova_stats_entries(
+      context = context,
+      data = data,
+      resp = resp,
+      factor1 = factor1,
+      factor2 = factor2,
+      posthoc_entry = posthoc_entry
+    )
+
+    for (entry in stats_entries) {
       rng <- compute_barplot_panel_range(
-        stats_df,
+        entry$stats_df,
         factor1,
         factor2,
-        posthoc_entry = posthoc_entry,
-        nested_posthoc = posthoc_entry
+        posthoc_entry = entry$posthoc,
+        nested_posthoc = entry$posthoc
       )
       combined <- update_numeric_range(combined, rng)
     }
   }
-  
+
   if (is.null(combined)) return(NULL)
   
   limits <- expand_axis_limits(combined, lower_mult = 0.05, upper_mult = 0.12)
@@ -216,6 +185,58 @@ ensure_barplot_zero_baseline <- function(range_vals) {
   
   range_vals[1] <- 0
   range_vals
+}
+
+get_posthoc_entry_for_response <- function(posthoc_all, resp) {
+  if (is.null(posthoc_all) || is.null(posthoc_all[[resp]])) return(NULL)
+  posthoc_all[[resp]]
+}
+
+generate_anova_stats_entries <- function(context,
+                                         data,
+                                         resp,
+                                         factor1,
+                                         factor2,
+                                         posthoc_entry) {
+  entries <- list()
+  has_strata <- context$has_strata && !is.null(context$strat_var) && context$strat_var %in% names(data)
+
+  if (has_strata) {
+    for (stratum in context$strata_levels) {
+      subset_rows <- !is.na(data[[context$strat_var]]) & data[[context$strat_var]] == stratum
+      subset_data <- data[subset_rows, , drop = FALSE]
+      if (nrow(subset_data) == 0) next
+
+      stats_df <- anova_summarise_stats(subset_data, resp, factor1, factor2)
+      if (nrow(stats_df) == 0) next
+
+      stats_df <- apply_anova_factor_levels(stats_df, factor1, factor2, context$order1, context$order2)
+
+      stratum_posthoc <- NULL
+      if (!is.null(posthoc_entry) && !is.null(posthoc_entry[[stratum]])) {
+        stratum_posthoc <- posthoc_entry[[stratum]]
+      }
+
+      entries[[length(entries) + 1]] <- list(
+        label = stratum,
+        stats_df = stats_df,
+        posthoc = stratum_posthoc
+      )
+    }
+  } else {
+    stats_df <- anova_summarise_stats(data, resp, factor1, factor2)
+    if (nrow(stats_df) == 0) return(entries)
+
+    stats_df <- apply_anova_factor_levels(stats_df, factor1, factor2, context$order1, context$order2)
+
+    entries[[1]] <- list(
+      label = resp,
+      stats_df = stats_df,
+      posthoc = posthoc_entry
+    )
+  }
+
+  entries
 }
 
 build_bar_plot_panel <- function(stats_df,
