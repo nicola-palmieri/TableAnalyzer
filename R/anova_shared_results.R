@@ -317,7 +317,14 @@ write_anova_docx <- function(content, file, response_name = NULL, stratum_label 
     black <- fp_border(color = "black", width = 1)
     ft <- border(ft, part = "header", border.top = black, border.bottom = black)
 
-    if ("Response" %in% names(df)) {
+    if ("Stratum" %in% names(df)) {
+      group_cols <- c(if ("Response" %in% names(df)) "Response", "Stratum")
+      strata_factor <- interaction(df[, group_cols, drop = FALSE], drop = TRUE)
+      change_rows <- which(diff(as.numeric(strata_factor)) != 0)
+      if (length(change_rows) > 0) {
+        ft <- border(ft, i = change_rows, part = "body", border.bottom = fp_border(color = "black", width = 0.5))
+      }
+    } else if ("Response" %in% names(df)) {
       change_rows <- which(diff(as.numeric(factor(df$Response))) != 0)
       if (length(change_rows) > 0) {
         ft <- border(ft, i = change_rows, part = "body", border.bottom = fp_border(color = "black", width = 0.5))
