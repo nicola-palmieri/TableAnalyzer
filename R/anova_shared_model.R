@@ -52,7 +52,7 @@ prepare_stratified_anova <- function(
   rhs <- if (is.null(rhs) || rhs == "") "1" else rhs
 
   build_formula <- function(resp) stats::as.formula(paste(anova_protect_vars(resp), "~", rhs))
-  safe_fit <- purrr::safely(function(fml, data) stats::aov(fml, data = data))
+  safe_fit <- purrr::safely(function(fml, data) stats::lm(fml, data = data))
 
   base_info <- list(
     type = model,
