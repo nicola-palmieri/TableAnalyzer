@@ -171,8 +171,9 @@ download_all_anova_results <- function(models_info, file) {
   if (is.null(models_info) || is.null(models_info$models)) {
     stop("No models found to export.")
   }
-  
-  combined_results <- list()
+
+  combined_anova <- list()
+  combined_contrasts <- list()
   factor_names <- unique(unlist(models_info$factors))
   factor_names <- factor_names[!is.na(factor_names) & nzchar(factor_names)]
   errors <- character(0)
@@ -204,7 +205,14 @@ download_all_anova_results <- function(models_info, file) {
       rownames(tbl) <- NULL
       names(tbl) <- sub(" ", "", names(tbl))
       tbl$PrF <- tbl[, grep("^Pr", names(tbl))[1]]
-      combined_results[[length(combined_results) + 1]] <- tbl
+      combined_anova[[length(combined_anova) + 1]] <- tbl
+
+      if (!is.null(outputs$posthoc_table) && nrow(outputs$posthoc_table) > 0) {
+        ph_tbl <- outputs$posthoc_table
+        ph_tbl$Response <- resp
+        ph_tbl$Stratum <- "None"
+        combined_contrasts[[length(combined_contrasts) + 1]] <- ph_tbl
+      }
     }
   } else {
     # --- Case 2: stratified
@@ -234,12 +242,19 @@ download_all_anova_results <- function(models_info, file) {
         rownames(tbl) <- NULL
         names(tbl) <- sub(" ", "", names(tbl))
         tbl$PrF <- tbl[, grep("^Pr", names(tbl))[1]]
-        combined_results[[length(combined_results) + 1]] <- tbl
+        combined_anova[[length(combined_anova) + 1]] <- tbl
+
+        if (!is.null(outputs$posthoc_table) && nrow(outputs$posthoc_table) > 0) {
+          ph_tbl <- outputs$posthoc_table
+          ph_tbl$Response <- resp
+          ph_tbl$Stratum <- stratum
+          combined_contrasts[[length(combined_contrasts) + 1]] <- ph_tbl
+        }
       }
     }
   }
-  
-  if (length(combined_results) == 0) {
+
+  if (length(combined_anova) == 0) {
     msg <- "No ANOVA models available to export."
     if (length(errors) > 0) {
       msg <- paste0(
@@ -250,101 +265,184 @@ download_all_anova_results <- function(models_info, file) {
     }
     stop(msg)
   }
-  
-  write_anova_docx(combined_results, file)
+
+  write_anova_docx(
+    content = list(
+      anova_results = combined_anova,
+      contrast_results = combined_contrasts
+    ),
+    file = file
+  )
 }
 
-write_anova_docx <- function(results, file) {
-  
-  if (is.null(results) || length(results) == 0) stop("No ANOVA results available to export.")
-  combined <- bind_rows(results)
-  
+write_anova_docx <- function(content, file, response_name = NULL, stratum_label = NULL) {
+  if (is.null(content)) stop("No ANOVA results available to export.")
+
+  # Helper to format p-values consistently
+  format_p <- function(df, p_col) {
+    if (is.null(p_col) || !p_col %in% names(df)) return(df)
+    p_vals <- as.numeric(df[[p_col]])
+    df[[p_col]] <- p_vals
+    df[[paste0(p_col, "_label")]] <- ifelse(p_vals < 0.001, "<0.001", sprintf("%.3f", p_vals))
+    df$sig <- p_vals < 0.05
+    df
+  }
+
+  # Shared styling for all tables
+  style_table <- function(df, visible_cols, merge_cols, header_labels, p_label_col = NULL, sig_col = "sig") {
+    ft <- flextable(df[, visible_cols, drop = FALSE])
+    ft <- set_header_labels(ft, values = header_labels)
+    ft <- merge_v(ft, j = intersect(merge_cols, ft$col_keys))
+    ft <- fontsize(ft, part = "all", size = 10)
+    ft <- bold(ft, part = "header", bold = TRUE)
+    ft <- color(ft, part = "header", color = "black")
+    ft <- align(ft, align = "center", part = "all")
+
+    if (!is.null(sig_col) && sig_col %in% names(df) && !is.null(p_label_col) && p_label_col %in% ft$col_keys) {
+      sig_rows <- which(df[[sig_col]] %in% TRUE)
+      if (length(sig_rows) > 0) {
+        ft <- bold(ft, i = sig_rows, j = p_label_col, bold = TRUE)
+      }
+    }
+
+    ft <- border_remove(ft)
+    black <- fp_border(color = "black", width = 1)
+    thin <- fp_border(color = "black", width = 0.5)
+
+    ft <- border(ft, part = "header", border.top = black)
+    ft <- border(ft, part = "header", border.bottom = black)
+
+    if ("Response" %in% names(df)) {
+      resp_index <- which(diff(as.numeric(factor(df$Response))) != 0)
+      if (length(resp_index) > 0) {
+        ft <- border(ft, i = resp_index, part = "body", border.bottom = thin)
+      }
+    }
+
+    if (nrow(df) > 0) {
+      ft <- border(ft, i = nrow(df), part = "body", border.bottom = black)
+    }
+
+    ft <- set_table_properties(ft, layout = "autofit", width = 0.9)
+    ft <- padding(ft, padding.top = 2, padding.bottom = 2, padding.left = 2, padding.right = 2)
+    ft
+  }
+
+  # Build unified data frames for ANOVA and contrasts
+  is_batch <- !is.null(content$anova_results) || !is.null(content$contrast_results)
+
+  if (is_batch) {
+    anova_entries <- content$anova_results
+    contrast_entries <- content$contrast_results
+  } else {
+    anova_entries <- list()
+    contrast_entries <- list()
+
+    if (!is.null(content$anova_object)) {
+      anova_tbl <- as.data.frame(content$anova_object)
+      anova_tbl$Response <- response_name %||% "Response"
+      anova_tbl$Stratum <- stratum_label %||% "None"
+      anova_tbl$Term <- rownames(anova_tbl)
+      rownames(anova_tbl) <- NULL
+      names(anova_tbl) <- sub(" ", "", names(anova_tbl))
+      anova_tbl$PrF <- anova_tbl[, grep("^Pr", names(anova_tbl))[1]]
+      anova_entries <- list(anova_tbl)
+    }
+
+    if (!is.null(content$posthoc_table) && nrow(content$posthoc_table) > 0) {
+      ph_tbl <- content$posthoc_table
+      ph_tbl$Response <- response_name %||% "Response"
+      ph_tbl$Stratum <- stratum_label %||% "None"
+      contrast_entries <- list(ph_tbl)
+    }
+  }
+
+  if (is.null(anova_entries) || length(anova_entries) == 0) stop("No ANOVA results available to export.")
+
+  combined_anova <- bind_rows(anova_entries)
+
   required_cols <- c("Response", "Stratum", "Term", "SumSq", "Df", "Fvalue", "PrF")
-  if (!all(required_cols %in% names(combined))) stop("Missing required columns in ANOVA results.")
-  
-  # Format and sort
-  combined <- combined %>%
+  if (!all(required_cols %in% names(combined_anova))) stop("Missing required columns in ANOVA results.")
+
+  combined_anova <- combined_anova %>%
     mutate(
       SumSq = round(SumSq, 3),
-      Fvalue = round(Fvalue, 3),
-      PrF_label = ifelse(PrF < 0.001, "<0.001", sprintf("%.3f", PrF)),
-      sig = PrF < 0.05
+      Fvalue = round(Fvalue, 3)
     ) %>%
+    format_p("PrF") %>%
     arrange(Response, Stratum, Term)
-  
-  # Hide Stratum column if it's all "None"
-  if (length(unique(combined$Stratum)) == 1 && unique(combined$Stratum) == "None") {
-    combined$Stratum <- NULL
-    visible_cols <- c("Response", "Term", "SumSq", "Df", "Fvalue", "PrF_label")
-    merge_cols <- c("Response")
+
+  show_strata <- !(length(unique(combined_anova$Stratum)) == 1 && unique(combined_anova$Stratum) == "None")
+
+  if (show_strata) {
+    anova_visible <- c("Response", "Stratum", "Term", "SumSq", "Df", "Fvalue", "PrF_label")
+    anova_merge <- c("Response", "Stratum")
   } else {
-    visible_cols <- c("Response", "Stratum", "Term", "SumSq", "Df", "Fvalue", "PrF_label")
-    merge_cols <- c("Response", "Stratum")
+    combined_anova$Stratum <- NULL
+    anova_visible <- c("Response", "Term", "SumSq", "Df", "Fvalue", "PrF_label")
+    anova_merge <- c("Response")
   }
-  
-  # Build flextable
-  ft <- flextable(combined[, visible_cols])
-  
-  # Clean header names
-  ft <- set_header_labels(
-    ft,
+
+  anova_headers <- c(
     Response = "Response",
-    Stratum = if ("Stratum" %in% visible_cols) "Stratum" else NULL,
+    Stratum = if (show_strata) "Stratum" else NULL,
     Term = "Term",
     SumSq = "Sum Sq",
     Df = "Df",
     Fvalue = "F value",
     PrF_label = "Pr(>F)"
   )
-  
-  # Merge identical group labels
-  ft <- merge_v(ft, j = intersect(merge_cols, ft$col_keys))
-  
-  # Styling
-  ft <- fontsize(ft, part = "all", size = 10)
-  ft <- bold(ft, part = "header", bold = TRUE)
-  ft <- color(ft, part = "header", color = "black")
-  ft <- align(ft, align = "center", part = "all")
-  
-  # Bold significant p-values (< 0.05)
-  if ("sig" %in% names(combined)) {
-    sig_rows <- which(combined$sig)
-    if (length(sig_rows) > 0 && "PrF_label" %in% ft$col_keys) {
-      ft <- bold(ft, i = sig_rows, j = "PrF_label", bold = TRUE)
-    }
-  }
-  
-  # ===== Journal-style borders =====
-  ft <- border_remove(ft)
-  black <- fp_border(color = "black", width = 1)
-  thin <- fp_border(color = "black", width = 0.5)
-  
-  # 1) Top line above header
-  ft <- border(ft, part = "header", border.top = black)
-  # 2) Line below header
-  ft <- border(ft, part = "header", border.bottom = black)
-  
-  # 3) Thin horizontal lines between different responses
-  if ("Response" %in% names(combined)) {
-    resp_index <- which(diff(as.numeric(factor(combined$Response))) != 0)
-    if (length(resp_index) > 0) {
-      ft <- border(ft, i = resp_index, part = "body", border.bottom = thin)
-    }
-  }
-  
-  # 4) Final bottom border (last line)
-  if (nrow(combined) > 0) {
-    ft <- border(ft, i = nrow(combined), part = "body", border.bottom = black)
-  }
-  
-  
-  # No side or inner borders
-  ft <- set_table_properties(ft, layout = "autofit", width = 0.9)
-  ft <- padding(ft, padding.top = 2, padding.bottom = 2, padding.left = 2, padding.right = 2)
-  
-  # Write to DOCX
+
   doc <- read_docx()
-  doc <- body_add_flextable(doc, ft)
+  doc <- body_add_par(doc, "ANOVA table", style = "heading 1")
+  doc <- body_add_flextable(
+    doc,
+    style_table(
+      combined_anova,
+      visible_cols = anova_visible,
+      merge_cols = anova_merge,
+      header_labels = anova_headers,
+      p_label_col = "PrF_label"
+    )
+  )
+
+  if (!is.null(contrast_entries) && length(contrast_entries) > 0) {
+    combined_contrasts <- bind_rows(contrast_entries)
+
+    p_col <- intersect(c("p.value", "p.value."), names(combined_contrasts))
+    p_col <- if (length(p_col) > 0) p_col[1] else NULL
+    combined_contrasts <- format_p(combined_contrasts, p_col)
+
+    has_stratum_contrast <- "Stratum" %in% names(combined_contrasts)
+    show_strata_contrast <- has_stratum_contrast && !(length(unique(combined_contrasts$Stratum)) == 1 && unique(combined_contrasts$Stratum) == "None")
+
+    combined_contrasts <- if (has_stratum_contrast) {
+      combined_contrasts %>% arrange(Response, Stratum)
+    } else {
+      combined_contrasts %>% arrange(Response)
+    }
+
+    base_cols <- c("Response", if (show_strata_contrast) "Stratum")
+    detail_cols <- setdiff(names(combined_contrasts), c(base_cols, "sig", if (!is.null(p_col)) c(p_col, paste0(p_col, "_label"))))
+    p_display_col <- if (!is.null(p_col)) paste0(p_col, "_label") else NULL
+    contrast_visible <- unique(c(base_cols, detail_cols, p_display_col))
+
+    header_labels <- setNames(gsub("_", " ", contrast_visible), contrast_visible)
+    if (!is.null(p_display_col)) header_labels[[p_display_col]] <- "p-value"
+
+    doc <- body_add_par(doc, "Post-hoc contrasts", style = "heading 1")
+    doc <- body_add_flextable(
+      doc,
+      style_table(
+        combined_contrasts,
+        visible_cols = contrast_visible,
+        merge_cols = base_cols,
+        header_labels = header_labels,
+        p_label_col = p_display_col
+      )
+    )
+  }
+
   doc <- body_add_par(doc, "")
   doc <- body_add_par(doc, sprintf("Generated by Table Analyzer on %s", Sys.Date()))
   doc <- body_add_par(doc, "Significant p-values (< 0.05) in bold.", style = "Normal")
