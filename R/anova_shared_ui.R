@@ -88,12 +88,11 @@ bind_anova_outputs <- function(ns, output, models_reactive) {
   observeEvent(models_reactive(), {
     model_info <- models_reactive()
     if (is.null(model_info)) return()
-
+    
     responses <- model_info$responses
     model_list <- model_info$models
     strata_info <- model_info$strata
     factors <- unlist(model_info$factors, use.names = FALSE)
-    p_adjust_method <- if (!is.null(model_info$p_adjust_method)) model_info$p_adjust_method else "none"
     
     # --- Non-stratified case ---
     if (is.null(strata_info)) {
@@ -108,8 +107,7 @@ bind_anova_outputs <- function(ns, output, models_reactive) {
             download_id = paste0("download_", idx),
             model_entry = model_entry,
             response_name = response_name,
-            factors = factors,
-            p_adjust_method = p_adjust_method
+            factors = factors
           )
         })
       }
@@ -133,8 +131,7 @@ bind_anova_outputs <- function(ns, output, models_reactive) {
             model_entry = model_entry,
             response_name = response_name,
             factors = factors,
-            stratum_label = stratum_label,
-            p_adjust_method = p_adjust_method
+            stratum_label = stratum_label
           )
         })
       }
@@ -146,10 +143,9 @@ bind_anova_outputs <- function(ns, output, models_reactive) {
 
 bind_single_model_outputs <- function(output, summary_id, download_id,
                                       model_entry, response_name, factors,
-                                      stratum_label = NULL,
-                                      p_adjust_method = "none") {
+                                      stratum_label = NULL) {
   output[[summary_id]] <- renderPrint({
-    print_anova_summary_and_posthoc(model_entry, factors, p_adjust_method)
+    print_anova_summary_and_posthoc(model_entry, factors)
   })
 
   output[[download_id]] <- downloadHandler(
@@ -164,7 +160,7 @@ bind_single_model_outputs <- function(output, summary_id, download_id,
       if (is.null(model_entry) || !is.null(model_entry$error) || is.null(model_entry$model)) {
         stop("Model not available for download due to fitting error.")
       }
-      results <- prepare_anova_outputs(model_entry$model, factors, p_adjust_method)
+      results <- prepare_anova_outputs(model_entry$model, factors)
       if (!is.null(results$error)) {
         stop(paste0("ANOVA results unavailable: ", results$error))
       }
@@ -189,7 +185,7 @@ sanitize_name <- function(name) {
   safe
 }
 
-print_anova_summary_and_posthoc <- function(model_entry, factors, p_adjust_method = "none") {
+print_anova_summary_and_posthoc <- function(model_entry, factors) {
   if (is.null(model_entry) || (is.list(model_entry) && is.null(model_entry$model))) {
     cat("Model is not available.\n")
     return(invisible(NULL))
@@ -201,7 +197,7 @@ print_anova_summary_and_posthoc <- function(model_entry, factors, p_adjust_metho
   }
 
   model_obj <- model_entry$model
-  results <- prepare_anova_outputs(model_obj, factors, p_adjust_method)
+  results <- prepare_anova_outputs(model_obj, factors)
   if (!is.null(results$error)) {
     cat(format_safe_error_message("ANOVA computation failed", results$error), "\n", sep = "")
     return(invisible(NULL))
