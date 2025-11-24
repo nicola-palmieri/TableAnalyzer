@@ -10,7 +10,8 @@ prepare_stratified_anova <- function(
     factor2_order = NULL,
     stratification = NULL,
     stratify_var = NULL,
-    strata_order = NULL
+    strata_order = NULL,
+    p_adjust_method = "none"
 ) {
   req(df, responses, model)
 
@@ -59,7 +60,12 @@ prepare_stratified_anova <- function(
     responses = responses,
     factors = list(factor1 = factor1_var, factor2 = factor2_var),
     orders = list(order1 = factor1_order, order2 = factor2_order),
-    data_used = df
+    data_used = df,
+    p_adjust_method = {
+      available_methods <- get_emmeans_adjustment_choices()
+      selected <- tolower(p_adjust_method)
+      if (!selected %in% available_methods) "none" else selected
+    }
   )
 
   if (is.null(strata)) {
@@ -104,6 +110,7 @@ compile_anova_results <- function(model_info) {
 
   factor_names <- unlist(model_info$factors)
   factor_names <- factor_names[!is.na(factor_names) & nzchar(factor_names)]
+  p_adjust_method <- if (!is.null(model_info$p_adjust_method)) model_info$p_adjust_method else "none"
 
   if (is.null(model_info$strata)) {
     summary_list <- list()
@@ -115,7 +122,7 @@ compile_anova_results <- function(model_info) {
       entry <- model_info$models[[resp]]
       entry_errors <- character(0)
       if (!is.null(entry$model)) {
-        outputs <- prepare_anova_outputs(entry$model, factor_names)
+        outputs <- prepare_anova_outputs(entry$model, factor_names, p_adjust_method)
         if (!is.null(outputs$error)) {
           entry_errors <- c(entry_errors, outputs$error)
           summary_list[[resp]] <- NULL
@@ -161,7 +168,7 @@ compile_anova_results <- function(model_info) {
       outputs <- NULL
       entry_error <- NULL
       if (!is.null(entry$model)) {
-        outputs <- prepare_anova_outputs(entry$model, factor_names)
+        outputs <- prepare_anova_outputs(entry$model, factor_names, p_adjust_method)
         if (!is.null(outputs$error)) {
           entry_error <- outputs$error
           outputs <- NULL

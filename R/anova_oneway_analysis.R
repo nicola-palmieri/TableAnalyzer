@@ -8,6 +8,15 @@ one_way_anova_ui <- function(id) {
     config = tagList(
       uiOutput(ns("inputs")),
       uiOutput(ns("level_order")),
+      with_help_tooltip(
+        selectInput(
+          ns("p_adjust"),
+          "P-value adjustment for contrasts",
+          choices = get_emmeans_adjustment_choices(),
+          selected = "none"
+        ),
+        "Choose how to adjust p-values for post-hoc contrasts."
+      ),
       tags$details(
         tags$summary(strong("Advanced options")),
         stratification_ui("strat", ns)
@@ -87,7 +96,8 @@ one_way_anova_server <- function(id, filtered_data) {
         model = "oneway_anova",
         factor1_var = input$group,
         factor1_order = input$order,
-        stratification = strat_info()
+        stratification = strat_info(),
+        p_adjust_method = input$p_adjust
       )
     })
     
@@ -129,7 +139,8 @@ one_way_anova_server <- function(id, filtered_data) {
         responses = mod$responses,
         strata = mod$strata,
         factors = mod$factors,
-        orders = mod$orders
+        orders = mod$orders,
+        p_adjust_method = mod$p_adjust_method
       )
     })
     
