@@ -2,10 +2,11 @@
 
 #### Section: ANOVA Output Processing ####
 
-prepare_anova_outputs <- function(model_obj, factor_names) {
+prepare_anova_outputs <- function(model_obj, factor_names, p_adjust_method = "none") {
   old_contrasts <- options("contrasts")
   on.exit(options(old_contrasts), add = TRUE)
   options(contrasts = c("contr.sum", "contr.poly"))
+  p_adjust_method <- if (!is.null(p_adjust_method)) tolower(p_adjust_method) else "none"
   
   safe_anova <- purrr::safely(function(mod) {
     car::Anova(mod, type = 3)
@@ -69,7 +70,7 @@ prepare_anova_outputs <- function(model_obj, factor_names) {
         
         # Only reference-vs-others contrasts (clean, robust)
         contrasts <- emmeans::contrast(emm, method = "trt.vs.ctrl", ref = ref_idx)
-        res_df <- as.data.frame(summary(contrasts))
+        res_df <- as.data.frame(summary(contrasts, adjust = p_adjust_method))
         
         res_df$Factor <- f1
         res_df
@@ -112,8 +113,8 @@ prepare_anova_outputs <- function(model_obj, factor_names) {
         method = "trt.vs.ctrl",
         ref = ref_idx
       )
-      
-      df <- as.data.frame(summary(contrasts_nested))
+
+      df <- as.data.frame(summary(contrasts_nested, adjust = p_adjust_method))
       df$Factor <- paste0(f2, "_within_", f1)
       
       # Ensure f1 column exists (grouping variable)
@@ -161,16 +162,20 @@ prepare_anova_outputs <- function(model_obj, factor_names) {
     anova_significant = anova_significant,
     posthoc_details = posthoc_details,
     posthoc_table = posthoc_combined,
-    posthoc_significant = posthoc_significant
+    posthoc_significant = posthoc_significant,
+    p_adjust_method = p_adjust_method
   )
 }
 
 #### Collate tidy summaries from ANOVA models ####
 
-download_all_anova_results <- function(models_info, file) {
+download_all_anova_results <- function(models_info, file, p_adjust_method = NULL) {
   if (is.null(models_info) || is.null(models_info$models)) {
     stop("No models found to export.")
   }
+
+  selected_adjust <- if (!is.null(p_adjust_method)) p_adjust_method else models_info$p_adjust_method
+  selected_adjust <- if (!is.null(selected_adjust)) tolower(selected_adjust) else "none"
 
   combined_anova <- list()
   combined_contrasts <- list()
@@ -188,7 +193,7 @@ download_all_anova_results <- function(models_info, file) {
         }
         next
       }
-      outputs <- prepare_anova_outputs(model_entry$model, factor_names)
+      outputs <- prepare_anova_outputs(model_entry$model, factor_names, selected_adjust)
       if (!is.null(outputs$error)) {
         errors <- c(errors, paste0(resp, ": ", outputs$error))
         next
@@ -225,7 +230,7 @@ download_all_anova_results <- function(models_info, file) {
           }
           next
         }
-        outputs <- prepare_anova_outputs(model_entry$model, factor_names)
+        outputs <- prepare_anova_outputs(model_entry$model, factor_names, selected_adjust)
         if (!is.null(outputs$error)) {
           errors <- c(errors, paste0(resp, " (", stratum, "): ", outputs$error))
           next
