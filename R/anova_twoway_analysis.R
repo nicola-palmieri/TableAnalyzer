@@ -36,6 +36,13 @@ two_way_anova_server <- function(id, filtered_data) {
     ns <- session$ns
 
     responses <- multi_response_server("response", filtered_data)
+    data_signature <- reactive({
+      data <- filtered_data()
+      list(
+        names = names(data),
+        classes = vapply(data, function(x) paste(class(x), collapse = "|"), character(1))
+      )
+    })
 
     output$inputs <- renderUI({
       req(filtered_data())
@@ -63,7 +70,7 @@ two_way_anova_server <- function(id, filtered_data) {
           "Select the factor for the lines in the interaction plot."
         )
       )
-    })
+    }) %>% bindCache(data_signature())
     
     strat_info <- stratification_server("strat", filtered_data)
     
@@ -83,8 +90,8 @@ two_way_anova_server <- function(id, filtered_data) {
         ),
         sprintf("Arrange the levels of %s for the x-axis; the first level is the reference.", input$factor1)
       )
-    })
-    
+    }) %>% bindCache(list(input$factor1, data_signature()))
+
     output$level_order_2 <- renderUI({
       req(filtered_data(), input$factor2)
       levels2 <- resolve_order_levels(filtered_data()[[input$factor2]])
@@ -98,7 +105,7 @@ two_way_anova_server <- function(id, filtered_data) {
         ),
         sprintf("Arrange the levels of %s for the line colours; the first level is the reference.", input$factor2)
       )
-    })
+    }) %>% bindCache(list(input$factor2, data_signature()))
     
     # -----------------------------------------------------------
     # Model fitting (via shared helper)

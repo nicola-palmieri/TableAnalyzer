@@ -32,6 +32,13 @@ descriptive_server <- function(id, filtered_data) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     df <- filtered_data
+    data_signature <- reactive({
+      data <- df()
+      list(
+        names = names(data),
+        classes = vapply(data, function(x) paste(class(x), collapse = "|"), character(1))
+      )
+    })
 
     # ------------------------------------------------------------
     # Dynamic inputs
@@ -52,7 +59,7 @@ descriptive_server <- function(id, filtered_data) {
           "Choose the numeric measurements you want to summarise (mean, SD, etc.)."
         )
       )
-    })
+    }) %>% bindCache(data_signature())
     
     strat_info <- stratification_server("strat", df)
     

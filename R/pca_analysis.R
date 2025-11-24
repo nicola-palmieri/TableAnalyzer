@@ -38,6 +38,13 @@ pca_server <- function(id, filtered_data) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     df <- reactive(filtered_data())
+    data_signature <- reactive({
+      data <- df()
+      list(
+        names = names(data),
+        classes = vapply(data, function(x) paste(class(x), collapse = "|"), character(1))
+      )
+    })
 
     # Dynamically populate numeric variable list (re-rendered with UI)
     output$vars_ui <- renderUI({
@@ -48,7 +55,7 @@ pca_server <- function(id, filtered_data) {
         selectInput(ns("vars"), "Numeric variables", choices = num_vars, selected = num_vars, multiple = TRUE),
         "Pick the numeric variables whose combined patterns you want PCA to capture."
       )
-    })
+    }) %>% bindCache(data_signature())
 
     `%||%` <- function(x, y) if (is.null(x)) y else x
 

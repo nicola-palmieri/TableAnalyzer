@@ -34,6 +34,13 @@ ggpairs_server <- function(id, data_reactive) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     df <- reactive(data_reactive())
+    data_signature <- reactive({
+      data <- df()
+      list(
+        names = names(data),
+        classes = vapply(data, function(x) paste(class(x), collapse = "|"), character(1))
+      )
+    })
 
     strat_info <- stratification_server("strat", df)
 
@@ -46,7 +53,7 @@ ggpairs_server <- function(id, data_reactive) {
         selectInput(ns("vars"), "Numeric variables", choices = num_vars, selected = num_vars, multiple = TRUE),
         "Choose which numeric columns to include in the correlation matrix."
       )
-    })
+    }) %>% bindCache(data_signature())
 
     build_ggpairs_object <- function(data) {
       GGally::ggpairs(
