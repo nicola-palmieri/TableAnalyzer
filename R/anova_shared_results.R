@@ -53,40 +53,25 @@ prepare_anova_outputs <- function(model_obj, factor_names) {
   posthoc_significant <- numeric(0)
   
   # --- Post-hoc Tukey (one-way or two-way specific) ---
-  if (length(factor_names) == 1) {
-    f1 <- factor_names[1]
-    f1_spec <- anova_protect_vars(f1)
-
-    res <- list(error = "Factor not found in model object.")
-    if (f1 %in% names(model_obj$model)) {
-      res <- tryCatch({
-        emm <- emmeans::emmeans(model_obj, specs = as.formula(paste("~", f1_spec)))
-        contrasts <- emmeans::contrast(emm, method = "pairwise", adjust = "tukey")
-        summary_df <- as.data.frame(summary(contrasts))
-
-        # Keep only contrasts that involve the reference level (first factor level)
-        levs <- levels(model_obj$model[[f1]])
-        if (!is.null(levs) && length(levs) > 0) {
-          reference <- levs[1]
-          summary_df <- summary_df[
-            grepl(paste0(reference, " - "), summary_df$contrast) |
-              grepl(paste0(" - ", reference), summary_df$contrast),
-            ,
-          ]
-        }
-
-        summary_df
-      }, error = function(e) list(error = e$message))
+    if (length(factor_names) == 1) {
+      f1 <- factor_names[1]
+      f1_spec <- anova_protect_vars(f1)
+      if (f1 %in% names(model_obj$model)) {
+        res <- tryCatch({
+          emm <- emmeans::emmeans(model_obj, specs = as.formula(paste("~", f1_spec)))
+          contrasts <- emmeans::contrast(emm, method = "pairwise", adjust = "tukey")
+          as.data.frame(summary(contrasts))
+        }, error = function(e) list(error = e$message))
+      
+      if (is.data.frame(res)) {
+        res$Factor <- f1
+        posthoc_details[[f1]] <- list(table = res, error = NULL)
+        posthoc_combined <- res
+      } else {
+        posthoc_details[[f1]] <- list(table = NULL, error = res$error)
+      }
     }
-
-    if (is.data.frame(res)) {
-      res$Factor <- f1
-      posthoc_details[[f1]] <- list(table = res, error = NULL)
-      posthoc_combined <- res
-    } else {
-      posthoc_details[[f1]] <- list(table = NULL, error = res$error)
-    }
-
+    
   } else if (length(factor_names) == 2) {
     f1 <- factor_names[1]
     f2 <- factor_names[2]
