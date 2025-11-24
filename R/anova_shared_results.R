@@ -115,36 +115,15 @@ prepare_anova_outputs <- function(model_obj, factor_names) {
       
       df <- as.data.frame(summary(contrasts_nested))
       df$Factor <- paste0(f2, "_within_", f1)
-
+      
       # Ensure f1 column exists (grouping variable)
       if (!f1 %in% names(df)) {
         df[[f1]] <- df$comparison # fallback: emmeans puts group there
       }
-
-      # Order contrasts to match the factor level selections from the widget
-      f1_levels <- levels(model_obj$model[[f1]])
-      df[[f1]] <- factor(df[[f1]], levels = f1_levels)
-
-      if (length(f2_levels) > 1) {
-        contrast_levels <- paste(f2_levels[-ref_idx], ref_lvl, sep = " - ")
-        if ("contrast" %in% names(df)) {
-          df$contrast <- factor(df$contrast, levels = contrast_levels)
-          df <- df[order(df[[f1]], df$contrast), , drop = FALSE]
-          df$contrast <- as.character(df$contrast)
-        } else if ("comparison" %in% names(df)) {
-          df$comparison <- factor(df$comparison, levels = contrast_levels)
-          df <- df[order(df[[f1]], df$comparison), , drop = FALSE]
-          df$comparison <- as.character(df$comparison)
-        } else {
-          df <- df[order(df[[f1]]), , drop = FALSE]
-        }
-      } else {
-        df <- df[order(df[[f1]]), , drop = FALSE]
-      }
-
+      
       df[[f1]] <- as.character(df[[f1]])
       df
-
+      
     }, error = function(e) list(error = e$message))
     
     if (is.data.frame(res_nested)) {
