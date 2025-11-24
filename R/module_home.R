@@ -39,7 +39,7 @@ home_ui <- function(id) {
             column(
               width = 3,
               div(
-                icon("chart-line", class = "fa-2x text-primary mb-2"),
+                icon("square-poll-horizontal", class = "fa-2x text-primary mb-2"),
                 h5("3. Analyze"),
                 p("Run summaries and models tailored to your dataset.")
               )

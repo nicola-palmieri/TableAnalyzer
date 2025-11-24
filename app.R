@@ -129,7 +129,7 @@ ui <- navbarPage(
     fluidPage(filter_ui("filter"))
   ),
   tabPanel(
-    title = tagList(icon("chart-line"), " Analyze"),
+    title = tagList(icon("square-poll-horizontal"), " Analyze"),
     value = "analysis_tab",
     fluidPage(analysis_ui("analysis"))
   ),
