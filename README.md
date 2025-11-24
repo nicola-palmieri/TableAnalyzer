@@ -1,12 +1,12 @@
 # 📊 Table Analyzer
 
-Table Analyzer is a modular R/Shiny application that walks researchers from raw spreadsheets to publication-ready figures and tables. The v1.00 app ships with dedicated tabs for uploading, filtering, modeling, and visualization so you can run end-to-end analyses without leaving the browser.
+Table Analyzer is a modular R/Shiny application for cleaning spreadsheets, running common statistical models, and exploring the results in a browser. The app runs entirely from this repository (via `app.R`) and ships with dedicated tabs for uploading data, filtering it, running models, and viewing visualizations.
 
 ### Current status
 
-- Stable Shiny app focused on interactive descriptive statistics, ANOVA (one- and two-way), linear and mixed models, correlations, and PCA.
-- Built-in demo datasets let you try the workflow immediately; Excel uploads support both tidy long and two-row-header wide formats.
-- Export buttons mirror what you see in the UI—model summaries, Type-III ANOVA tables, diagnostic plots, and Word reports for LM/LMM modules.
+- Actively developed Shiny app with modules for descriptive statistics, one- and two-way ANOVA, linear models, linear mixed models, pairwise correlations, and principal component analysis.
+- Demo datasets live in `data/`, and the upload tab accepts Excel files in tidy-long or two-row-header wide formats before reshaping.
+- Each analysis module surfaces the tables and plots it computes; LM/LMM tabs also offer Word exports generated with `officer` and `flextable`.
 
 ---
 
@@ -83,9 +83,13 @@ shiny::runApp(".")
 ## 🧪 Development notes
 
 - Regression exports rely on `flextable` and `officer`; install these packages to avoid runtime errors.
-- Wide-format ingestion is safeguarded by unit tests in `tests/test_convert_wide_to_long.R`. Run them with:
+- Wide-format ingestion is safeguarded by unit tests in `tests/test_convert_wide_to_long.R`:
   ```bash
   Rscript tests/test_convert_wide_to_long.R
+  ```
+- Upload preprocessing (column cleaning and factor ordering) is covered by `tests/test_preprocess_uploaded_table.R`:
+  ```bash
+  Rscript tests/test_preprocess_uploaded_table.R
   ```
 - Helper scripts in `dev/` illustrate layout prototypes and can be sourced during development, but are not required for production use.
 
@@ -93,7 +97,7 @@ shiny::runApp(".")
 
 ## 📝 License
 
-MIT (or update with your project’s chosen license).
+A license file has not been added to this repository yet. Please include one if you plan to distribute the app.
 
 ---
 
@@ -116,14 +120,4 @@ Every analysis tab in Table Analyzer maps directly to familiar R functions. The 
 | Pairwise correlations | `stats::cor(..., use = "pairwise.complete.obs")` for coefficients; visual diagnostics via `GGally::ggpairs()` with correlation, scatter, and density panels. | Numeric variables selected in the UI and optional stratification factor; each stratum is analyzed independently. |
 | Principal component analysis | `stats::prcomp(center = TRUE, scale. = TRUE)` applied to complete cases for the selected columns, with variance summaries from `summary(prcomp)` and loadings displayed. | Numeric variables selected for PCA. Rows missing any selected variable are removed before fitting, and the excluded count is reported. |
 
-When exporting results, each module bundles the rendered tables, model summaries, and diagnostic plots based on these function calls, enabling straightforward reproduction and review.
-
----
-
-## 📚 How to cite Table Analyzer
-
-If Table Analyzer supports your research, please cite it so others can discover the tool:
-
-**Palmieri, N.** (2025). *Table Analyzer: Turn your tabular data into publication-ready tables and plots* (Version 1.00). Available at [https://github.com/nicola-palmieri/TableAnalyzer](https://github.com/nicola-palmieri/TableAnalyzer).
-
-
+When exporting results, each module bundles the rendered tables, model summaries, and diagnostic plots based on these function calls so downstream reviewers can see exactly what was generated.
