@@ -1,5 +1,5 @@
 # ===============================================================
-# 🧬 Common module for LM, LMM, and GLM
+# 🧬 Common module for LM and LMM
 # ===============================================================
 
 reg_diagnostic_explanation <- paste(
@@ -10,7 +10,7 @@ reg_diagnostic_explanation <- paste(
   "If you spot strong patterns in either plot, consider transforming variables, adding predictors, or trying a different model to improve the fit."
 )
 
-fit_all_models <- function(df, responses, rhs, strat_details, engine, allow_multi_response, glm_family = NULL) {
+fit_all_models <- function(df, responses, rhs, strat_details, engine, allow_multi_response) {
   safe_fit <- purrr::safely(reg_fit_model)
 
   make_entry <- function(label = NULL, display = label, model = NULL, error = NULL) {
@@ -49,7 +49,7 @@ fit_all_models <- function(df, responses, rhs, strat_details, engine, allow_mult
 
   for (resp in responses) {
     if (is.null(strat_details$var)) {
-      result <- safe_fit(resp, rhs, df, engine = engine, glm_family = glm_family)
+      result <- safe_fit(resp, rhs, df, engine = engine)
       strata_entry <- make_entry(display = "Overall")
 
       if (is.null(result$error)) {
@@ -72,7 +72,7 @@ fit_all_models <- function(df, responses, rhs, strat_details, engine, allow_mult
         if (nrow(subset_data) == 0) {
           entry$error <- paste0("No observations available for stratum '", level, "'.")
         } else {
-          result <- safe_fit(resp, rhs, subset_data, engine = engine, glm_family = glm_family)
+          result <- safe_fit(resp, rhs, subset_data, engine = engine)
           if (is.null(result$error)) {
             entry$model <- result$result
             successful_strata[[level]] <- result$result
@@ -131,18 +131,15 @@ fit_all_models <- function(df, responses, rhs, strat_details, engine, allow_mult
 render_model_summary <- function(engine, model_obj) {
   if (engine == "lm") {
     reg_display_lm_summary(model_obj)
-  } else if (engine == "glm") {
-    reg_display_glm_summary(model_obj)
   } else {
     reg_display_lmm_summary(model_obj)
   }
 }
 
-render_residual_plot <- function(model_obj, engine) {
-  resid_type <- if (engine == "glm") "deviance" else "response"
+render_residual_plot <- function(model_obj) {
   plot_df <- data.frame(
     fitted = stats::fitted(model_obj),
-    residuals = stats::residuals(model_obj, type = resid_type)
+    residuals = stats::residuals(model_obj)
   )
 
   ggplot2::ggplot(plot_df, ggplot2::aes(x = fitted, y = residuals)) +
@@ -162,8 +159,8 @@ render_residual_plot <- function(model_obj, engine) {
     )
 }
 
-render_qq_plot <- function(model_obj, engine) {
-  resid_vals <- stats::residuals(model_obj, type = if (engine == "glm") "deviance" else "response")
+render_qq_plot <- function(model_obj) {
+  resid_vals <- stats::residuals(model_obj)
   qq_base <- stats::qqnorm(resid_vals, plot.it = FALSE)
   
   qq_df <- data.frame(
@@ -221,11 +218,11 @@ assign_model_outputs <- function(output, engine, response, idx, model_obj, strat
   })
 
   output[[resid_id]] <- renderPlot({
-    render_residual_plot(model_obj, engine)
+    render_residual_plot(model_obj)
   })
 
   output[[qq_id]] <- renderPlot({
-    render_qq_plot(model_obj, engine)
+    render_qq_plot(model_obj)
   })
 
   assign_download_handler(output, download_id, engine, response, stratum_display, model_obj)
@@ -351,30 +348,26 @@ render_model_outputs <- function(output, models_info, engine) {
   }
 }
 
-regression_ui <- function(id, engine = c("lm", "lmm", "glm"), allow_multi_response = FALSE, compact = FALSE) {
+regression_ui <- function(id, engine = c("lm", "lmm"), allow_multi_response = FALSE) {
   ns <- NS(id)
   engine <- match.arg(engine)
   allow_multi_response <- isTRUE(allow_multi_response)
-  compact <- isTRUE(compact)
 
   list(
     config = tagList(
       if (allow_multi_response) multi_response_ui(ns("response")) else uiOutput(ns("response_ui")),
       uiOutput(ns("fixed_selector")),
-      if (!compact) uiOutput(ns("level_order")),
+      uiOutput(ns("level_order")),
       uiOutput(ns("covar_selector")),
       if (engine == "lmm") uiOutput(ns("random_selector")),
-      if (engine == "glm") uiOutput(ns("family_selector")),
-      if (!compact) uiOutput(ns("interaction_select")),
+      uiOutput(ns("interaction_select")),
       uiOutput(ns("formula_preview")),
       br(),
-      if (!compact) tagList(
-        tags$details(
-          tags$summary(strong("Advanced options")),
-          stratification_ui("strat", ns)
-        ),
-        br()
+      tags$details(
+        tags$summary(strong("Advanced options")),
+        stratification_ui("strat", ns)
       ),
+      br(),
       fluidRow(
         column(6, with_help_tooltip(
           actionButton(ns("run"), "Show results", width = "100%"),
@@ -392,14 +385,13 @@ regression_ui <- function(id, engine = c("lm", "lmm", "glm"), allow_multi_respon
   )
 }
 
-regression_server <- function(id, data, engine = c("lm", "lmm", "glm"), allow_multi_response = FALSE, compact = FALSE) {
+regression_server <- function(id, data, engine = c("lm", "lmm"), allow_multi_response = FALSE) {
   engine <- match.arg(engine)
   allow_multi_response <- isTRUE(allow_multi_response)
-  compact <- isTRUE(compact)
 
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
-    strat_info <- if (compact) reactive(list(var = NULL, levels = NULL)) else stratification_server("strat", data)
+    strat_info <- stratification_server("strat", data)
 
     if (allow_multi_response) {
       selected_responses <- multi_response_server("response", data)
@@ -407,10 +399,8 @@ regression_server <- function(id, data, engine = c("lm", "lmm", "glm"), allow_mu
       output$response_ui <- renderUI({
         req(data())
         types <- reg_detect_types(data())
-        response_choices <- if (engine == "glm") unique(c(types$num, types$fac)) else types$num
-        label <- if (engine == "glm") "Response variable" else "Response variable (numeric)"
         with_help_tooltip(
-          selectInput(ns("dep"), label, choices = response_choices),
+          selectInput(ns("dep"), "Response variable (numeric)", choices = types$num),
           "Choose the outcome that the model should predict."
         )
       })
@@ -442,7 +432,7 @@ regression_server <- function(id, data, engine = c("lm", "lmm", "glm"), allow_mu
       df <- data()
       fac_vars <- input$fixed
 
-      if (compact || length(fac_vars) == 0) return(NULL)
+      if (length(fac_vars) == 0) return(NULL)
 
       tagList(
         lapply(fac_vars, function(var) {
@@ -494,26 +484,8 @@ regression_server <- function(id, data, engine = c("lm", "lmm", "glm"), allow_mu
 
     output$interaction_select <- renderUI({
       req(data())
-      if (compact) return(NULL)
       types <- reg_detect_types(data())
       reg_interactions_ui(ns, input$fixed, types$fac)
-    })
-
-    output$family_selector <- renderUI({
-      req(engine == "glm")
-      with_help_tooltip(
-        selectInput(
-          ns("family"),
-          "GLM family",
-          choices = c(
-            "Gaussian (identity)" = "gaussian",
-            "Binomial (logit)" = "binomial",
-            "Poisson (log)" = "poisson"
-          ),
-          selected = "gaussian"
-        ),
-        "Pick the link family that matches your outcome distribution."
-      )
     })
 
     output$formula_preview <- renderUI({
@@ -534,11 +506,7 @@ regression_server <- function(id, data, engine = c("lm", "lmm", "glm"), allow_mu
       df <- data()
       responses <- selected_responses()
       req(length(responses) > 0)
-      if (engine != "glm") {
-        validate_numeric_columns(df, responses, "response variable(s)")
-      } else {
-        validate_glm_response(df, responses, input$family)
-      }
+      validate_numeric_columns(df, responses, "response variable(s)")
 
       rhs <- reg_compose_rhs(
         input$fixed,
@@ -549,7 +517,7 @@ regression_server <- function(id, data, engine = c("lm", "lmm", "glm"), allow_mu
       )
 
       strat_details <- strat_info()
-      fit_all_models(df, responses, rhs, strat_details, engine, allow_multi_response, glm_family = input$family)
+      fit_all_models(df, responses, rhs, strat_details, engine, allow_multi_response)
     })
 
     output$results_ui <- renderUI({
@@ -646,8 +614,8 @@ regression_server <- function(id, data, engine = c("lm", "lmm", "glm"), allow_mu
       data_used <- df_final()
 
       list(
-        analysis_type = if (engine == "lm") "LM" else if (engine == "glm") "GLM" else "LMM",
-        type = if (engine == "lm") "lm" else if (engine == "glm") "glm" else "lmm",
+        analysis_type = if (engine == "lm") "LM" else "LMM",
+        type = if (engine == "lm") "lm" else "lmm",
         data_used = data_used,
         model = model_fit(),
         summary = summary_table(),
