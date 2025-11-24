@@ -13,18 +13,14 @@ plot_anova_barplot_meanse <- function(data,
   data <- context$data
   factor1 <- context$factor1
   factor2 <- context$factor2
-  
+
   allowed_positions <- c("bottom", "top", "left", "right")
-  legend_position_value <- if (!is.null(legend_position) && legend_position %in% allowed_positions) {
-    legend_position
-  } else {
-    "bottom"
-  }
-  
+  legend_position_value <- if (!is.null(legend_position) && legend_position %in% allowed_positions) legend_position else "bottom"
+
   if (is.null(factor1) || length(context$responses) == 0) {
     return(NULL)
   }
-  
+
   shared_y_limits <- if (isTRUE(share_y_axis)) {
     compute_barplot_shared_limits(
       context,
@@ -37,16 +33,12 @@ plot_anova_barplot_meanse <- function(data,
     NULL
   }
   
-  base_fill <- if (!is.null(line_colors) && length(line_colors) > 0) {
-    unname(line_colors)[1]
-  } else {
-    "#3E8FC4"
-  }
-  
+  base_fill <- if (!is.null(line_colors) && length(line_colors) > 0) unname(line_colors)[1] else "#3E8FC4"
+
   response_plots <- list()
   strata_panel_count <- context$initial_strata_panels
 
-  for (resp in context$responses) {
+  build_response_plot <- function(resp) {
     posthoc_entry <- get_posthoc_entry_for_response(posthoc_all, resp)
     stats_entries <- generate_anova_stats_entries(
       context = context,
@@ -58,10 +50,8 @@ plot_anova_barplot_meanse <- function(data,
     )
 
     if (context$has_strata && !is.null(context$strat_var) && context$strat_var %in% names(data)) {
-      stratum_plots <- list()
-
-      for (entry in stats_entries) {
-        stratum_plots[[entry$label]] <- build_bar_plot_panel(
+      stratum_plots <- lapply(stats_entries, function(entry) {
+        build_bar_plot_panel(
           stats_df = entry$stats_df,
           title_text = entry$label,
           factor1 = factor1,
@@ -73,26 +63,28 @@ plot_anova_barplot_meanse <- function(data,
           nested_posthoc = entry$posthoc,
           y_limits = shared_y_limits
         )
-      }
+      })
+      names(stratum_plots) <- vapply(stats_entries, function(x) x$label, character(1))
+      stratum_plots <- Filter(Negate(is.null), stratum_plots)
 
-      if (length(stratum_plots) > 0) {
-        strata_panel_count <- max(strata_panel_count, length(stratum_plots))
-        combined <- patchwork::wrap_plots(
-          plotlist = stratum_plots,
-          nrow = context$strata_layout$nrow,
-          ncol = context$strata_layout$ncol
-        )
+      if (!length(stratum_plots)) return(NULL)
 
-        title_plot <- ggplot() +
-          ta_plot_theme_void() +
-          ggtitle(resp) +
-          theme(plot.title = element_text(size = base_size, face = "bold", hjust = 0.5))
+      strata_panel_count <<- max(strata_panel_count, length(stratum_plots))
+      combined <- patchwork::wrap_plots(
+        plotlist = stratum_plots,
+        nrow = context$strata_layout$nrow,
+        ncol = context$strata_layout$ncol
+      )
 
-        response_plots[[resp]] <- title_plot / combined + patchwork::plot_layout(heights = c(0.08, 1))
-      }
+      title_plot <- ggplot() +
+        ta_plot_theme_void() +
+        ggtitle(resp) +
+        theme(plot.title = element_text(size = base_size, face = "bold", hjust = 0.5))
+
+      title_plot / combined + patchwork::plot_layout(heights = c(0.08, 1))
     } else if (length(stats_entries) > 0) {
       entry <- stats_entries[[1]]
-      response_plots[[resp]] <- build_bar_plot_panel(
+      build_bar_plot_panel(
         stats_df = entry$stats_df,
         title_text = entry$label,
         factor1 = factor1,
@@ -106,7 +98,11 @@ plot_anova_barplot_meanse <- function(data,
       )
     }
   }
-  
+
+  response_plots <- lapply(context$responses, build_response_plot)
+  names(response_plots) <- context$responses
+  response_plots <- Filter(Negate(is.null), response_plots)
+
   finalize_anova_plot_result(
     response_plots = response_plots,
     context = context,
@@ -154,24 +150,20 @@ compute_barplot_shared_limits <- function(context,
 
 compute_barplot_panel_range <- function(stats_df,
                                         factor1,
-                                        factor2,
-                                        posthoc_entry = NULL,
-                                        nested_posthoc = NULL) {
+                                       factor2,
+                                       posthoc_entry = NULL,
+                                       nested_posthoc = NULL) {
   if (is.null(stats_df) || nrow(stats_df) == 0) return(NULL)
   values <- c(stats_df$mean - stats_df$se, stats_df$mean + stats_df$se)
   values <- values[is.finite(values)]
   if (length(values) == 0) return(NULL)
-  rng <- range(values)
-  max_val <- rng[2]
-  c(rng[1], max_val)
+  range(values)
 }
 
 expand_axis_limits <- function(range_vals, lower_mult = 0.05, upper_mult = 0.12) {
   if (is.null(range_vals) || length(range_vals) != 2 || any(!is.finite(range_vals))) return(range_vals)
   span <- diff(range_vals)
-  if (!is.finite(span) || span == 0) {
-    span <- max(1, abs(range_vals[2]))
-  }
+  if (!is.finite(span) || span == 0) span <- max(1, abs(range_vals[2]))
   c(range_vals[1] - span * lower_mult, range_vals[2] + span * upper_mult)
 }
 
@@ -179,11 +171,8 @@ ensure_barplot_zero_baseline <- function(range_vals) {
   if (is.null(range_vals) || length(range_vals) != 2 || any(!is.finite(range_vals))) {
     return(range_vals)
   }
-  
-  lower <- range_vals[1]
-  if (is.na(lower)) return(range_vals)
-  
-  range_vals[1] <- 0
+
+  if (!is.na(range_vals[1])) range_vals[1] <- 0
   range_vals
 }
 
@@ -298,8 +287,6 @@ build_single_factor_barplot <- function(stats_df,
                                         base_size,
                                         posthoc_entry,
                                         y_limits = NULL) {
-  format_numeric_labels <- scales::label_number(accuracy = 0.01, trim = TRUE)
-  
   plot_obj <- ggplot(stats_df, aes(x = !!sym(factor1), y = mean)) +
     geom_col(fill = base_fill, width = 0.6, alpha = 0.8) +
     geom_errorbar(
@@ -341,8 +328,6 @@ build_two_factor_barplot <- function(stats_df,
                                      base_size,
                                      nested_posthoc = NULL,
                                      y_limits = NULL) {
-  format_numeric_labels <- scales::label_number(accuracy = 0.01, trim = TRUE)
-  
   group_levels <- if (is.factor(stats_df[[factor2]])) {
     levels(stats_df[[factor2]])
   } else {
@@ -440,11 +425,7 @@ build_annotations_single_factor <- function(barpos,
   
   values <- barpos$y[is.finite(barpos$y)]
   if (length(values) == 0) return(NULL)
-  span <- diff(range(values))
-  if (!is.finite(span) || span == 0) {
-    span <- max(values)
-  }
-  offset <- if (is.finite(span) && span > 0) span * offset_mult else 0.1
+  offset <- compute_annotation_offset(values, offset_mult)
   
   res <- list()
   
@@ -523,11 +504,7 @@ build_annotations_two_factor <- function(barpos,
   
   values <- barpos$y[is.finite(barpos$y)]
   if (length(values) == 0) return(NULL)
-  span <- diff(range(values))
-  if (!is.finite(span) || span == 0) {
-    span <- max(values)
-  }
-  offset <- if (is.finite(span) && span > 0) span * offset_mult else 0.1
+  offset <- compute_annotation_offset(values, offset_mult)
   
   res <- list()
   
@@ -569,8 +546,14 @@ build_annotations_two_factor <- function(barpos,
   }
   
   if (length(res) == 0) return(NULL)
-  
+
   do.call(rbind, res)
+}
+
+compute_annotation_offset <- function(values, offset_mult) {
+  span <- diff(range(values))
+  if (!is.finite(span) || span == 0) span <- max(values)
+  if (is.finite(span) && span > 0) span * offset_mult else 0.1
 }
 
 add_significance_after_build <- function(p,
