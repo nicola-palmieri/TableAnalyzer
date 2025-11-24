@@ -392,13 +392,6 @@ regression_server <- function(id, data, engine = c("lm", "lmm"), allow_multi_res
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     strat_info <- stratification_server("strat", data)
-    data_signature <- reactive({
-      df <- data()
-      list(
-        names = names(df),
-        classes = vapply(df, function(x) paste(class(x), collapse = "|"), character(1))
-      )
-    })
 
     if (allow_multi_response) {
       selected_responses <- multi_response_server("response", data)
@@ -410,7 +403,7 @@ regression_server <- function(id, data, engine = c("lm", "lmm"), allow_multi_res
           selectInput(ns("dep"), "Response variable (numeric)", choices = types$num),
           "Choose the outcome that the model should predict."
         )
-      }) %>% bindCache(data_signature())
+      })
 
       selected_responses <- reactive({
         req(input$dep)
@@ -430,7 +423,7 @@ regression_server <- function(id, data, engine = c("lm", "lmm"), allow_multi_res
         ),
         "Pick factor variables that might explain differences in the response."
       )
-    }) %>% bindCache(data_signature())
+    })
 
     output$level_order <- renderUI({
       req(data())
@@ -457,7 +450,7 @@ regression_server <- function(id, data, engine = c("lm", "lmm"), allow_multi_res
           )
         })
       )
-    }) %>% bindCache(list(input$fixed, data_signature()))
+    })
 
     output$covar_selector <- renderUI({
       req(data())
@@ -471,7 +464,7 @@ regression_server <- function(id, data, engine = c("lm", "lmm"), allow_multi_res
         ),
         "Pick numeric predictors that could help explain the response."
       )
-    }) %>% bindCache(data_signature())
+    })
 
     if (engine == "lmm") {
       output$random_selector <- renderUI({
@@ -486,14 +479,14 @@ regression_server <- function(id, data, engine = c("lm", "lmm"), allow_multi_res
           ),
           "Choose a grouping factor for random intercepts in the mixed model."
         )
-      }) %>% bindCache(data_signature())
+      })
     }
 
     output$interaction_select <- renderUI({
       req(data())
       types <- reg_detect_types(data())
       reg_interactions_ui(ns, input$fixed, types$fac)
-    }) %>% bindCache(list(input$fixed, data_signature()))
+    })
 
     output$formula_preview <- renderUI({
       responses <- selected_responses()

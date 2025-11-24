@@ -37,17 +37,10 @@ one_way_anova_ui <- function(id) {
 one_way_anova_server <- function(id, filtered_data) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
-
+    
     responses <- multi_response_server("response", filtered_data)
     strat_info <- stratification_server("strat", filtered_data)
-    data_signature <- reactive({
-      data <- filtered_data()
-      list(
-        names = names(data),
-        classes = vapply(data, function(x) paste(class(x), collapse = "|"), character(1))
-      )
-    })
-
+    
     output$inputs <- renderUI({
       req(filtered_data())
       data <- filtered_data()
@@ -65,8 +58,8 @@ one_way_anova_server <- function(id, filtered_data) {
           "Choose the grouping variable that defines the comparison categories."
         )
       )
-    }) %>% bindCache(data_signature())
-
+    })
+    
     output$level_order <- renderUI({
       req(filtered_data(), input$group)
       levels <- resolve_order_levels(filtered_data()[[input$group]])
@@ -80,7 +73,7 @@ one_way_anova_server <- function(id, filtered_data) {
         ),
         "Arrange the group levels; the first level is used as the reference in outputs."
       )
-    }) %>% bindCache(list(input$group, data_signature()))
+    })
     
     models <- eventReactive(input$run, {
       df <- filtered_data()
