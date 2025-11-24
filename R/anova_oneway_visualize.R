@@ -206,28 +206,3 @@ visualize_oneway_server <- function(id, filtered_data, model_info) {
 }
 
 
-extract_tukey_for_signif <- function(posthoc_entry) {
-  if (is.null(posthoc_entry) || !is.data.frame(posthoc_entry)) return(NULL)
-  
-  df <- posthoc_entry
-  
-  # split contrast into group1 and group2
-  parts <- strsplit(as.character(df$contrast), " - ")
-  df$group1 <- vapply(parts, `[`, "", 1)
-  df$group2 <- vapply(parts, `[`, "", 2)
-  
-  # clean p.value column
-  df$p.value <- as.character(df$p.value)
-  df$p.value <- gsub("\\*", "", df$p.value)          # remove any stars
-  df$p.value <- gsub("<0\\.001", "0.0009", df$p.value)  # make "<0.001" numeric
-  df$p.value <- suppressWarnings(as.numeric(df$p.value))
-  
-  df <- df %>%
-    dplyr::filter(!is.na(p.value)) %>%
-    dplyr::select(group1, group2, p.value)
-  
-  df
-}
-
-
-

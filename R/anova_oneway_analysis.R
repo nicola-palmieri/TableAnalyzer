@@ -44,7 +44,7 @@ one_way_anova_server <- function(id, filtered_data) {
     output$inputs <- renderUI({
       req(filtered_data())
       data <- filtered_data()
-      cat_cols <- names(data)[sapply(data, function(x) is.character(x) || is.factor(x))]
+      cat_cols <- names(data)[sapply(data, is.factor) | sapply(data, is.character)]
       
       tagList(
         multi_response_ui(ns("response")),
@@ -95,7 +95,7 @@ one_way_anova_server <- function(id, filtered_data) {
       filename = function() {
         info <- models()
         n_resp <- length(info$responses)
-        n_strata <- if (is.null(info$strata)) 0 else length(info$strata$levels)
+        n_strata <- length(info$strata$levels %||% NULL)
         label <- ifelse(n_strata == 0, "nostratum", paste0(n_strata, "strata"))
         paste0("anova_results_", n_resp, "resp_", label, "_", format(Sys.time(), "%Y%m%d-%H%M"), ".docx")
       },
