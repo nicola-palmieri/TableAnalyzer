@@ -105,7 +105,7 @@ reg_interactions_ui <- function(ns, fixed, fac_vars) {
 # Formula construction
 # ---------------------------------------------------------------
 
-reg_compose_rhs <- function(fixed, covar, interactions, random = NULL, engine = c("lm","lmm")) {
+reg_compose_rhs <- function(fixed, covar, interactions, random = NULL, engine = c("lm","lmm", "glm")) {
   engine <- match.arg(engine)
   fixed <- reg_protect_vars(compact_chr(fixed))
   covar <- reg_protect_vars(compact_chr(covar))
@@ -117,6 +117,38 @@ reg_compose_rhs <- function(fixed, covar, interactions, random = NULL, engine = 
     rhs <- c(rhs, paste0("(1|", rand, ")"))
   }
   rhs
+}
+
+validate_glm_response <- function(df, responses, family_choice) {
+  if (length(responses) == 0) return(invisible(TRUE))
+  resp <- responses[1]
+  vals <- df[[resp]]
+
+  if (family_choice == "binomial") {
+    unique_vals <- unique(na.omit(vals))
+    if (length(unique_vals) != 2) {
+      shiny::validate(shiny::need(
+        FALSE,
+        paste0(
+          "Binomial models need a binary outcome with exactly two levels. Please recode '",
+          resp,
+          "' to have two distinct values."
+        )
+      ))
+    }
+  } else {
+    validate_numeric_columns(df, responses, "response variable(s)")
+    if (family_choice == "poisson") {
+      if (any(vals < 0, na.rm = TRUE)) {
+        shiny::validate(shiny::need(
+          FALSE,
+          paste0("Poisson models require non-negative counts. Check the values in '", resp, "'.")
+        ))
+      }
+    }
+  }
+
+  invisible(TRUE)
 }
 
 reg_formula_preview_ui <- function(ns, dep, rhs) {
@@ -132,11 +164,22 @@ reg_formula_preview_ui <- function(ns, dep, rhs) {
 # Model computation
 # ---------------------------------------------------------------
 
-reg_fit_model <- function(dep, rhs, data, engine = c("lm","lmm")) {
+resolve_glm_family <- function(family_name) {
+  switch(family_name,
+    binomial = stats::binomial(),
+    poisson = stats::poisson(),
+    gaussian = stats::gaussian(),
+    stats::gaussian()
+  )
+}
+
+reg_fit_model <- function(dep, rhs, data, engine = c("lm","lmm", "glm"), glm_family = NULL) {
   engine <- match.arg(engine)
   form <- as.formula(reg_formula_text(dep, rhs))
   if (engine == "lm") {
     lm(form, data = data)
+  } else if (engine == "glm") {
+    stats::glm(form, data = data, family = resolve_glm_family(glm_family))
   } else {
     # LMM: lme4 + lmerTest for p-values
     lmerTest::lmer(form, data = data)
@@ -147,10 +190,10 @@ reg_fit_model <- function(dep, rhs, data, engine = c("lm","lmm")) {
 # Output composition
 # ---------------------------------------------------------------
 
-reg_display_summary <- function(model, engine = c("lm", "lmm")) {
+reg_display_summary <- function(model, engine = c("lm", "lmm", "glm")) {
   engine <- match.arg(engine)
 
-  if (engine == "lm") {
+  if (engine %in% c("lm", "glm")) {
     aout <- capture.output(car::Anova(model, type = 3))
     signif_idx <- grep("^Signif\\. codes", aout)
     if (length(signif_idx) > 0) {
@@ -183,6 +226,8 @@ reg_display_summary <- function(model, engine = c("lm", "lmm")) {
 reg_display_lm_summary <- function(m) reg_display_summary(m, "lm")
 
 reg_display_lmm_summary <- function(m) reg_display_summary(m, "lmm")
+
+reg_display_glm_summary <- function(m) reg_display_summary(m, "glm")
 
 # ---------------------------------------------------------------
 # Summaries for standardized regression outputs
@@ -234,7 +279,19 @@ tidy_regression_model <- function(model, engine) {
     names(coef_df) <- c("term", clean_regression_coef_names(original_names[-1]))
   }
 
-  if (inherits(model, "lm")) {
+  if (inherits(model, "glm")) {
+    metrics <- data.frame(
+      metric = c("deviance", "aic", "bic", "dispersion", "nobs"),
+      value = c(
+        stats::deviance(model),
+        stats::AIC(model),
+        stats::BIC(model),
+        summary(model)$dispersion,
+        stats::nobs(model)
+      ),
+      stringsAsFactors = FALSE
+    )
+  } else if (inherits(model, "lm")) {
     sm <- summary(model)
     metrics <- data.frame(
       metric = c("sigma", "r_squared", "adj_r_squared", "nobs"),
@@ -256,7 +313,7 @@ tidy_regression_model <- function(model, engine) {
   }
 
   anova_tbl <- tryCatch({
-    if (engine == "lm") {
+    if (engine %in% c("lm", "glm")) {
       car::Anova(model, type = 3)
     } else {
       anova(model, type = 3)

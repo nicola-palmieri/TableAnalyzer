@@ -31,7 +31,8 @@ analysis_ui <- function(id) {
               "One-way ANOVA" = "One-way ANOVA",
               "Two-way ANOVA" = "Two-way ANOVA",
               "Linear Model (LM)" = "Linear Model (LM)",
-              "Linear Mixed Model (LMM)" = "Linear Mixed Model (LMM)"
+              "Linear Mixed Model (LMM)" = "Linear Mixed Model (LMM)",
+              "Generalized Linear Model (GLM)" = "Generalized Linear Model (GLM)"
             ),
             "Multivariate" = c(
               "Pairwise Correlation" = "Pairwise Correlation",
@@ -66,6 +67,7 @@ analysis_server <- function(id, filtered_data) {
       "Two-way ANOVA"          = list(id = "anova2", ui = two_way_anova_ui, server = two_way_anova_server, type = "anova2"),
       "Linear Model (LM)"      = list(id = "lm",     ui = lm_ui, server = lm_server, type = "lm"),
       "Linear Mixed Model (LMM)" = list(id = "lmm",  ui = lmm_ui, server = lmm_server, type = "lmm"),
+      "Generalized Linear Model (GLM)" = list(id = "glm", ui = glm_ui, server = glm_server, type = "glm"),
       "Pairwise Correlation"   = list(id = "pairs",  ui = ggpairs_ui, server = ggpairs_server, type = "pairs"),
       "PCA"                    = list(id = "pca",    ui = pca_ui, server = pca_server, type = "pca")
     )
@@ -88,6 +90,7 @@ analysis_server <- function(id, filtered_data) {
         anova1 = "ANOVA",
         anova2 = "ANOVA",
         lm = "LM",
+        glm = "GLM",
         lmm = "LMM",
         pairs = "CORR",
         pca = "PCA"
