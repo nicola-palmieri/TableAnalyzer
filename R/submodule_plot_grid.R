@@ -163,8 +163,7 @@ plot_grid_server <- function(id,
                              rows_min = 1L,
                              rows_max = 10L,
                              cols_min = 1L,
-                             cols_max = 10L,
-                             debounce_ms = 400) {
+                             cols_max = 10L) {
   moduleServer(id, function(input, output, session) {
     sanitize <- function(x, min_value, max_value) {
       if (length(x) == 0) return(NA_integer_)
@@ -178,11 +177,8 @@ plot_grid_server <- function(id,
     rows_raw <- reactive(sanitize(input$rows, rows_min, rows_max))
     cols_raw <- reactive(sanitize(input$cols, cols_min, cols_max))
     
-    values_raw <- reactive(list(rows = rows_raw(), cols = cols_raw()))
-    values_debounced <- debounce(values_raw, millis = debounce_ms)
-    
-    rows <- reactive(values_debounced()$rows)
-    cols <- reactive(values_debounced()$cols)
+    rows <- reactive(rows_raw())
+    cols <- reactive(cols_raw())
     
     list(
       rows = rows,
