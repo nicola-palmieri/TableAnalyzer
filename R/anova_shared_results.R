@@ -62,11 +62,22 @@ prepare_anova_outputs <- function(model_obj, factor_names) {
       res <- tryCatch({
         emm <- emmeans::emmeans(model_obj, specs = as.formula(paste("~", f1_spec)))
         contrasts <- emmeans::contrast(emm, method = "pairwise", adjust = "tukey")
-        as.data.frame(summary(contrasts))
+        res_df <- as.data.frame(summary(contrasts))
+        ref_lvl <- levels(model_obj$model[[f1]])[1]
+
+        if (!is.null(ref_lvl) && length(ref_lvl) == 1 && !is.na(ref_lvl) && "contrast" %in% names(res_df)) {
+          res_df <- res_df[vapply(
+            strsplit(res_df$contrast, " - "),
+            function(parts) ref_lvl %in% parts,
+            logical(1)
+          ), , drop = FALSE]
+        }
+
+        res_df
       }, error = function(e) list(error = e$message))
-      
+
       if (is.data.frame(res)) {
-        res$Factor <- f1
+        res$Factor <- rep(f1, nrow(res))
         posthoc_details[[f1]] <- list(table = res, error = NULL)
         posthoc_combined <- res
       } else {
