@@ -60,8 +60,24 @@ prepare_anova_outputs <- function(model_obj, factor_names) {
         res <- tryCatch({
           emm <- emmeans::emmeans(model_obj, specs = as.formula(paste("~", f1_spec)))
           contrasts <- emmeans::contrast(emm, method = "pairwise", adjust = "tukey")
-          as.data.frame(summary(contrasts))
+          df <- as.data.frame(summary(contrasts))
+          
+          # validate df BEFORE filtering
+          if (!is.data.frame(df) || !"contrast" %in% names(df)) {
+            stop("Invalid posthoc structure")
+          }
+          
+          # reference filtering
+          ref <- levels(model_obj$model[[f1]])[1]
+          df <- df[
+            grepl(paste0(ref, " - "), df$contrast) |
+              grepl(paste0(" - ", ref), df$contrast),
+            ,
+          ]
+          
+          df
         }, error = function(e) list(error = e$message))
+        
       
       if (is.data.frame(res)) {
         res$Factor <- f1

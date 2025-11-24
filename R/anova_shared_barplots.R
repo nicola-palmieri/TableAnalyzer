@@ -300,13 +300,6 @@ build_single_factor_barplot <- function(stats_df,
       axis.ticks = element_line(color = "#9ca3af")
     )
   
-  if (!is.null(y_limits) && all(is.finite(y_limits))) {
-    plot_obj <- plot_obj + scale_y_continuous(
-      limits = y_limits,
-      expand = expansion(mult = c(0, 0))
-    )
-  }
-  
   plot_obj <- add_significance_after_build(
     p = plot_obj,
     stats_df = stats_df,
@@ -361,13 +354,6 @@ build_two_factor_barplot <- function(stats_df,
     ) +
     scale_fill_manual(values = palette)
   
-  if (!is.null(y_limits) && all(is.finite(y_limits))) {
-    plot_obj <- plot_obj + scale_y_continuous(
-      limits = y_limits,
-      expand = expansion(mult = c(0, 0))
-    )
-  }
-  
   plot_obj <- add_significance_after_build(
     p = plot_obj,
     stats_df = stats_df,
@@ -418,7 +404,7 @@ clean_p_values_barplot <- function(x) {
 build_annotations_single_factor <- function(barpos,
                                             posthoc_entry,
                                             factor1,
-                                            offset_mult = 0.08) {
+                                            offset_mult = 0.12) {
   if (is.null(posthoc_entry) || nrow(posthoc_entry) == 0) return(NULL)
   
   levels_f1 <- unique(as.character(barpos[[factor1]]))
@@ -480,7 +466,7 @@ build_annotations_two_factor <- function(barpos,
                                          nested_posthoc,
                                          factor1,
                                          factor2,
-                                         offset_mult = 0.08) {
+                                         offset_mult = 0.12) {
   if (is.null(nested_posthoc)) return(NULL)
   
   nested_name <- paste0(factor2, "_within_", factor1)
@@ -595,12 +581,25 @@ add_significance_after_build <- function(p,
   
   if (is.null(ann) || nrow(ann) == 0) return(p)
   
-  p + geom_text(
-    data = ann,
-    aes(x = x, y = y, label = label),
-    inherit.aes = FALSE,
-    color = "gray30",
-    size = text_size,
-    fontface = "bold"
-  )
+  max_y_text <- max(ann$y, na.rm = TRUE)
+  
+  p_build <- ggplot_build(p)
+  current_limits <- p_build$layout$panel_params[[1]]$y.range
+  
+  new_upper <- max(current_limits[2], max_y_text * 1.05)
+  
+  p +
+    scale_y_continuous(
+      limits = c(0, new_upper),
+      expand = expansion(mult = c(0, 0))
+    ) +
+    geom_text(
+      data = ann,
+      aes(x = x, y = y, label = label),
+      inherit.aes = FALSE,
+      color = "gray30",
+      size = text_size,
+      fontface = "bold"
+    )
+  
 }

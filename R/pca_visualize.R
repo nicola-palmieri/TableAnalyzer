@@ -532,7 +532,7 @@ visualize_pca_server <- function(id, filtered_data, model_fit) {
           loading_scale = loading_scale,
           custom_colors = custom_colors(),
           subset_rows = idx,
-          color_levels = color_levels,
+          color_levels = NULL,
           x_limits = x_limits,
           y_limits = y_limits,
           base_size = base_size()
