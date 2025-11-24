@@ -197,10 +197,10 @@ download_all_anova_results <- function(models_info, file) {
       tbl$PrF <- tbl[, grep("^Pr", names(tbl))[1]]
       combined_results[[length(combined_results) + 1]] <- tbl
 
-      if (!is.null(outputs$posthoc_table) && nrow(outputs$posthoc_table) > 0) {
+      if (!is.null(outputs$posthoc_table)) {
         contrast_tbl <- outputs$posthoc_table
-        contrast_tbl$Response <- rep(resp, nrow(contrast_tbl))
-        contrast_tbl$Stratum <- rep("None", nrow(contrast_tbl))
+        contrast_tbl$Response <- resp
+        contrast_tbl$Stratum <- "None"
         contrast_results[[length(contrast_results) + 1]] <- contrast_tbl
       }
     }
@@ -234,10 +234,10 @@ download_all_anova_results <- function(models_info, file) {
         tbl$PrF <- tbl[, grep("^Pr", names(tbl))[1]]
         combined_results[[length(combined_results) + 1]] <- tbl
 
-        if (!is.null(outputs$posthoc_table) && nrow(outputs$posthoc_table) > 0) {
+        if (!is.null(outputs$posthoc_table)) {
           contrast_tbl <- outputs$posthoc_table
-          contrast_tbl$Response <- rep(resp, nrow(contrast_tbl))
-          contrast_tbl$Stratum <- rep(stratum, nrow(contrast_tbl))
+          contrast_tbl$Response <- resp
+          contrast_tbl$Stratum <- stratum
           contrast_results[[length(contrast_results) + 1]] <- contrast_tbl
         }
       }
@@ -389,10 +389,10 @@ prepare_docx_tables <- function(content, response_name = NULL, stratum_label = N
 
     anova_tables <- list(anova_tbl)
 
-    if (!is.null(content$posthoc_table) && nrow(content$posthoc_table) > 0) {
+    if (!is.null(content$posthoc_table)) {
       contrast_tbl <- content$posthoc_table
-      contrast_tbl$Response <- rep(resp_label, nrow(contrast_tbl))
-      contrast_tbl$Stratum <- rep(stratum_val, nrow(contrast_tbl))
+      contrast_tbl$Response <- resp_label
+      contrast_tbl$Stratum <- stratum_val
       contrast_tables <- list(contrast_tbl)
     }
   } else if (!is.null(content$anova)) {
