@@ -77,7 +77,7 @@ prepare_anova_outputs <- function(model_obj, factor_names) {
       }, error = function(e) list(error = e$message))
 
       if (is.data.frame(res)) {
-        res$Factor <- f1
+        res$Factor <- rep(f1, nrow(res))
         posthoc_details[[f1]] <- list(table = res, error = NULL)
         posthoc_combined <- res
       } else {
