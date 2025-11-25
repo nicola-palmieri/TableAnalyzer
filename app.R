@@ -91,18 +91,29 @@ ui <- navbarPage(
       }
     ")),
     tags$script(HTML("
-      Shiny.addCustomMessageHandler('toggleTabState', function(data) {
-        var selector = 'a[data-value=\"' + data.tab + '\"]';
-        var tab = $(selector);
-        if (data.disable) {
-          tab.addClass('disabled');
-          tab.attr('aria-disabled', 'true');
+      const tabManager = function(tab, disable) {
+        var selector = 'a[data-value=\"' + tab + '\"]';
+        var $tab = $(selector);
+        if (disable) {
+          $tab.addClass('disabled');
+          $tab.attr('aria-disabled', 'true');
         } else {
-          tab.removeClass('disabled');
-          tab.attr('aria-disabled', 'false');
+          $tab.removeClass('disabled');
+          $tab.attr('aria-disabled', 'false');
         }
+      };
+
+      // Disable downstream tabs immediately on load to avoid flicker before Shiny initializes.
+      document.addEventListener('DOMContentLoaded', function() {
+        ['filter_tab', 'analysis_tab', 'visualize_tab'].forEach(function(tab) {
+          tabManager(tab, true);
+        });
       });
-    
+
+      Shiny.addCustomMessageHandler('toggleTabState', function(data) {
+        tabManager(data.tab, data.disable);
+      });
+
       $(document).on('click', 'a.nav-link.disabled', function(e) {
         e.preventDefault();
         return false;
