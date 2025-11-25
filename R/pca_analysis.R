@@ -50,6 +50,14 @@ pca_server <- function(id, filtered_data) {
       )
     })
 
+    selected_numeric_vars <- reactive({
+      data <- req(df())
+      numeric_vars <- names(data)[vapply(data, is.numeric, logical(1))]
+      intersect(input$vars, numeric_vars)
+    })
+
+    has_enough_numeric_vars <- reactive(length(selected_numeric_vars()) > 1)
+
     `%||%` <- function(x, y) if (is.null(x)) y else x
 
     format_usage_line <- function(entry) {
@@ -134,9 +142,8 @@ pca_server <- function(id, filtered_data) {
       data <- df()
       validate(need(nrow(data) > 0, "No data available for PCA."))
 
-      numeric_vars <- names(data)[vapply(data, is.numeric, logical(1))]
-      selected_vars <- intersect(input$vars, numeric_vars)
-      validate(need(length(selected_vars) > 1, "Select at least two numeric variables for PCA."))
+      selected_vars <- selected_numeric_vars()
+      validate(need(has_enough_numeric_vars(), "Select at least two numeric variables for PCA."))
 
       result <- run_pca_on_subset(data, selected_vars)
 
@@ -287,6 +294,7 @@ pca_server <- function(id, filtered_data) {
     })
 
     output$excluded_rows_section <- renderUI({
+      req(has_enough_numeric_vars())
       results <- pca_result()
       req(results)
 
@@ -302,6 +310,7 @@ pca_server <- function(id, filtered_data) {
     })
 
     output$excluded_table <- DT::renderDT({
+      req(has_enough_numeric_vars())
       results <- pca_result()
       req(results)
       
