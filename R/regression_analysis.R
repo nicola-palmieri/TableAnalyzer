@@ -193,25 +193,11 @@ render_qq_plot <- function(model_obj) {
 }
 
 
-assign_download_handler <- function(output, id, engine, response, stratum_display, model_obj) {
-  output[[id]] <- downloadHandler(
-    filename = function() {
-      parts <- c(engine, "results", response)
-      if (!is.null(stratum_display)) parts <- c(parts, stratum_display)
-      paste0(paste(parts, collapse = "_"), "_", Sys.Date(), ".docx")
-    },
-    content = function(file) {
-      write_lm_docx(model_obj, file)
-    }
-  )
-}
-
-assign_model_outputs <- function(output, engine, response, idx, model_obj, stratum_idx = NULL, stratum_display = NULL) {
+assign_model_outputs <- function(output, engine, response, idx, model_obj, stratum_idx = NULL) {
   suffix <- if (is.null(stratum_idx)) idx else paste(idx, stratum_idx, sep = "_")
   summary_id <- paste0("summary_", suffix)
   resid_id <- paste0("resid_", suffix)
   qq_id <- paste0("qq_", suffix)
-  download_id <- paste0("download_", suffix)
 
   output[[summary_id]] <- renderPrint({
     render_model_summary(engine, model_obj)
@@ -224,11 +210,9 @@ assign_model_outputs <- function(output, engine, response, idx, model_obj, strat
   output[[qq_id]] <- renderPlot({
     render_qq_plot(model_obj)
   })
-
-  assign_download_handler(output, download_id, engine, response, stratum_display, model_obj)
 }
 
-build_diagnostic_block <- function(ns, suffix, tooltip_text) {
+build_diagnostic_block <- function(ns, suffix) {
   tagList(
     verbatimTextOutput(ns(paste0("summary_", suffix))),
     br(),
@@ -240,18 +224,13 @@ build_diagnostic_block <- function(ns, suffix, tooltip_text) {
     ),
     br(),
     helpText(reg_diagnostic_explanation),
-    br(),
-    br(),
-    with_help_tooltip(
-      downloadButton(ns(paste0("download_", suffix)), "Download results", style = "width: 100%;"),
-      tooltip_text
-    )
+    br()
   )
 }
 
 build_response_content <- function(ns, idx, fit_entry) {
   if (!isTRUE(fit_entry$stratified)) {
-    return(build_diagnostic_block(ns, idx, "Save the model summary and diagnostics for this response."))
+    return(build_diagnostic_block(ns, idx))
   }
 
   strata <- fit_entry$strata
@@ -260,7 +239,7 @@ build_response_content <- function(ns, idx, fit_entry) {
     label <- if (!is.null(stratum$display)) stratum$display else paste("Stratum", j)
 
     content <- if (!is.null(stratum$model)) {
-      build_diagnostic_block(ns, paste(idx, j, sep = "_"), "Save the model summary and diagnostics for this stratum.")
+      build_diagnostic_block(ns, paste(idx, j, sep = "_"))
     } else {
       tags$pre(format_safe_error_message("Model fitting failed", stratum$error))
     }
@@ -340,8 +319,7 @@ render_model_outputs <- function(output, models_info, engine) {
         response,
         idx,
         stratum$model,
-        stratum_idx = if (is_stratified) j else NULL,
-        stratum_display = if (is_stratified) stratum$display else NULL
+        stratum_idx = if (is_stratified) j else NULL
       )
       if (!is_stratified) break
     }
