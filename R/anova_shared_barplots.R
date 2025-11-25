@@ -378,23 +378,17 @@ extract_bar_positions <- function(p, factor1, factor2 = NULL) {
   layer <- built$data[[1]]
   original <- built$plot$data
   
-  y_top <- if ("ymax" %in% names(layer)) {
-    layer$ymax
-  } else if ("y" %in% names(layer)) {
-    layer$y
-  } else {
-    rep(NA_real_, nrow(layer))
-  }
+  y_top <- if ("ymax" %in% names(layer)) layer$ymax else layer$y
   
   df <- data.frame(
     x = layer$x,
     y = y_top
   )
   
-  df[[factor1]] <- original[[factor1]]
+  df[[factor1]] <- as.character(original[[factor1]])
   
   if (!is.null(factor2)) {
-    df[[factor2]] <- original[[factor2]]
+    df[[factor2]] <- as.character(original[[factor2]])
   }
   
   df
@@ -407,102 +401,101 @@ clean_p_values_barplot <- function(x) {
   suppressWarnings(as.numeric(x))
 }
 
+
+# One-way annotation builder
 build_annotations_single_factor <- function(barpos,
                                             posthoc_entry,
                                             factor1,
-                                            offset_mult = 0.12) {
+                                            stats_df,
+                                            offset_mult = 0.5) {
+  
   if (is.null(posthoc_entry) || nrow(posthoc_entry) == 0) return(NULL)
   
-  levels_f1 <- unique(as.character(barpos[[factor1]]))
+  # --- CLEAN bar levels (remove parentheses) ---
+  levels_f1 <- gsub("[()]", "", unique(as.character(barpos[[factor1]])))
   if (length(levels_f1) < 2) return(NULL)
   reference <- levels_f1[1]
   
-  posthoc_entry <- posthoc_entry |> dplyr::mutate(
-    p.value = clean_p_values_barplot(.data$p.value)
-  )
-  posthoc_entry <- posthoc_entry |> dplyr::filter(!is.na(.data$p.value))
+  # --- CLEAN posthoc contrast labels ---
+  posthoc_entry <- posthoc_entry |>
+    dplyr::mutate(
+      p.value = clean_p_values_barplot(.data$p.value),
+      contrast_clean = gsub("[()]", "", .data$contrast)
+    ) |>
+    dplyr::filter(!is.na(.data$p.value))
+  
   if (nrow(posthoc_entry) == 0) return(NULL)
   
-  values <- barpos$y[is.finite(barpos$y)]
-  if (length(values) == 0) return(NULL)
-  offset <- compute_annotation_offset(values, offset_mult)
-  
   res <- list()
+  idx <- 0L
   
   for (lvl in levels_f1[-1]) {
+    
     contrasts <- c(
       paste0(lvl, " - ", reference),
       paste0(reference, " - ", lvl)
     )
     
-    row <- posthoc_entry[posthoc_entry$contrast %in% contrasts, , drop = FALSE]
+    # --- match using cleaned labels ---
+    row <- posthoc_entry[posthoc_entry$contrast_clean %in% contrasts, , drop = FALSE]
     if (nrow(row) == 0) next
     
     p <- row$p.value[1]
     if (is.na(p) || p >= 0.05) next
     
-    label <- dplyr::case_when(
-      p < 0.001 ~ "***",
-      p < 0.01 ~ "**",
-      p < 0.05 ~ "*",
-      TRUE ~ ""
-    )
-    if (label == "") next
+    label <- if (p < 0.001) "***" else if (p < 0.01) "**" else "*"
     
-    bar_row <- barpos[as.character(barpos[[factor1]]) == lvl, , drop = FALSE]
+    # --- match bar position (also cleaned) ---
+    bar_row <- barpos[gsub("[()]", "", as.character(barpos[[factor1]])) == lvl, , drop = FALSE]
     if (nrow(bar_row) == 0) next
     
-    res[[length(res) + 1]] <- data.frame(
+    mean_val <- stats_df$mean[gsub("[()]", "", as.character(stats_df[[factor1]])) == lvl]
+    se_val   <- stats_df$se[gsub("[()]", "", as.character(stats_df[[factor1]])) == lvl]
+    
+    # --- label above SE ---
+    y_ann <- (mean_val + se_val) + se_val * offset_mult
+    
+    idx <- idx + 1L
+    res[[idx]] <- data.frame(
       x = bar_row$x[1],
-      y = bar_row$y[1] + offset,
+      y = y_ann,
       label = label
     )
   }
   
   if (length(res) == 0) return(NULL)
-  
   do.call(rbind, res)
 }
 
+# Two-way annotation builder
 build_annotations_two_factor <- function(barpos,
                                          nested_posthoc,
                                          factor1,
                                          factor2,
-                                         offset_mult = 0.12) {
-  if (is.null(nested_posthoc) || !is.data.frame(nested_posthoc)) {
-    return(NULL)
-  }
+                                         stats_df,
+                                         offset_mult = 0.5) {
   
+  if (is.null(nested_posthoc) || !is.data.frame(nested_posthoc)) return(NULL)
   needed <- c("contrast", "p.value", factor1)
-  if (!all(needed %in% names(nested_posthoc))) {
-    return(NULL)
-  }
+  if (!all(needed %in% names(nested_posthoc))) return(NULL)
   
   df <- nested_posthoc
-  
   df$contrast_clean <- gsub("[()]", "", df$contrast)
   df$p.value <- clean_p_values_barplot(df$p.value)
   df <- df[is.finite(df$p.value), , drop = FALSE]
   if (nrow(df) == 0) return(NULL)
   
-  lev1 <- unique(as.character(barpos[[factor1]]))   # DPI
-  lev2 <- unique(as.character(barpos[[factor2]]))   # Treatment
-  lev1 <- lev1[!is.na(lev1)]
-  lev2 <- lev2[!is.na(lev2)]
+  lev1 <- unique(as.character(barpos[[factor1]]))
+  lev2 <- unique(as.character(barpos[[factor2]]))
   if (length(lev2) < 2) return(NULL)
   
   reference <- lev2[1]
-  
-  values <- barpos$y[is.finite(barpos$y)]
-  if (length(values) == 0) return(NULL)
-  offset <- compute_annotation_offset(values, offset_mult)
   
   res <- list()
   idx <- 0L
   
   for (g1 in lev1) {
-    for (lvl in lev2) {
-      if (lvl == reference) next
+    for (lvl in lev2[lev2 != reference]) {
       
       lvl_clean <- gsub("[()]", "", lvl)
       ref_clean <- gsub("[()]", "", reference)
@@ -522,13 +515,7 @@ build_annotations_two_factor <- function(barpos,
       p <- sub$p.value[1]
       if (is.na(p) || p >= 0.05) next
       
-      if (p < 0.001) {
-        label <- "***"
-      } else if (p < 0.01) {
-        label <- "**"
-      } else {
-        label <- "*"
-      }
+      label <- if (p < 0.001) "***" else if (p < 0.01) "**" else "*"
       
       bar_row <- barpos[
         as.character(barpos[[factor1]]) == g1 &
@@ -538,10 +525,19 @@ build_annotations_two_factor <- function(barpos,
       ]
       if (nrow(bar_row) == 0) next
       
+      mean_val <- stats_df$mean[
+        stats_df[[factor1]] == g1 & stats_df[[factor2]] == lvl
+      ]
+      se_val <- stats_df$se[
+        stats_df[[factor1]] == g1 & stats_df[[factor2]] == lvl
+      ]
+      
+      y_ann <- (mean_val + se_val) + se_val * offset_mult
+      
       idx <- idx + 1L
       res[[idx]] <- data.frame(
         x = bar_row$x[1],
-        y = bar_row$y[1] + offset,
+        y = y_ann,
         label = label
       )
     }
@@ -552,19 +548,14 @@ build_annotations_two_factor <- function(barpos,
 }
 
 
-
-compute_annotation_offset <- function(values, offset_mult) {
-  span <- diff(range(values))
-  if (!is.finite(span) || span == 0) span <- max(values)
-  if (is.finite(span) && span > 0) span * offset_mult else 0.1
-}
-
+# Attach significance after building the plot
 add_significance_after_build <- function(p,
                                          stats_df,
                                          factor1,
                                          factor2 = NULL,
                                          posthoc_entry = NULL,
                                          text_size = 4) {
+  
   if (is.null(posthoc_entry)) return(p)
   
   barpos <- extract_bar_positions(p, factor1, factor2)
@@ -575,25 +566,27 @@ add_significance_after_build <- function(p,
     ann <- build_annotations_single_factor(
       barpos = barpos,
       posthoc_entry = posthoc_entry,
-      factor1 = factor1
+      factor1 = factor1,
+      stats_df = stats_df
     )
   } else {
     ann <- build_annotations_two_factor(
       barpos = barpos,
       nested_posthoc = posthoc_entry,
       factor1 = factor1,
-      factor2 = factor2
+      factor2 = factor2,
+      stats_df = stats_df
     )
   }
+  
   if (is.null(ann) || nrow(ann) == 0) return(p)
   
-  max_y_text <- max(ann$y, na.rm = TRUE)
-
+  max_y <- max(ann$y, na.rm = TRUE)
+  
   p_build <- ggplot_build(p)
   current_limits <- p_build$layout$panel_params[[1]]$y.range
-
-  padding <- compute_annotation_offset(barpos$y, offset_mult = 0.12)
-  new_upper <- max(current_limits[2], max_y_text + padding)
+  
+  new_upper <- max(current_limits[2], max_y * 1.05)
   
   p +
     scale_y_continuous(
@@ -608,5 +601,4 @@ add_significance_after_build <- function(p,
       size = text_size,
       fontface = "bold"
     )
-  
 }
