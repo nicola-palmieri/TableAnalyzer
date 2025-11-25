@@ -5,6 +5,6 @@ account: nicola-palmieri
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 15918853
-bundleId: 11230126
+bundleId: 11230198
 url: https://nicola-palmieri.shinyapps.io/tableanalyzer/
 version: 1

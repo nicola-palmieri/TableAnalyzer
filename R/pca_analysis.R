@@ -174,9 +174,6 @@ pca_server <- function(id, filtered_data) {
       print(summary(model))
       cat("\n── PCA Loadings (rotation matrix) ──\n")
       print(round(model$rotation, 3))
-      cat("\n── PCA Explained Variance (%) ──\n")
-      var_exp <- 100 * model$sdev^2 / sum(model$sdev^2)
-      print(round(var_exp, 2))
       cat("\n")
 
       invisible()
@@ -214,9 +211,6 @@ pca_server <- function(id, filtered_data) {
         print(summary(model))
         cat("\n── PCA Loadings (rotation matrix) ──\n")
         print(round(model$rotation, 3))
-        cat("\n── PCA Explained Variance (%) ──\n")
-        var_exp <- 100 * model$sdev^2 / sum(model$sdev^2)
-        print(round(var_exp, 2))
         cat("\n")
       }
     )
