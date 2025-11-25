@@ -82,12 +82,42 @@ apply_common_legend_layout <- function(plot_obj,
   if (is.null(plot_obj)) return(plot_obj)
 
   updated <- plot_obj
-  if (collect_guides) {
-    updated <- collect_guides_safe(updated)
-  }
-
   if (!is.null(legend_position)) {
     updated <- add_theme_to_plot(updated, theme(legend.position = legend_position))
+  }
+
+  if (collect_guides && requireNamespace("patchwork", quietly = TRUE)) {
+    if (!inherits(updated, "patchwork")) {
+      updated <- patchwork::wrap_plots(updated)
+    }
+
+    exports <- tryCatch(getNamespaceExports("patchwork"), error = function(...) character())
+    panel_grid <- if ("collect_guides" %in% exports) {
+      patchwork::collect_guides(updated)
+    } else {
+      updated + patchwork::plot_layout(guides = "collect")
+    }
+
+    legend_area <- patchwork::guide_area()
+    rel_panel <- 1
+    rel_legend <- 0.1
+
+    legend_position_checked <- if (is.null(legend_position)) "right" else legend_position
+
+    layout_guided <- switch(
+      legend_position_checked,
+      bottom = panel_grid / legend_area + patchwork::plot_layout(heights = c(rel_panel, rel_legend)),
+      right  = legend_area | panel_grid + patchwork::plot_layout(widths = c(rel_legend, rel_panel)),
+      top    = legend_area / panel_grid + patchwork::plot_layout(heights = c(rel_legend, rel_panel)),
+      left   = panel_grid | legend_area + patchwork::plot_layout(widths = c(rel_panel, rel_legend)),
+      panel_grid
+    )
+
+    return(layout_guided)
+  }
+
+  if (collect_guides) {
+    updated <- collect_guides_safe(updated)
   }
 
   updated
