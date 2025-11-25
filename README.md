@@ -9,7 +9,7 @@ Table Analyzer is a modular R/Shiny application for analysing tabular datasets w
 - **Excel-native uploads**
   - Accepts long-format workbooks or wide-format plates with two header rows (response × replicate). Wide sheets are reshaped automatically and validated for duplicate measurements.
   - Bundled demo datasets illustrate both layouts and can be loaded instantly from the UI.
-  - Ambiguous numeric columns (≤10 distinct values) can be re-typed as categorical factors directly in the upload panel, and column names are tidied for uniqueness.
+  - Ambiguous numeric columns (≤10 distinct values) can be re-typed as categorical factors directly in the upload panel.
 - **Interactive filtering**
   - Choose any subset of columns, then refine rows with auto-generated range sliders (numeric), checkboxes (logical), or multi-select pickers (categorical).
   - The filtered preview updates live and feeds downstream modules.
