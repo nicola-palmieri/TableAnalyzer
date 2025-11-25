@@ -1,4 +1,4 @@
-# Clean names + convert characters to ordered factors
+# Convert characters to ordered factors
 preprocess_uploaded_table <- function(df) {
   df |> mutate(across(where(is.character) | where(is.factor), auto_factor_order))
 }
