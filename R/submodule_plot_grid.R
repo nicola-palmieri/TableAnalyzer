@@ -82,6 +82,17 @@ apply_grid_defaults_if_empty <- function(input, session, grid_id, defaults, n_it
   reset_rows <- needs_reset(current_rows)
   reset_cols <- needs_reset(current_cols)
 
+  current_rows <- coerce_grid_value(current_rows, default = rows_default)
+  current_cols <- coerce_grid_value(current_cols, default = cols_default)
+
+  if (!is.null(n_items)) {
+    validation <- validate_grid(n_items, current_rows, current_cols)
+    if (!isTRUE(validation$valid)) {
+      reset_rows <- TRUE
+      reset_cols <- TRUE
+    }
+  }
+
   if (reset_rows) {
     updateNumericInput(session, rows_id, value = rows_default)
   }
