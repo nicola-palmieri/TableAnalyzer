@@ -21,7 +21,7 @@ pca_ui <- function(id) {
           "Compute the principal components for the selected variables."
         )),
         column(6, with_help_tooltip(
-          downloadButton(ns("download_all"), "Download all results", style = "width: 100%;"),
+          downloadButton(ns("download_all"), "Download results", style = "width: 100%;"),
           "Export the PCA summaries, loadings, and diagnostics to a text file."
         ))
       )

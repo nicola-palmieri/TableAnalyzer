@@ -35,7 +35,7 @@ Table Analyzer is a modular R/Shiny application for analysing tabular datasets w
    - Pick the columns you care about and adjust numeric ranges or factor selections to create the analysis-ready subset.
 3. **Analyze** (Tab “3️⃣ Analyze”)
    - Choose a module and configure responses, predictors, covariates, interactions, stratification, and (for LMM) random intercepts.
-   - Click **Show results** to run the model; export everything with **Download all results**.
+   - Click **Show results** to run the model; export everything with **Download results**.
 4. **Visualize** (Tab “4️⃣ Visualize”)
    - Explore plots tailored to the active analysis, including multi-panel layouts for stratified fits and customizable color themes.
 
@@ -66,7 +66,7 @@ shiny::runApp(".")
 
 ## 📦 Exports & reporting
 
-- Every module exposes a “Download all results” button that bundles the text outputs currently displayed; model tables use publication-style formatting with top and bottom rules for the header and a closing border at the table foot.
+- Every module exposes a “Download results” button that bundles the text outputs currently displayed; model tables use publication-style formatting with top and bottom rules for the header and a closing border at the table foot.
 - LM/LMM exports generate Word (`.docx`) reports with ANOVA tables, model coefficients, random-effects variance (if applicable), and ICC summaries rendered with the same publication-style borders.
 - All plots download as publication-ready PNG files (300 dpi) with customizable width and height; PCA, correlation, and descriptive visuals can also be saved via each plot’s built-in controls.
 

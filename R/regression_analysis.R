@@ -352,7 +352,7 @@ regression_ui <- function(id, engine = c("lm", "lmm"), allow_multi_response = FA
           "Fit the model using the chosen predictors and options."
         )),
         column(6, with_help_tooltip(
-          downloadButton(ns("download_model"), "Download all results", style = "width: 100%;"),
+          downloadButton(ns("download_model"), "Download results", style = "width: 100%;"),
           "Export the model outputs, tables, and summaries to your computer."
         ))
       )

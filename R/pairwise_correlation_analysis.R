@@ -18,7 +18,7 @@ ggpairs_ui <- function(id) {
           "Calculate the correlation coefficients for the selected variables."
         )),
         column(6, with_help_tooltip(
-          downloadButton(ns("download_model"), "Download all results", style = "width: 100%;"),
+          downloadButton(ns("download_model"), "Download results", style = "width: 100%;"),
           "Export the correlation matrices and any messages to a text file."
         ))
       )
