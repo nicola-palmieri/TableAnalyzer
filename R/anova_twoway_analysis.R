@@ -20,7 +20,7 @@ two_way_anova_ui <- function(id) {
           "Fit the two-way ANOVA with the selected factors and responses."
         )),
         column(6, with_help_tooltip(
-          downloadButton(ns("download_all"), "Download all results", style = "width: 100%;"),
+          downloadButton(ns("download_all"), "Download results", style = "width: 100%;"),
           "Save all ANOVA tables, post-hoc results, and diagnostics to disk."
         ))
       )
