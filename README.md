@@ -71,18 +71,6 @@ shiny::runApp(".")
 - All plots download as publication-ready PNG files (300 dpi) with customizable width and height; PCA, correlation, and descriptive visuals can also be saved via each plot’s built-in controls.
 
 ---
-
-## 📝 License
-
-A license file has not been added to this repository yet. Please include one if you plan to distribute the app.
-
----
-
-## 🙏 Acknowledgments
-
-Built by the Table Analyzer team. Inspired by best practices for transparent statistical reporting and reproducible research.
-
----
 ## 🔍 Transparency for users and reviewers
 
 Every analysis tab in Table Analyzer maps directly to familiar R functions. The table below summarizes what is executed and which options the UI fills in on your behalf.
@@ -96,5 +84,3 @@ Every analysis tab in Table Analyzer maps directly to familiar R functions. The 
 | Linear mixed model (LMM) | `lmerTest::lmer(response ~ fixed + covariates + interactions + (1\|random))`; fixed-effect tests via `anova(type = 3)` from **lmerTest**, ICC derived from `lme4::VarCorr()`; residual checks mirror the LM module. | Same inputs as LM plus a random-intercept factor. Stratification runs a separate mixed model for each level. |
 | Pairwise correlations | `stats::cor(..., use = "pairwise.complete.obs")` for coefficients; visual diagnostics via `GGally::ggpairs()` with correlation, scatter, and density panels. | Numeric variables selected in the UI and optional stratification factor; each stratum is analyzed independently. |
 | Principal component analysis | `stats::prcomp(center = TRUE, scale. = TRUE)` applied to complete cases for the selected columns, with variance summaries from `summary(prcomp)` and loadings displayed. | Numeric variables selected for PCA. Rows missing any selected variable are removed before fitting, and the excluded count is reported. |
-
-When exporting results, each module bundles the rendered tables, model summaries, and diagnostic plots based on these function calls so downstream reviewers can see exactly what was generated.
