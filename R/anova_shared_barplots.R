@@ -61,7 +61,8 @@ plot_anova_barplot_meanse <- function(data,
           base_size = base_size,
           posthoc_entry = entry$posthoc,
           nested_posthoc = entry$posthoc,
-          y_limits = shared_y_limits
+          y_limits = shared_y_limits,
+          response_var = resp
         )
       })
       names(stratum_plots) <- vapply(stats_entries, function(x) x$label, character(1))
@@ -70,23 +71,16 @@ plot_anova_barplot_meanse <- function(data,
       if (!length(stratum_plots)) return(NULL)
 
       strata_panel_count <<- max(strata_panel_count, length(stratum_plots))
-      combined <- patchwork::wrap_plots(
+      patchwork::wrap_plots(
         plotlist = stratum_plots,
         nrow = context$strata_layout$nrow,
         ncol = context$strata_layout$ncol
       )
-
-      title_plot <- ggplot() +
-        ta_plot_theme_void() +
-        ggtitle(resp) +
-        theme(plot.title = element_text(size = base_size, face = "bold", hjust = 0.5))
-
-      title_plot / combined + patchwork::plot_layout(heights = c(0.08, 1))
     } else if (length(stats_entries) > 0) {
       entry <- stats_entries[[1]]
       build_bar_plot_panel(
         stats_df = entry$stats_df,
-        title_text = entry$label,
+        title_text = "",
         factor1 = factor1,
         factor2 = factor2,
         line_colors = line_colors,
@@ -94,7 +88,8 @@ plot_anova_barplot_meanse <- function(data,
         base_size = base_size,
         posthoc_entry = entry$posthoc,
         nested_posthoc = entry$posthoc,
-        y_limits = shared_y_limits
+        y_limits = shared_y_limits,
+        response_var = resp
       )
     }
   }
@@ -237,7 +232,8 @@ build_bar_plot_panel <- function(stats_df,
                                  base_size = 14,
                                  posthoc_entry = NULL,
                                  nested_posthoc = NULL,
-                                 y_limits = NULL) {
+                                 y_limits = NULL,
+                                 response_var = NULL) {
   if (is.null(y_limits)) {
     panel_range <- compute_barplot_panel_range(
       stats_df,
@@ -262,7 +258,8 @@ build_bar_plot_panel <- function(stats_df,
         base_fill = base_fill,
         base_size = base_size,
         posthoc_entry = posthoc_entry,
-        y_limits = y_limits
+        y_limits = y_limits,
+        response_var = response_var
       )
     )
   }
@@ -276,7 +273,8 @@ build_bar_plot_panel <- function(stats_df,
     base_fill = base_fill,
     base_size = base_size,
     nested_posthoc = nested_posthoc,
-    y_limits = y_limits
+    y_limits = y_limits,
+    response_var = response_var
   )
 }
 
@@ -286,7 +284,8 @@ build_single_factor_barplot <- function(stats_df,
                                         base_fill,
                                         base_size,
                                         posthoc_entry,
-                                        y_limits = NULL) {
+                                        y_limits = NULL,
+                                        response_var = NULL) {
   plot_obj <- ggplot(stats_df, aes(x = !!sym(factor1), y = mean)) +
     geom_col(fill = base_fill, width = 0.6, alpha = 0.8) +
     geom_errorbar(
@@ -296,7 +295,11 @@ build_single_factor_barplot <- function(stats_df,
       linewidth = 0.5
     ) +
     ta_plot_theme(base_size = base_size) +
-    labs(x = factor1, y = "Mean ± SE", title = title_text) +
+    labs(
+      x = factor1,
+      y = if (!is.null(response_var)) response_var else "Mean ± SE",
+      title = title_text
+    ) +
     theme(
       plot.title = element_text(size = base_size, face = "bold", hjust = 0.5),
       axis.title.x = element_text(margin = margin(t = 6)),
@@ -327,7 +330,8 @@ build_two_factor_barplot <- function(stats_df,
                                      base_fill,
                                      base_size,
                                      nested_posthoc = NULL,
-                                     y_limits = NULL) {
+                                     y_limits = NULL,
+                                     response_var = NULL) {
   group_levels <- if (is.factor(stats_df[[factor2]])) {
     levels(stats_df[[factor2]])
   } else {
@@ -347,7 +351,12 @@ build_two_factor_barplot <- function(stats_df,
       linewidth = 0.5
     ) +
     ta_plot_theme(base_size = base_size) +
-    labs(x = factor1, y = "Mean ± SE", fill = factor2, title = title_text) +
+    labs(
+      x = factor1,
+      y = if (!is.null(response_var)) response_var else "Mean ± SE",
+      fill = factor2,
+      title = title_text
+    ) +
     theme(
       plot.title = element_text(size = base_size, face = "bold", hjust = 0.5),
       axis.title.x = element_text(margin = margin(t = 6)),
