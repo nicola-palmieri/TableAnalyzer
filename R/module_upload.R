@@ -27,7 +27,9 @@ upload_ui <- function(id) {
       uiOutput(ns("file_input")),
       uiOutput(ns("sheet_selector")),
       uiOutput(ns("replicate_col_input")),
-      uiOutput(ns("type_selectors"))
+      actionButton(ns("open_type_editor"), "Edit column types…"),
+      uiOutput(ns("type_editor_modal"))
+      
     ),
     mainPanel(
       width = 8,
@@ -75,7 +77,6 @@ upload_server <- function(id) {
         ),
         class = "display nowrap"
       )
-      create_type_selectors(data)
       if (!is.null(success_message)) {
         render_validation(success_message)
       }
@@ -269,41 +270,51 @@ upload_server <- function(id) {
     }, ignoreInit = TRUE)
     
     # -----------------------------------------------------------
-    # 5️⃣ Create type selectors
+    # 5️⃣ Column Type Editor (New, Modal-based)
     # -----------------------------------------------------------
-    create_type_selectors <- function(data) {
+    
+    # Which columns are editable
+    editable_cols <- reactiveVal(NULL)
+    
+    # Open modal when clicking the button
+    observeEvent(input$open_type_editor, {
+      data <- df()
       req(data)
+      
       num_vars <- names(data)[vapply(data, is.numeric, logical(1))]
-      few_level_nums <- Filter(
-        function(col) length(unique(stats::na.omit(data[[col]]))) <= 10,
-        num_vars
-      )
-
-      if (length(few_level_nums) == 0) {
-        editable_cols(NULL)
-        output$type_selectors <- renderUI(NULL)
-        return()
-      }
-
-      editable_cols(few_level_nums)
-      output$type_selectors <- renderUI({
-        tagList(
-          h5("Ambiguous type columns"),
-          lapply(few_level_nums, function(col) {
-            with_help_tooltip(
-              selectInput(
-                ns(paste0("type_", col)),
-                label = col,
-                choices = c("Numeric", "Categorical"),
-                selected = "Numeric",
-                width = "100%"
-              ),
-              "Tell the app whether this column should be treated as numbers or as groups."
+      editable_cols(num_vars)
+      
+      output$type_editor_modal <- renderUI({
+        showModal(
+          modalDialog(
+            title = "Column type editor",
+            size = "l",
+            easyClose = TRUE,
+            footer = modalButton("Close"),
+            div(
+              style = "padding-right: 10px;",
+              fluidRow(
+                lapply(seq_along(num_vars), function(i) {
+                  col <- num_vars[[i]]
+                  column(
+                    width = 6,
+                    selectInput(
+                      ns(paste0("type_", col)),
+                      label = col,
+                      choices = c("Numeric", "Categorical"),
+                      selected = if (is.numeric(data[[col]])) "Numeric" else "Categorical",
+                      width = "100%"
+                    )
+                  )
+                })
+              )
             )
-          })
+            
+          )
         )
       })
-    }
+    })
+    
     
     # -----------------------------------------------------------
     # 6️⃣ Apply user type edits reactively
