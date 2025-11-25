@@ -97,19 +97,7 @@ plot_anova_lineplot_meanse <- function(data,
         combined <- collect_guides_safe(combined)
       }
       
-      title_plot <- ggplot() +
-        ta_plot_theme_void() +
-        ggtitle(resp) +
-        theme(
-          plot.title = element_text(
-            size = base_size,
-            face = "bold",
-            hjust = 0.5
-          ),
-          plot.margin = margin(t = 0, r = 0, b = 6, l = 0)
-        )
-      
-      response_plots[[resp]] <- title_plot / combined + plot_layout(heights = c(0.08, 1))
+      response_plots[[resp]] <- combined
     } else {
       stats_df <- anova_summarise_stats(data, resp, factor1, factor2)
       if (nrow(stats_df) == 0) {
@@ -127,7 +115,7 @@ plot_anova_lineplot_meanse <- function(data,
       
       response_plots[[resp]] <- build_line_plot_panel(
         stats_df = stats_df,
-        title_text = resp,
+        title_text = "",
         y_limits = y_limits_to_use,
         factor1 = factor1,
         factor2 = factor2,
@@ -249,7 +237,10 @@ build_line_plot_panel <- function(stats_df,
         color = color_value
       ) +
       ta_plot_theme(base_size = base_size) +
-      labs(x = factor1, y = "Mean ± SE") +
+      labs(
+        x = factor1,
+        y = if (!is.null(response_var)) response_var else "Mean ± SE"
+      ) +
       theme(
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -327,7 +318,7 @@ build_line_plot_panel <- function(stats_df,
       ta_plot_theme(base_size = base_size) +
       labs(
         x = factor1,
-        y = "Mean ± SE",
+        y = if (!is.null(response_var)) response_var else "Mean ± SE",
         color = factor2
       ) +
       theme(
@@ -344,14 +335,18 @@ build_line_plot_panel <- function(stats_df,
     p <- p + scale_y_continuous(limits = y_limits)
   }
 
-  p + ggtitle(title_text) +
-    theme(
-      plot.title = element_text(
-        size = base_size,
-        face = "bold",
-        hjust = 0.5
+  if (!is.null(title_text) && nzchar(title_text)) {
+    p + ggtitle(title_text) +
+      theme(
+        plot.title = element_text(
+          size = base_size,
+          face = "bold",
+          hjust = 0.5
+        )
       )
-    )
+  } else {
+    p
+  }
 }
 
 
