@@ -4,12 +4,14 @@
 
 visualize_twoway_ui <- function(id) {
   ns <- NS(id)
+  
   sidebarLayout(
     sidebarPanel(
       width = 4,
       h4("Step 4 — Visualize two-way ANOVA"),
       p("Select visualization type and adjust subplot layout, axis scaling, and figure size."),
       hr(),
+      
       with_help_tooltip(
         selectInput(
           ns("plot_type"),
@@ -22,6 +24,7 @@ visualize_twoway_ui <- function(id) {
         ),
         "Pick the chart style you prefer for viewing group means and uncertainty."
       ),
+      
       conditionalPanel(
         condition = sprintf("input['%s'] === 'lineplot_mean_se'", ns("plot_type")),
         fluidRow(
@@ -44,14 +47,16 @@ visualize_twoway_ui <- function(id) {
                 "Dodge grouped means",
                 value = FALSE
               ),
-              "Offset the level means of the second factor along the x-axis to prevent overlap."
+              "Offset the level means of the second factor along the x-axis."
             )
           )
         )
       ),
+      
       uiOutput(ns("axis_and_jitter")),
       subplot_size_ui(ns),
       uiOutput(ns("layout_controls")),
+      
       fluidRow(
         column(6, add_color_customization_ui(ns, multi_group = TRUE)),
         column(
@@ -75,6 +80,7 @@ visualize_twoway_ui <- function(id) {
         column(6, downloadButton(ns("download_plot"), "Download plot", style = "width: 100%;"))
       )
     ),
+    
     mainPanel(
       width = 8,
       h4("Plots"),
@@ -90,6 +96,9 @@ visualize_twoway_server <- function(id, filtered_data, model_info) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
+    # ------------------------------------------------------------------
+    # Stored state
+    # ------------------------------------------------------------------
     stored <- reactiveValues(
       plot = NULL,
       warning = NULL,
@@ -100,6 +109,9 @@ visualize_twoway_server <- function(id, filtered_data, model_info) {
     
     df <- reactive(filtered_data())
     
+    # ------------------------------------------------------------------
+    # Color handling
+    # ------------------------------------------------------------------
     color_var <- reactive({
       info <- model_info()
       if (is.null(info) || is.null(info$factors)) return(NULL)
@@ -124,10 +136,15 @@ visualize_twoway_server <- function(id, filtered_data, model_info) {
     
     base_size <- base_size_server(input = input, default = 13)
     
-    strata_grid <- plot_grid_server("strata_grid")
+    # ------------------------------------------------------------------
+    # Grid modules
+    # ------------------------------------------------------------------
+    strata_grid   <- plot_grid_server("strata_grid")
     response_grid <- plot_grid_server("response_grid")
     
-    # UI render
+    # ------------------------------------------------------------------
+    # Dynamic UI
+    # ------------------------------------------------------------------
     output$layout_controls <- renderUI({
       info <- model_info()
       req(info)
@@ -136,6 +153,7 @@ visualize_twoway_server <- function(id, filtered_data, model_info) {
     
     output$axis_and_jitter <- renderUI({
       jitter_widget <- NULL
+      
       if (input$plot_type == "lineplot_mean_se") {
         jitter_widget <- with_help_tooltip(
           checkboxInput(
@@ -163,7 +181,9 @@ visualize_twoway_server <- function(id, filtered_data, model_info) {
       )
     })
     
+    # ------------------------------------------------------------------
     # Common legend UI
+    # ------------------------------------------------------------------
     legend_state <- reactiveValues(
       enabled = FALSE,
       position = "bottom"
@@ -173,18 +193,20 @@ visualize_twoway_server <- function(id, filtered_data, model_info) {
       info <- model_info()
       if (is.null(info) || !identical(info$type, "twoway_anova"))
         return(FALSE)
+      
       has_mult_resp <- length(info$responses %||% character()) > 1
       has_strata <- !is.null(info$strata) && !is.null(info$strata$var)
+      
       has_mult_resp || has_strata
     })
     
     observeEvent(input$use_common_legend, {
       legend_state$enabled <- isTRUE(input$use_common_legend)
-    }, ignoreNULL = TRUE)
+    })
     
     observeEvent(input$common_legend_position, {
       legend_state$position <- input$common_legend_position
-    }, ignoreNULL = TRUE)
+    })
     
     output$common_legend_controls <- renderUI({
       if (!common_legend_available()) return(NULL)
@@ -217,110 +239,127 @@ visualize_twoway_server <- function(id, filtered_data, model_info) {
     })
     
     # ------------------------------------------------------------------
-    # APPLY button (core logic)
+    # Layout helper (new core fix)
+    # ------------------------------------------------------------------
+    resolve_grid_layout <- function(n_items, rows_value, cols_value) {
+      layout <- list(
+        nrow = rows_value,
+        ncol = cols_value
+      )
+      adjusted <- adjust_grid_layout(n_items, layout)
+      list(rows = adjusted$nrow, cols = adjusted$ncol)
+    }
+    
+    # ------------------------------------------------------------------
+    # APPLY BUTTON
     # ------------------------------------------------------------------
     observeEvent(input$apply_plot, {
       data <- df()
       info <- model_info()
       
-      stored$plot_width  <- input$plot_width
-      stored$plot_height <- input$plot_height
+      stored$plot_width  <- input$plot_width  %||% 600
+      stored$plot_height <- input$plot_height %||% 600
       
       if (is.null(info) || is.null(data) || nrow(data) == 0) {
         stored$warning <- "No data or ANOVA results available."
         stored$plot <- NULL
+        stored$layout <- NULL
         return()
       }
       
-      # Build layout
+      # Count panels
+      has_strata <- !is.null(info$strata) && !is.null(info$strata$levels)
+      n_strata <- if (has_strata) length(info$strata$levels) else 1L
+      
+      responses <- info$responses
+      n_responses <- if (!is.null(responses) && length(responses) > 0L) length(responses) else 1L
+      
+      # Final grid layouts
+      strata_layout <- resolve_grid_layout(
+        n_items = n_strata,
+        rows_value = strata_grid$rows(),
+        cols_value = strata_grid$cols()
+      )
+      
+      response_layout <- resolve_grid_layout(
+        n_items = n_responses,
+        rows_value = response_grid$rows(),
+        cols_value = response_grid$cols()
+      )
+      
       layout_inputs <- list(
-        strata_rows = strata_grid$rows(),
-        strata_cols = strata_grid$cols(),
-        resp_rows   = response_grid$rows(),
-        resp_cols   = response_grid$cols()
+        strata_rows = strata_layout$rows,
+        strata_cols = strata_layout$cols,
+        resp_rows   = response_layout$rows,
+        resp_cols   = response_layout$cols
       )
       
       # Legend handling
-      legend_supported <- input$plot_type %in% c("lineplot_mean_se", "barplot_mean_se")
+      legend_supported <- TRUE
       use_common_legend <- legend_supported && common_legend_available() && legend_state$enabled
       legend_position <- if (use_common_legend) legend_state$position else NULL
       
-      # Compute all plots
+      # Compute plots
       results <- list(
         lineplot_mean_se = plot_anova_lineplot_meanse(
           data, info, layout_inputs,
-          line_colors  = custom_colors(),
-          base_size    = base_size(),
-          show_lines   = input$lineplot_show_lines,
-          show_jitter  = input$lineplot_show_jitter,
-          use_dodge    = input$lineplot_use_dodge,
-          share_y_axis = input$share_y_axis,
-          common_legend = use_common_legend,
-          legend_position = legend_position
+          line_colors      = custom_colors(),
+          base_size        = base_size(),
+          show_lines       = input$lineplot_show_lines,
+          show_jitter      = input$lineplot_show_jitter,
+          use_dodge        = input$lineplot_use_dodge,
+          share_y_axis     = input$share_y_axis,
+          common_legend    = use_common_legend,
+          legend_position  = legend_position
         ),
         
         barplot_mean_se = plot_anova_barplot_meanse(
           data, info, layout_inputs,
-          line_colors       = custom_colors(),
-          base_size         = base_size(),
-          posthoc_all       = info$posthoc,
-          share_y_axis      = input$share_y_axis,
-          common_legend     = use_common_legend,
-          legend_position   = legend_position
+          line_colors      = custom_colors(),
+          base_size        = base_size(),
+          posthoc_all      = info$posthoc,
+          share_y_axis     = input$share_y_axis,
+          common_legend    = use_common_legend,
+          legend_position  = legend_position
         )
       )
       
       chosen <- input$plot_type
       chosen_result <- results[[chosen]]
-
+      
       stored$warning <- chosen_result$warning
       stored$plot    <- chosen_result$plot
       stored$layout  <- chosen_result$layout
-
-      apply_grid_defaults_if_empty(
-        input,
-        session,
-        "strata_grid",
-        chosen_result$defaults$strata,
-        n_items = chosen_result$panel_counts$strata
-      )
-
-      apply_grid_defaults_if_empty(
-        input,
-        session,
-        "response_grid",
-        chosen_result$defaults$responses,
-        n_items = chosen_result$panel_counts$responses
-      )
     })
     
     # ------------------------------------------------------------------
-    # OUTPUTS
+    # Outputs
     # ------------------------------------------------------------------
-    
     output$plot_warning <- renderUI({
       if (!is.null(stored$warning))
         div(class = "alert alert-warning", stored$warning)
     })
     
-    output$plot <- renderPlot({
-      p <- stored$plot
-      if (is.null(p)) return(NULL)
-      print(p)
-    },
-    width = function() {
-      lay <- stored$layout
-      if (is.null(lay)) return(600)
-      total_cols <- (lay$strata$cols %||% 1) * (lay$responses$cols %||% 1)
-      stored$plot_width * total_cols
-    },
-    height = function() {
-      lay <- stored$layout
-      if (is.null(lay)) return(600)
-      total_rows <- (lay$strata$rows %||% 1) * (lay$responses$rows %||% 1)
-      stored$plot_height * total_rows
-    },
-    res = 96)
+    output$plot <- renderPlot(
+      {
+        p <- stored$plot
+        if (is.null(p)) return(NULL)
+        print(p)
+      },
+      width = function() {
+        lay <- stored$layout
+        if (is.null(lay)) return(600)
+        cols <- (lay$strata$cols %||% 1) * (lay$responses$cols %||% 1)
+        stored$plot_width * cols
+      },
+      height = function() {
+        lay <- stored$layout
+        if (is.null(lay)) return(600)
+        rows <- (lay$strata$rows %||% 1) * (lay$responses$rows %||% 1)
+        stored$plot_height * rows
+      },
+      res = 96
+    )
     
     output$download_plot <- downloadHandler(
       filename = function() paste0("anova_twoway_plot_", Sys.Date(), ".png"),
@@ -331,17 +370,19 @@ visualize_twoway_server <- function(id, filtered_data, model_info) {
         lay <- stored$layout
         req(!is.null(lay))
         
-        total_cols <- (lay$strata$cols %||% 1) * (lay$responses$cols %||% 1)
-        total_rows <- (lay$strata$rows %||% 1) * (lay$responses$rows %||% 1)
+        cols <- (lay$strata$cols %||% 1) * (lay$responses$cols %||% 1)
+        rows <- (lay$strata$rows %||% 1) * (lay$responses$rows %||% 1)
         
-        w_in <- (stored$plot_width  * total_cols) / 96
-        h_in <- (stored$plot_height * total_rows) / 96
+        w_in <- (stored$plot_width  * cols) / 96
+        h_in <- (stored$plot_height * rows) / 96
         
-        ggsave(file, p, dpi = 300,
-               width = w_in, height = h_in,
-               units = "in", limitsize = FALSE)
+        ggsave(file, p,
+               dpi = 300,
+               width = w_in,
+               height = h_in,
+               units = "in",
+               limitsize = FALSE)
       }
     )
   })
 }
-
