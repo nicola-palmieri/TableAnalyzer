@@ -44,14 +44,12 @@ Table Analyzer is a modular R/Shiny application for running modern statistical a
 ## 🔧 Installation & local launch
 
 ```r
-# Install core packages (run once)
+# Install packages (run once)
 install.packages(c(
   "bslib", "dplyr", "DT", "emmeans", "fitdistrplus", "flextable",
-  "GGally", "ggsignif", "ggplot2", "lmerTest", "officer", "patchwork",
-  "readxl", "shiny", "shinyjqui", "skimr", "tidyr", "zoo"
+  "GGally", "ggplot2", "lmerTest", "officer", "patchwork",
+  "readxl", "shiny", "skimr", "tidyr", "zoo"
 ))
-
-# Additional namespace-only dependencies used in the app: car, ggrepel
 
 # Launch the app from the repository root
 shiny::runApp(".")
