@@ -469,37 +469,28 @@ build_annotations_two_factor <- function(barpos,
                                          factor1,
                                          factor2,
                                          offset_mult = 0.12) {
-  if (is.null(nested_posthoc)) return(NULL)
-  
-  nested_name <- paste0(factor2, "_within_", factor1)
-  
-  df <- NULL
-  if (is.data.frame(nested_posthoc)) {
-    if ("Factor" %in% names(nested_posthoc)) {
-      df <- nested_posthoc |> dplyr::filter(.data$Factor == nested_name)
-    } else {
-      df <- nested_posthoc
-    }
-  } else if (is.list(nested_posthoc) && nested_name %in% names(nested_posthoc)) {
-    df <- nested_posthoc[[nested_name]]
-  } else {
+  if (is.null(nested_posthoc) || !is.data.frame(nested_posthoc)) {
     return(NULL)
   }
   
-  if (is.null(df) || nrow(df) == 0) return(NULL)
-  if (!all(c("contrast", "p.value", factor1) %in% names(df))) return(NULL)
+  needed <- c("contrast", "p.value", factor1)
+  if (!all(needed %in% names(nested_posthoc))) {
+    return(NULL)
+  }
   
-  df <- df |> dplyr::mutate(
-    p.value = clean_p_values_barplot(.data$p.value)
-  )
-  df <- df |> dplyr::filter(!is.na(.data$p.value))
+  df <- nested_posthoc
+  
+  df$contrast_clean <- gsub("[()]", "", df$contrast)
+  df$p.value <- clean_p_values_barplot(df$p.value)
+  df <- df[is.finite(df$p.value), , drop = FALSE]
   if (nrow(df) == 0) return(NULL)
   
-  lev1 <- unique(as.character(barpos[[factor1]]))
-  lev2 <- unique(as.character(barpos[[factor2]]))
+  lev1 <- unique(as.character(barpos[[factor1]]))   # DPI
+  lev2 <- unique(as.character(barpos[[factor2]]))   # Treatment
   lev1 <- lev1[!is.na(lev1)]
   lev2 <- lev2[!is.na(lev2)]
   if (length(lev2) < 2) return(NULL)
+  
   reference <- lev2[1]
   
   values <- barpos$y[is.finite(barpos$y)]
@@ -507,27 +498,37 @@ build_annotations_two_factor <- function(barpos,
   offset <- compute_annotation_offset(values, offset_mult)
   
   res <- list()
+  idx <- 0L
   
   for (g1 in lev1) {
-    for (lvl in lev2[lev2 != reference]) {
-      contrasts <- c(
-        paste0(lvl, " - ", reference),
-        paste0(reference, " - ", lvl)
-      )
+    for (lvl in lev2) {
+      if (lvl == reference) next
       
-      sub <- df[df[[factor1]] == g1 & df$contrast %in% contrasts, , drop = FALSE]
+      lvl_clean <- gsub("[()]", "", lvl)
+      ref_clean <- gsub("[()]", "", reference)
+      
+      ct1 <- paste0(lvl_clean, " - ", ref_clean)
+      ct2 <- paste0(ref_clean, " - ", lvl_clean)
+      
+      sub <- df[
+        as.character(df[[factor1]]) == g1 &
+          df$contrast_clean %in% c(ct1, ct2),
+        ,
+        drop = FALSE
+      ]
+      
       if (nrow(sub) == 0) next
       
       p <- sub$p.value[1]
       if (is.na(p) || p >= 0.05) next
       
-      label <- dplyr::case_when(
-        p < 0.001 ~ "***",
-        p < 0.01 ~ "**",
-        p < 0.05 ~ "*",
-        TRUE ~ ""
-      )
-      if (label == "") next
+      if (p < 0.001) {
+        label <- "***"
+      } else if (p < 0.01) {
+        label <- "**"
+      } else {
+        label <- "*"
+      }
       
       bar_row <- barpos[
         as.character(barpos[[factor1]]) == g1 &
@@ -537,7 +538,8 @@ build_annotations_two_factor <- function(barpos,
       ]
       if (nrow(bar_row) == 0) next
       
-      res[[length(res) + 1]] <- data.frame(
+      idx <- idx + 1L
+      res[[idx]] <- data.frame(
         x = bar_row$x[1],
         y = bar_row$y[1] + offset,
         label = label
@@ -546,9 +548,10 @@ build_annotations_two_factor <- function(barpos,
   }
   
   if (length(res) == 0) return(NULL)
-
   do.call(rbind, res)
 }
+
+
 
 compute_annotation_offset <- function(values, offset_mult) {
   span <- diff(range(values))
@@ -582,7 +585,6 @@ add_significance_after_build <- function(p,
       factor2 = factor2
     )
   }
-  
   if (is.null(ann) || nrow(ann) == 0) return(p)
   
   max_y_text <- max(ann$y, na.rm = TRUE)
