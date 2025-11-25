@@ -15,11 +15,11 @@ upload_ui <- function(id) {
           ns("data_source"),
           label = "Data source",
           choices = c(
-            "Example dataset" = "example",
             "Upload (long format)" = "long",
-            "Upload (wide format)" = "wide"
+            "Upload (wide format)" = "wide",
+            "Example dataset" = "example"
           ),
-          selected = "example"
+          selected = "long"
         ),
         "Decide whether to explore the built-in example data or load your own table."
       ),
@@ -103,7 +103,7 @@ upload_server <- function(id) {
       output$preview <- renderDT(data.frame())
 
       if (input$data_source == "example") {
-        path <- "data/Data at necropsy_all groups_all days_Table Analyzer.xlsx"
+        path <- "data/toy_animal_trial_data_long.xlsx"
         validate(need(file.exists(path), "⚠️ Example dataset not found in data folder."))
         safe_result <- safe_call(readxl::read_excel, path)
         if (!handle_safe_result(
