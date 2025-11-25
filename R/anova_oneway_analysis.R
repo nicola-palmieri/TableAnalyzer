@@ -1,5 +1,5 @@
 # ===============================================================
-# 🧪 Table Analyzer — One-way ANOVA Module (Clean & Minimal)
+# 🧪 Table Analyzer — One-way ANOVA Module (Validated Version)
 # ===============================================================
 
 one_way_anova_ui <- function(id) {
@@ -41,10 +41,19 @@ one_way_anova_server <- function(id, filtered_data) {
     responses <- multi_response_server("response", filtered_data)
     strat_info <- stratification_server("strat", filtered_data)
     
+    # -----------------------------------------------------
+    # UI inputs
+    # -----------------------------------------------------
     output$inputs <- renderUI({
       req(filtered_data())
       data <- filtered_data()
+      
       cat_cols <- names(data)[sapply(data, is.factor) | sapply(data, is.character)]
+      
+      validate(
+        need(length(cat_cols) > 0,
+             "No categorical predictors found. At least one factor or character variable is required.")
+      )
       
       tagList(
         multi_response_ui(ns("response")),
@@ -53,16 +62,20 @@ one_way_anova_server <- function(id, filtered_data) {
             ns("group"),
             "Categorical predictor",
             choices = cat_cols,
-            selected = if (length(cat_cols) > 0) cat_cols[1] else NULL
+            selected = cat_cols[1]
           ),
           "Choose the grouping variable that defines the comparison categories."
         )
       )
     })
     
+    # -----------------------------------------------------
+    # Order of levels
+    # -----------------------------------------------------
     output$level_order <- renderUI({
       req(filtered_data(), input$group)
       levels <- resolve_order_levels(filtered_data()[[input$group]])
+      
       with_help_tooltip(
         selectInput(
           ns("order"),
@@ -75,12 +88,78 @@ one_way_anova_server <- function(id, filtered_data) {
       )
     })
     
+    # -----------------------------------------------------
+    # Run models
+    # -----------------------------------------------------
     models <- eventReactive(input$run, {
       df <- filtered_data()
       req(df, input$group, input$order)
+      
       resp_vals <- responses()
-      validate(need(length(resp_vals) > 0, "Select at least one response variable."))
-      validate_numeric_columns(df, resp_vals, "response variables")
+      
+      # ------------------------
+      # Validations
+      # ------------------------
+      
+      validate(
+        need(length(resp_vals) > 0,
+             "Select at least one response variable.")
+      )
+      
+      validate(
+        need(all(sapply(df[resp_vals], is.numeric)),
+             "All selected response variables must be numeric.")
+      )
+      
+      # Response variance
+      for (r in resp_vals) {
+        validate(
+          need(stats::var(df[[r]], na.rm = TRUE) > 0,
+               paste("Response", r, "has zero variance and cannot be analyzed."))
+        )
+      }
+      
+      # Group must have >= 2 levels
+      grp <- df[[input$group]]
+      validate(
+        need(dplyr::n_distinct(grp) > 1,
+             "The categorical predictor must contain at least two distinct levels.")
+      )
+      
+      # Order must have >= 2 items
+      validate(
+        need(length(input$order) > 1,
+             "The order list must contain at least two levels.")
+      )
+      
+      # Order must match data
+      actual_levels <- unique(grp)
+      missing_levels <- setdiff(input$order, actual_levels)
+      validate(
+        need(length(missing_levels) == 0,
+             paste("Some selected levels are not present in the filtered data:",
+                   paste(missing_levels, collapse = ", ")))
+      )
+      
+      # Stratification checks
+      if (!is.null(strat_info()$active) && strat_info()$active) {
+        s_info <- strat_info()
+        
+        for (lev in s_info$levels) {
+          sub_df <- df[df[[s_info$var]] == lev, ]
+          
+          k <- dplyr::n_distinct(sub_df[[input$group]])
+          validate(
+            need(k > 1,
+                 paste0("Stratum '", lev,
+                        "' contains less than two levels of the grouping variable."))
+          )
+        }
+      }
+      
+      # -----------------------------------------------------
+      # Run the main stratified ANOVA preparation
+      # -----------------------------------------------------
       prepare_stratified_anova(
         df = df,
         responses = resp_vals,
@@ -91,28 +170,39 @@ one_way_anova_server <- function(id, filtered_data) {
       )
     })
     
+    # -----------------------------------------------------
+    # Download handler
+    # -----------------------------------------------------
     output$download_all <- downloadHandler(
       filename = function() {
         info <- models()
         n_resp <- length(info$responses)
         n_strata <- length(info$strata$levels %||% NULL)
         label <- ifelse(n_strata == 0, "nostratum", paste0(n_strata, "strata"))
-        paste0("anova_results_", n_resp, "resp_", label, "_", format(Sys.time(), "%Y%m%d-%H%M"), ".docx")
+        paste0("anova_results_", n_resp, "resp_", label, "_",
+               format(Sys.time(), "%Y%m%d-%H%M"), ".docx")
       },
       content = function(file) download_all_anova_results(models(), file)
     )
     
+    # -----------------------------------------------------
+    # Summary UI
+    # -----------------------------------------------------
     output$summary_ui <- renderUI({
       render_anova_results(ns, models(), "One-way ANOVA")
     })
     
+    # Forwarding other outputs
     bind_anova_outputs(ns, output, models)
     
+    # -----------------------------------------------------
+    # Exportable ANOVA results object
+    # -----------------------------------------------------
     anova_results <- reactive({
       mod <- models()
       req(mod)
       res <- compile_anova_results(mod)
-
+      
       list(
         analysis_type = "ANOVA",
         type = "oneway_anova",
@@ -132,7 +222,6 @@ one_way_anova_server <- function(id, filtered_data) {
         orders = mod$orders
       )
     })
-    
     
     return(anova_results)
   })

@@ -125,6 +125,66 @@ ggpairs_server <- function(id, data_reactive) {
           levels = strata_levels
         )
       }
+      
+      # ======================================
+      # VALIDATION CHECKS (add here)
+      # ======================================
+      
+      # -- 1) Need at least two numeric variables
+      validate(
+        need(length(selected_vars) >= 2,
+             "Please select at least two numeric variables.")
+      )
+      
+      # -- 2) After filtering and stratification, data must exist
+      validate(
+        need(nrow(processed_data) > 1,
+             "No data available after stratification / filtering.")
+      )
+      
+      # -- 3) If stratified: each stratum must have >= 2 rows
+      if (!is.null(group_var)) {
+        for (lev in strata_levels) {
+          sub <- processed_data[processed_data[[group_var]] == lev, , drop = FALSE]
+          validate(
+            need(nrow(sub) >= 2,
+                 paste0("Stratum '", lev, "' does not contain at least 2 observations."))
+          )
+        }
+      }
+      
+      # -- 4) Variables must not be all NA in any stratum
+      if (!is.null(group_var)) {
+        for (lev in strata_levels) {
+          sub <- processed_data[processed_data[[group_var]] == lev, , drop = FALSE]
+          for (v in selected_vars) {
+            validate(
+              need(sum(!is.na(sub[[v]])) >= 2,
+                   paste0("Variable '", v,
+                          "' has fewer than 2 non-missing values in stratum '", lev, "'."))
+            )
+          }
+        }
+      } else {
+        for (v in selected_vars) {
+          validate(
+            need(sum(!is.na(processed_data[[v]])) >= 2,
+                 paste0("Variable '", v,
+                        "' has fewer than 2 non-missing observations."))
+          )
+        }
+      }
+      
+      # -- 5) Optional: warn if variable is constant (no variance)
+      for (v in selected_vars) {
+        if (stats::var(processed_data[[v]], na.rm = TRUE) == 0) {
+          showNotification(
+            paste0("Variable '", v, "' is constant after filtering; correlations will be NA."),
+            type = "warning"
+          )
+        }
+      }
+      
 
       if (is.null(group_var)) {
         dat <- processed_data[, selected_vars, drop = FALSE]

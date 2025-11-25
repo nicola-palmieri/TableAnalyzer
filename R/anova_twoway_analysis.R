@@ -1,5 +1,5 @@
 # ===============================================================
-# 🧪 Table Analyzer — Two-way ANOVA Module
+# 🧪 Table Analyzer — Two-way ANOVA Module (Validated Version)
 # ===============================================================
 
 two_way_anova_ui <- function(id) {
@@ -25,98 +25,172 @@ two_way_anova_ui <- function(id) {
         ))
       )
     ),
-    results = tagList(
-      uiOutput(ns("summary_ui"))
-    )
+    results = uiOutput(ns("summary_ui"))
   )
 }
 
 two_way_anova_server <- function(id, filtered_data) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
-
+    
     responses <- multi_response_server("response", filtered_data)
-
+    strat_info <- stratification_server("strat", filtered_data)
+    
+    # ------------------------------------------------------------
+    # Dynamic inputs
+    # ------------------------------------------------------------
     output$inputs <- renderUI({
       req(filtered_data())
       data <- filtered_data()
-      cat_cols <- names(data)[sapply(data, function(x) is.character(x) || is.factor(x))]
-
+      
+      cat_cols <- names(data)[sapply(data, function(x) is.factor(x) || is.character(x))]
+      
+      validate(
+        need(length(cat_cols) > 1,
+             "At least two categorical predictors are required for a two-way ANOVA.")
+      )
+      
       tagList(
         multi_response_ui(ns("response")),
+        
         with_help_tooltip(
           selectInput(
             ns("factor1"),
             "Categorical predictor 1 (x-axis)",
             choices = cat_cols,
-            selected = if (length(cat_cols) > 0) cat_cols[1] else NULL
+            selected = cat_cols[1]
           ),
           "Select the factor for the x-axis groups in the interaction plot."
         ),
+        
         with_help_tooltip(
           selectInput(
             ns("factor2"),
             "Categorical predictor 2 (lines)",
             choices = cat_cols,
-            selected = if (length(cat_cols) > 1) cat_cols[2] else NULL
+            selected = cat_cols[2]
           ),
           "Select the factor for the lines in the interaction plot."
         )
       )
     })
     
-    strat_info <- stratification_server("strat", filtered_data)
-    
-    # -----------------------------------------------------------
-    # Level order selections
-    # -----------------------------------------------------------
+    # ------------------------------------------------------------
+    # Level order inputs
+    # ------------------------------------------------------------
     output$level_order_1 <- renderUI({
       req(filtered_data(), input$factor1)
-      levels1 <- resolve_order_levels(filtered_data()[[input$factor1]])
+      lev <- resolve_order_levels(filtered_data()[[input$factor1]])
       with_help_tooltip(
         selectInput(
           ns("order1"),
-          paste("Order of levels (first = reference)", input$factor1, "(x-axis)"),
-          choices = levels1,
-          selected = levels1,
+          paste("Order of levels (first = reference)", input$factor1),
+          choices = lev,
+          selected = lev,
           multiple = TRUE
         ),
-        sprintf("Arrange the levels of %s for the x-axis; the first level is the reference.", input$factor1)
+        sprintf("Arrange the levels of %s. The first is the reference.", input$factor1)
       )
     })
     
     output$level_order_2 <- renderUI({
       req(filtered_data(), input$factor2)
-      levels2 <- resolve_order_levels(filtered_data()[[input$factor2]])
+      lev <- resolve_order_levels(filtered_data()[[input$factor2]])
       with_help_tooltip(
         selectInput(
           ns("order2"),
-          paste("Order of levels (first = reference)", input$factor2, "(lines)"),
-          choices = levels2,
-          selected = levels2,
+          paste("Order of levels (first = reference)", input$factor2),
+          choices = lev,
+          selected = lev,
           multiple = TRUE
         ),
-        sprintf("Arrange the levels of %s for the line colours; the first level is the reference.", input$factor2)
+        sprintf("Arrange the levels of %s. The first is the reference.", input$factor2)
       )
     })
     
-    # -----------------------------------------------------------
-    # Model fitting (via shared helper)
-    # -----------------------------------------------------------
+    # ------------------------------------------------------------
+    # Main model fitting
+    # ------------------------------------------------------------
     models <- eventReactive(input$run, {
       df <- filtered_data()
-      req(df, input$factor1, input$order1, input$factor2, input$order2)
+      req(df, input$factor1, input$factor2, input$order1, input$order2)
+      
       resp_vals <- responses()
       validate(
-        need(length(resp_vals) > 0, "Please select at least one response variable."),
-        need(
-          !identical(input$factor1, input$factor2),
-          "Categorical predictor 1 and 2 must be different variables."
-        ),
-        need(all(input$order1 %in% unique(df[[input$factor1]])), "Invalid level order for first factor."),
-        need(all(input$order2 %in% unique(df[[input$factor2]])), "Invalid level order for second factor.")
+        need(length(resp_vals) > 0, "Select at least one response variable.")
       )
+      
+      validate(
+        need(!identical(input$factor1, input$factor2),
+             "The two categorical predictors must be different variables.")
+      )
+      
+      # Factor 1 must have ≥ 2 levels
+      validate(
+        need(dplyr::n_distinct(df[[input$factor1]]) > 1,
+             paste0("'", input$factor1, "' must contain at least two levels."))
+      )
+      
+      # Factor 2 must have ≥ 2 levels
+      validate(
+        need(dplyr::n_distinct(df[[input$factor2]]) > 1,
+             paste0("'", input$factor2, "' must contain at least two levels."))
+      )
+      
+      # Order must contain ≥ 2 levels
+      validate(
+        need(length(input$order1) > 1,
+             paste0("The level order for '", input$factor1, "' must contain at least two levels."))
+      )
+      
+      validate(
+        need(length(input$order2) > 1,
+             paste0("The level order for '", input$factor2, "' must contain at least two levels."))
+      )
+      
+      # Orders must match existing data levels
+      validate(
+        need(all(input$order1 %in% unique(df[[input$factor1]])),
+             "Invalid level order for the first factor.")
+      )
+      
+      validate(
+        need(all(input$order2 %in% unique(df[[input$factor2]])),
+             "Invalid level order for the second factor.")
+      )
+      
+      # Numeric responses
       validate_numeric_columns(df, resp_vals, "response variables")
+      
+      # Response variance > 0
+      for (r in resp_vals) {
+        validate(
+          need(stats::var(df[[r]], na.rm = TRUE) > 0,
+               paste("Response", r, "has zero variance and cannot be analyzed."))
+        )
+      }
+      
+      # Stratification: each stratum must contain ≥ 2 levels for each factor
+      if (!is.null(strat_info()$active) && strat_info()$active) {
+        s <- strat_info()
+        for (lev in s$levels) {
+          sub <- df[df[[s$var]] == lev, ]
+          
+          validate(
+            need(dplyr::n_distinct(sub[[input$factor1]]) > 1,
+                 paste0("Stratum '", lev, "' contains fewer than two levels of ", input$factor1, "."))
+          )
+          
+          validate(
+            need(dplyr::n_distinct(sub[[input$factor2]]) > 1,
+                 paste0("Stratum '", lev, "' contains fewer than two levels of ", input$factor2, "."))
+          )
+        }
+      }
+      
+      # --------
+      # Fit model
+      # --------
       prepare_stratified_anova(
         df = df,
         responses = resp_vals,
@@ -128,47 +202,43 @@ two_way_anova_server <- function(id, filtered_data) {
         stratification = strat_info()
       )
     })
-
-    # -----------------------------------------------------------
-    # Download all results as one combined DOCX
-    # -----------------------------------------------------------
+    
+    # ------------------------------------------------------------
+    # Download
+    # ------------------------------------------------------------
     output$download_all <- downloadHandler(
       filename = function() {
-        model_info <- models()
-        req(model_info)
+        info <- models()
+        req(info)
         
-        n_resp <- length(model_info$responses)
-        n_strata <- if (is.null(model_info$strata)) 0 else length(model_info$strata$levels)
-        strata_label <- ifelse(n_strata == 0, "nostratum", paste0(n_strata, "strata"))
-        timestamp <- format(Sys.time(), "%Y%m%d-%H%M")
-        sprintf("anova_results_%sresp_%s_%s.docx", n_resp, strata_label, timestamp)
+        n_resp <- length(info$responses)
+        n_strata <- length(info$strata$levels %||% NULL)
+        label <- ifelse(n_strata == 0, "nostratum", paste0(n_strata, "strata"))
+        paste0("anova_results_", n_resp, "resp_", label, "_",
+               format(Sys.time(), "%Y%m%d-%H%M"), ".docx")
       },
-      content = function(file) {
-        model_info <- models()
-        req(model_info)
-        download_all_anova_results(model_info, file)
-      }
+      content = function(file) download_all_anova_results(models(), file)
     )
     
-    # -----------------------------------------------------------
-    # Render results
-    # -----------------------------------------------------------
+    # ------------------------------------------------------------
+    # Results UI
+    # ------------------------------------------------------------
     output$summary_ui <- renderUI({
       render_anova_results(ns, models(), "Two-way ANOVA")
     })
     
-    # -----------------------------------------------------------
-    # Render model summaries + downloads (shared helper)
-    # -----------------------------------------------------------
     bind_anova_outputs(ns, output, models)
-
+    
+    # ------------------------------------------------------------
+    # Exportable results object
+    # ------------------------------------------------------------
     anova_results <- reactive({
       mod <- models()
       req(mod)
-
+      
       res <- compile_anova_results(mod)
       data_used <- mod$data_used
-
+      
       list(
         analysis_type = "ANOVA",
         type = "twoway_anova",
@@ -185,7 +255,7 @@ two_way_anova_server <- function(id, filtered_data) {
         orders = mod$orders
       )
     })
-
+    
     return(anova_results)
   })
 }

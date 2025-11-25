@@ -61,42 +61,82 @@ descriptive_server <- function(id, filtered_data) {
     # ------------------------------------------------------------
     summary_data <- eventReactive(input$run, {
       req(df())
-
+      
+      # Raw data
       local_data <- df()
+      
+      # -----------------------------
+      # Validate selected variables
+      # -----------------------------
       selected_vars <- unique(c(input$cat_vars, input$num_vars))
-      validate(need(length(selected_vars) > 0, "Please select at least one variable."))
-
+      validate(
+        need(length(selected_vars) > 0, "Please select at least one variable.")
+      )
+      
+      # -----------------------------
+      # Apply stratification
+      # -----------------------------
       strat_details <- strat_info()
       group_var <- strat_details$var
-      data_columns <- selected_vars
-
+      
       if (!is.null(group_var)) {
         sel <- strat_details$levels
+        
         if (!is.null(sel) && length(sel) > 0) {
           local_data <- dplyr::filter(local_data, .data[[group_var]] %in% sel)
           local_data[[group_var]] <- factor(as.character(local_data[[group_var]]), levels = sel)
         } else {
           local_data[[group_var]] <- factor(as.character(local_data[[group_var]]))
         }
+        
         local_data <- droplevels(local_data)
-        data_columns <- unique(c(data_columns, group_var))
+        selected_vars <- unique(c(selected_vars, group_var))
       }
-
-      data_columns <- data_columns[!is.na(data_columns) & nzchar(data_columns)]
-      data_columns <- intersect(data_columns, names(local_data))
-      local_data <- local_data[, data_columns, drop = FALSE]
-
-      selected_vars <- selected_vars[!is.na(selected_vars) & nzchar(selected_vars)]
+      
+      # -----------------------------
+      # Validate after stratification
+      # -----------------------------
+      validate(
+        need(nrow(local_data) > 0,
+             "No data available after applying stratification.")
+      )
+      
+      # Keep only selected variables that exist now
       selected_vars <- intersect(selected_vars, names(local_data))
-
+      validate(
+        need(length(selected_vars) > 0,
+             "None of the selected variables are present after filtering.")
+      )
+      
+      local_data <- local_data[, selected_vars, drop = FALSE]
+      
+      # -----------------------------
+      # Validate categorical variables levels
+      # -----------------------------
+      cat_vars <- intersect(input$cat_vars, names(local_data))
+      if (length(cat_vars) > 0) {
+        for (v in cat_vars) {
+          validate(
+            need(nlevels(as.factor(local_data[[v]])) > 0,
+                 paste0("Variable '", v, "' contains no valid levels in the filtered data."))
+          )
+        }
+      }
+      
+      # -----------------------------
+      # Build the result
+      # -----------------------------
       list(
         summary = compute_descriptive_summary(local_data, group_var),
         selected_vars = selected_vars,
         group_var = group_var,
         processed_data = local_data,
-        strata_levels = if (!is.null(group_var) && group_var %in% names(local_data)) levels(local_data[[group_var]]) else NULL
+        strata_levels = if (!is.null(group_var) && group_var %in% names(local_data))
+          levels(local_data[[group_var]])
+        else NULL
       )
     })
+    
     
     
     
