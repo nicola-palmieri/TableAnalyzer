@@ -98,7 +98,6 @@ upload_server <- function(id) {
     observeEvent(input$data_source, {
       df(NULL)
       editable_cols(NULL)
-      output$type_selectors <- renderUI(NULL)
       output$sheet_selector <- renderUI(NULL)
       output$preview <- renderDT(data.frame())
 
