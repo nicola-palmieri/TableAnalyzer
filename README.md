@@ -1,6 +1,6 @@
 # 📊 Table Analyzer
 
-Table Analyzer is a modular R/Shiny application for preparing spreadsheet data and running common statistical models in a click-driven interface. Launching the app from this repository (via `app.R`) gives you tabs for uploading data, refining it, running models, and reviewing visualizations without leaving the browser.
+Table Analyzer is a modular R/Shiny application for running modern statistical analyses and generating publication-ready visualizations. It lets you analyse multiple variables in parallel, apply stratification, and produce fully auto-arranged plots without any manual positioning. Launching the app (via app.R) opens a set of focused modules for uploading data, selecting models, refining inputs, and reviewing results — all powered by R directly in the browser.
 
 ---
 
