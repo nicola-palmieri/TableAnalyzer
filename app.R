@@ -22,16 +22,6 @@ library(zoo)
 options(shiny.autoreload = TRUE)
 options(shiny.maxRequestSize = 200 * 1024^2)
 
-is_shinyapps_io <- function() {
-  env_vars <- c("SHINYAPPS_ACCOUNT", "SHINYAPPS_SERVER", "SHINYAPPS_URL")
-  any(nzchar(Sys.getenv(env_vars)))
-}
-
-if (is_shinyapps_io()) {
-  # Ensure long prints are not truncated on shinyapps.io, which may use a smaller max.print.
-  options(max.print = 1e5)
-}
-
 for (f in list.files("R", full.names = TRUE, pattern = "\\.R$")) source(f)
 
 # ---------------------------------------------------------------

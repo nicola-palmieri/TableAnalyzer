@@ -42,7 +42,7 @@ convert_wide_to_long <- function(path, sheet = 1, replicate_col = "Replicate") {
   fixed_cols   <- clean_names[header2 == ""]
   measure_cols <- clean_names[header2 != ""]
   
-  data <- readxl::read_excel(path, sheet = sheet, skip = 2, col_names = clean_names)
+  data <- readxl::read_excel(path, sheet = sheet, skip = 2, col_names = clean_names, guess_max = 1000000)
   
   data_long <- data |>
     tidyr::pivot_longer(

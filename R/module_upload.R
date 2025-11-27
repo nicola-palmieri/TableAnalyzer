@@ -253,7 +253,7 @@ upload_server <- function(id) {
         return()
       }
 
-      long_result <- safe_call(readxl::read_excel, path, sheet = input$sheet)
+      long_result <- safe_call(readxl::read_excel, path, sheet = input$sheet, guess_max = 1000000)
       if (!handle_safe_result(
         long_result,
         "❌ Error loading sheet",
