@@ -5,18 +5,8 @@
 pairwise_correlation_visualize_ggpairs_ui <- function(id) {
   ns <- NS(id)
   tagList(
-    subplot_size_ui(
-      ns,
-      width_value = 800,
-      height_value = 600,
-      width_help = "Set the width in pixels for each panel of the correlation matrix.",
-      height_help = "Set the height in pixels for each panel of the correlation matrix."
-    ),
-    plot_grid_ui(
-      id = ns("plot_grid"),
-      rows_help = "Choose how many rows of panels to use when multiple strata are plotted.",
-      cols_help = "Choose how many columns of panels to use when multiple strata are plotted."
-    ),
+    uiOutput(ns("size_controls")),
+    uiOutput(ns("grid_controls")),
     fluidRow(
       column(6, add_color_customization_ui(ns, multi_group = TRUE)),
       column(6, base_size_ui(
@@ -71,6 +61,25 @@ pairwise_correlation_visualize_ggpairs_server <- function(
     )
     
     grid <- plot_grid_server("plot_grid")
+
+    output$size_controls <- renderUI({
+      subplot_size_ui(
+        ns,
+        width_value = 800,
+        height_value = 600,
+        width_help = "Set the width in pixels for each panel of the correlation matrix.",
+        height_help = "Set the height in pixels for each panel of the correlation matrix."
+      )
+    })
+
+    output$grid_controls <- renderUI({
+      if (is.null(group_var())) return(NULL)
+      plot_grid_ui(
+        id = ns("plot_grid"),
+        rows_help = "Choose how many rows of panels to use when multiple strata are plotted.",
+        cols_help = "Choose how many columns of panels to use when multiple strata are plotted."
+      )
+    })
     base_size <- base_size_server(input = input, default = 11)
     
     # ---- Unified state() -----------------------------------------------------
@@ -208,7 +217,8 @@ pairwise_correlation_visualize_ggpairs_server <- function(
         warning = val$message,
         defaults = defaults,
         plot_w = s$plot_w,
-        plot_h = s$plot_h
+        plot_h = s$plot_h,
+        apply_id = isolate(apply_trigger())
       )
     }, ignoreNULL = TRUE, ignoreInit = TRUE)
 
@@ -260,7 +270,11 @@ pairwise_correlation_visualize_ggpairs_server <- function(
       }),
       width = reactive(plot_dimensions()$width),
       height = reactive(plot_dimensions()$height),
-      dimensions = reactive(plot_dimensions())
+      dimensions = reactive(plot_dimensions()),
+      apply_id = reactive({
+        info <- plot_info()
+        if (is.null(info)) NULL else info$apply_id
+      })
     )
   })
 }
