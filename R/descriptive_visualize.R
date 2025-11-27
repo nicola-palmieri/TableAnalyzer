@@ -17,10 +17,7 @@ visualize_descriptive_ui <- function(id) {
           choices = c(
             "Categorical barplots" = "categorical",
             "Numeric boxplots"     = "boxplots",
-            "Numeric histograms"   = "histograms",
-            "CV (%)"               = "cv",
-            "Outlier counts"       = "outliers",
-            "Missingness (%)"      = "missing"
+            "Numeric histograms"   = "histograms"
           ),
           selected = "categorical"
         ),
@@ -53,9 +50,6 @@ visualize_descriptive_server <- function(id, filtered_data, descriptive_summary)
     visualize_categorical_barplots_server("categorical", filtered_data, descriptive_summary)
     visualize_numeric_boxplots_server("boxplots", filtered_data, descriptive_summary)
     visualize_numeric_histograms_server("histograms", filtered_data, descriptive_summary)
-    visualize_cv_server("cv", filtered_data, descriptive_summary)
-    visualize_outliers_server("outliers", filtered_data, descriptive_summary)
-    visualize_missing_server("missing", filtered_data, descriptive_summary)
     
     # ---- SUB-CONTROLS UI ----
     output$sub_controls <- renderUI({
@@ -71,18 +65,6 @@ visualize_descriptive_server <- function(id, filtered_data, descriptive_summary)
         conditionalPanel(
           condition = sprintf("input['%s'] == 'histograms'", ns("plot_type")),
           visualize_numeric_histograms_ui(ns("histograms"))
-        ),
-        conditionalPanel(
-          condition = sprintf("input['%s'] == 'cv'", ns("plot_type")),
-          visualize_cv_ui(ns("cv"))
-        ),
-        conditionalPanel(
-          condition = sprintf("input['%s'] == 'outliers'", ns("plot_type")),
-          visualize_outliers_ui(ns("outliers"))
-        ),
-        conditionalPanel(
-          condition = sprintf("input['%s'] == 'missing'", ns("plot_type")),
-          visualize_missing_ui(ns("missing"))
         )
       )
     })
@@ -101,21 +83,8 @@ visualize_descriptive_server <- function(id, filtered_data, descriptive_summary)
         conditionalPanel(
           condition = sprintf("input['%s'] == 'histograms'", ns("plot_type")),
           visualize_numeric_histograms_plot_ui(ns("histograms"))
-        ),
-        conditionalPanel(
-          condition = sprintf("input['%s'] == 'cv'", ns("plot_type")),
-          visualize_cv_plot_ui(ns("cv"))
-        ),
-        conditionalPanel(
-          condition = sprintf("input['%s'] == 'outliers'", ns("plot_type")),
-          visualize_outliers_plot_ui(ns("outliers"))
-        ),
-        conditionalPanel(
-          condition = sprintf("input['%s'] == 'missing'", ns("plot_type")),
-          visualize_missing_plot_ui(ns("missing"))
         )
       )
     })
   })
 }
-
