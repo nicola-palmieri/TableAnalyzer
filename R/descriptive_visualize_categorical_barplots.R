@@ -296,6 +296,13 @@ build_descriptive_categorical_plot <- function(df,
     cols_to_use <- c(var, group_col)
     cols_to_use <- cols_to_use[cols_to_use %in% names(df)]
     var_data <- df[, cols_to_use, drop = FALSE]
+
+    # If grouping column is missing (e.g., strat var not in filtered data), drop grouping
+    if (!is.null(group_col) && !group_col %in% names(var_data)) {
+      group_col <- NULL
+      cols_to_use <- var
+      var_data <- df[, cols_to_use, drop = FALSE]
+    }
     
     var_data[[var]] <- as.character(var_data[[var]])
     keep <- !is.na(var_data[[var]]) & trimws(var_data[[var]]) != ""

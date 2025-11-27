@@ -93,7 +93,6 @@ descriptive_server <- function(id, filtered_data) {
         }
         
         local_data <- droplevels(local_data)
-        selected_vars <- unique(c(selected_vars, group_var))
       }
       
       # -----------------------------
@@ -104,14 +103,16 @@ descriptive_server <- function(id, filtered_data) {
              "No data available after applying stratification.")
       )
       
-      # Keep only selected variables that exist now
+      # Keep only selected variables (plus stratification column for grouping)
       selected_vars <- intersect(selected_vars, names(local_data))
+      keep_cols <- unique(c(selected_vars, group_var))
+      keep_cols <- intersect(keep_cols, names(local_data))
       validate(
         need(length(selected_vars) > 0,
              "None of the selected variables are present after filtering.")
       )
       
-      local_data <- local_data[, selected_vars, drop = FALSE]
+      local_data <- local_data[, keep_cols, drop = FALSE]
       
       # -----------------------------
       # Validate categorical variables levels
