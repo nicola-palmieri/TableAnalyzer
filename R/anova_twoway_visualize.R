@@ -18,7 +18,8 @@ visualize_twoway_ui <- function(id) {
           label = "Select visualization type",
           choices = c(
             "Lineplots (mean ± SE)" = "lineplot_mean_se",
-            "Barplots (mean ± SE)"  = "barplot_mean_se"
+            "Barplots (mean ± SE)"  = "barplot_mean_se",
+            "Boxplots"              = "boxplot"
           ),
           selected = "lineplot_mean_se"
         ),
@@ -294,6 +295,14 @@ visualize_twoway_server <- function(id, filtered_data, model_info) {
           line_colors      = custom_colors(),
           base_size        = base_size(),
           posthoc_all      = info$posthoc,
+          share_y_axis     = input$share_y_axis,
+          common_legend    = use_common_legend,
+          legend_position  = legend_position
+        ),
+        boxplot = plot_anova_boxplot(
+          data, info, layout_inputs,
+          line_colors      = custom_colors(),
+          base_size        = base_size(),
           share_y_axis     = input$share_y_axis,
           common_legend    = use_common_legend,
           legend_position  = legend_position
