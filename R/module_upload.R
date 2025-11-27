@@ -27,7 +27,7 @@ upload_ui <- function(id) {
       uiOutput(ns("file_input")),
       uiOutput(ns("sheet_selector")),
       uiOutput(ns("replicate_col_input")),
-      uiOutput(ns("type_editor_button")),
+      actionButton(ns("open_type_editor"), "Edit column types…"),
       uiOutput(ns("type_editor_modal"))
       
     ),
@@ -200,20 +200,10 @@ upload_server <- function(id) {
     # -----------------------------------------------------------
     observeEvent(input$file, {
       req(input$data_source != "example")
-
-      if (is.null(input$file)) {
-        df(NULL)
-        editable_cols(NULL)
-        output$sheet_selector <- renderUI(NULL)
-        output$preview <- renderDT(data.frame())
-        render_validation("Please upload an Excel file.")
-        return()
-      }
-
       ext <- tolower(tools::file_ext(input$file$name))
       validate(need(ext %in% c("xlsx", "xls", "xlsm"),
                     "❌ Invalid file type. Please upload .xlsx/.xls/.xlsm."))
-
+      
       sheets_result <- safe_call(readxl::excel_sheets, input$file$datapath)
       validate(need(is.null(sheets_result$error), "❌ No readable sheets found in workbook."))
 
@@ -226,7 +216,7 @@ upload_server <- function(id) {
           "Pick the worksheet inside your Excel file that contains the data."
         )
       )
-    }, ignoreInit = TRUE, ignoreNULL = FALSE)
+    }, ignoreInit = TRUE)
     
     # -----------------------------------------------------------
     # 4️⃣ Load selected sheet (handles both long & wide)
@@ -284,14 +274,6 @@ upload_server <- function(id) {
     
     # Which columns are editable
     editable_cols <- reactiveVal(NULL)
-
-    output$type_editor_button <- renderUI({
-      actionButton(
-        ns("open_type_editor"),
-        "Edit column types…",
-        disabled = if (is.null(df())) "disabled" else NULL
-      )
-    })
     
     # Open modal when clicking the button
     observeEvent(input$open_type_editor, {
