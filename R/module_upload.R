@@ -27,7 +27,7 @@ upload_ui <- function(id) {
       uiOutput(ns("file_input")),
       uiOutput(ns("sheet_selector")),
       uiOutput(ns("replicate_col_input")),
-      actionButton(ns("open_type_editor"), "Edit column types…"),
+      actionButton(ns("open_type_editor"), "Edit column types"),
       uiOutput(ns("type_editor_modal"))
       
     ),
