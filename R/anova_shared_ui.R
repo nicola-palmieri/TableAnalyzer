@@ -5,34 +5,25 @@ build_anova_layout_controls <- function(ns, input, info) {
   has_strata <- !is.null(info$strata) && !is.null(info$strata$var)
   n_responses <- if (!is.null(info$responses)) length(info$responses) else 0
 
-  build_grid_section <- function(title, grid_id, row_help, col_help) {
-    tagList(
-      h5(title),
-      plot_grid_ui(
-        id = ns(grid_id),
-        rows_help = row_help,
-        cols_help = col_help
-      )
-    )
-  }
-
   strata_inputs <- if (has_strata) {
-    build_grid_section(
-      title = "Across strata:",
-      grid_id = "strata_grid",
-      row_help = "Set how many rows of plots to use when displaying different strata.",
-      col_help = "Set how many columns of plots to use when displaying different strata."
+    plot_grid_ui(
+      id = ns("strata_grid"),
+      rows_label = sprintf("Rows for strata (%s)", info$strata$var),
+      cols_label = sprintf("Cols for strata (%s)", info$strata$var),
+      rows_help = "Rows of plots when displaying each stratum.",
+      cols_help = "Columns of plots when displaying each stratum."
     )
   } else {
     NULL
   }
 
   response_inputs <- if (!is.null(n_responses) && n_responses > 1) {
-    build_grid_section(
-      title = "Across responses:",
-      grid_id = "response_grid",
-      row_help = "Set the number of plot rows when multiple responses are shown together.",
-      col_help = "Set the number of plot columns when multiple responses are shown together."
+    plot_grid_ui(
+      id = ns("response_grid"),
+      rows_label = sprintf("Rows for responses (n=%d)", n_responses),
+      cols_label = sprintf("Cols for responses (n=%d)", n_responses),
+      rows_help = "Rows of plots when multiple responses are shown together.",
+      cols_help = "Columns of plots when multiple responses are shown together."
     )
   } else {
     NULL
