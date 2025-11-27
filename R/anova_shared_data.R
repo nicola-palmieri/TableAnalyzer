@@ -28,6 +28,7 @@ apply_anova_factor_levels <- function(stats_df, factor1, factor2, order1, order2
   if (!is.null(factor1) && factor1 %in% names(stats_df)) {
     if (!is.null(order1)) {
       stats_df[[factor1]] <- factor(as.character(stats_df[[factor1]]), levels = order1)
+      stats_df <- stats_df[!is.na(stats_df[[factor1]]), , drop = FALSE]
     } else {
       stats_df[[factor1]] <- factor(as.character(stats_df[[factor1]]))
     }
@@ -40,6 +41,7 @@ apply_anova_factor_levels <- function(stats_df, factor1, factor2, order1, order2
       unique(as.character(stats_df[[factor2]]))
     }
     stats_df[[factor2]] <- factor(as.character(stats_df[[factor2]]), levels = levels2)
+    stats_df <- stats_df[!is.na(stats_df[[factor2]]), , drop = FALSE]
   }
 
   stats_df
