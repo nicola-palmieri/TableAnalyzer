@@ -24,7 +24,10 @@ descriptive_ui <- function(id) {
       ),
       hr()
     ),
-    results = tagList(verbatimTextOutput(ns("summary_text")))
+    results = tagList(
+      actionLink(ns("summary_help"), "How to read the summary"),
+      verbatimTextOutput(ns("summary_text"))
+    )
   )
 }
 
@@ -146,7 +149,41 @@ descriptive_server <- function(id, filtered_data) {
     # ------------------------------------------------------------
     output$summary_text <- renderPrint({
       req(summary_data())
-      print_summary_sections(summary_data()$summary)
+      digits <- input$digits %||% 3
+      print_summary_sections(summary_data()$summary, digits = digits)
+    })
+
+    observeEvent(input$summary_help, {
+      showModal(
+        modalDialog(
+          title = "How to read these numbers",
+          easyClose = TRUE,
+          size = "m",
+          tagList(
+            strong("Variable type: factor"),
+            tags$ul(
+              tags$li("n_unique: how many categories."),
+              tags$li("n_singletons: categories seen only once."),
+              tags$li("top_counts: most common categories with their counts.")
+            ),
+            br(),
+            strong("Variable type: numeric"),
+            tags$ul(
+              tags$li("mean, sd, min/max, quartiles, missing: basic descriptive stats.")
+            ),
+            br(),
+            strong("Numeric variables summary"),
+            tags$ul(
+              tags$li("variable: column name (plus group column if you stratified)."),
+              tags$li("cv: variability as % of the mean (higher = more spread)."),
+              tags$li("outliers: number of values outside the usual range (beyond 1.5×IQR)."),
+              tags$li("distribution: best-fitting curve (Normal, Log-normal, Gamma, Weibull, Exponential)."),
+              tags$li("skewness: whether values lean left (<0) or right (>0)."),
+              tags$li("kurtosis: tail heaviness (>0 = heavier tails than Normal).")
+            )
+          )
+        )
+      )
     })
     
     # ------------------------------------------------------------
@@ -159,7 +196,8 @@ descriptive_server <- function(id, filtered_data) {
         req(results)
         sink(file)
         on.exit(sink(), add = TRUE)
-        print_summary_sections(results$summary)
+        digits <- input$digits %||% 3
+        print_summary_sections(results$summary, digits = digits)
       }
     )
     
@@ -230,6 +268,10 @@ compute_descriptive_summary <- function(data, group_var = NULL) {
   skim_full <- skimr::skim_with(
     factor = skimr::sfl(
       n_unique   = skimr::n_unique,
+      n_singletons = function(x) {
+        tab <- table(x, useNA = "ifany")
+        sum(tab == 1)
+      },
       top_counts = top_counts_full
     ),
     append = FALSE
@@ -341,7 +383,9 @@ safe_fitdist <- function(values, dist_name) {
 }
 
 # ---- Shared printing ----
-print_summary_sections <- function(results) {
+print_summary_sections <- function(results, digits = 3) {
+  old_opts <- options(digits = digits)
+  on.exit(options(old_opts), add = TRUE)
   # 1) Print skim (shortened headers for variable types)
   skim_lines <- capture.output(print(results$skim))
   skim_lines <- sub(
@@ -389,7 +433,11 @@ print_summary_sections <- function(results) {
     dplyr::full_join(dist_long, by = join_keys) |>
     dplyr::full_join(skew_long, by = join_keys) |>
     dplyr::full_join(kurt_long, by = join_keys) |>
-    dplyr::mutate(cv = round(cv, 2))
+    dplyr::mutate(
+      cv = round(cv, 2),
+      skewness = round(skewness, 3),
+      kurtosis = round(kurtosis, 3)
+    )
 
   numeric_order <- NULL
   if (is.data.frame(results$skim) && all(c("skim_type", "skim_variable") %in% names(results$skim))) {
@@ -421,10 +469,6 @@ print_summary_sections <- function(results) {
   )
   final_df <- merged[, final_cols, drop = FALSE]
   print(as.data.frame(final_df), row.names = FALSE)
-
-  cat("\nInterpretation:\n")
-  cat("  • outliers = # beyond 1.5×IQR\n")
-  cat("  • distribution = best fit (AIC) among Normal/Log-normal/Gamma/Weibull/Exponential\n")
 
   invisible(NULL)
 }

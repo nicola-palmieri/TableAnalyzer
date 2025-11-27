@@ -277,7 +277,7 @@ ggpairs_server <- function(id, data_reactive) {
           if (is.null(mat)) {
             cat("No data available for this stratum.\n\n")
           } else {
-            print(round(mat, 3))
+            print(round(mat, 2))
             cat("\n")
           }
         }

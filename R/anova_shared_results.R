@@ -34,10 +34,14 @@ prepare_anova_outputs <- function(model_obj, factor_names) {
   p_col <- grep("^Pr", names(anova_df), value = TRUE)
   p_col <- if (length(p_col) > 0) p_col[1] else NULL
   raw_p <- if (!is.null(p_col)) anova_df[[p_col]] else rep(NA_real_, nrow(anova_df))
-  
+
   for (col in names(anova_df)) {
     if (is.numeric(anova_df[[col]])) {
-      anova_df[[col]] <- round(anova_df[[col]], 2)
+      # Keep SumSq/MeanSq to 3 decimals, F to 3, leave p unrounded for label formatting
+      if (!is.null(p_col) && col == p_col) {
+        next
+      }
+      anova_df[[col]] <- round(anova_df[[col]], 4)
     }
   }
   
@@ -149,9 +153,11 @@ prepare_anova_outputs <- function(model_obj, factor_names) {
     numeric_cols <- names(posthoc_combined)[sapply(posthoc_combined, is.numeric)]
     if (length(numeric_cols) > 0) {
       for (col in numeric_cols) {
-        posthoc_combined[[col]] <- round(posthoc_combined[[col]], 2)
-      }
+      # keep effect sizes/SE/df at 4 decimals; leave p-value for formatter
+      if (tolower(col) %in% c("p.value", "p.value.")) next
+      posthoc_combined[[col]] <- round(posthoc_combined[[col]], 4)
     }
+  }
     
     if ("p.value" %in% names(posthoc_combined)) {
       raw_posthoc_p <- posthoc_combined$p.value
@@ -385,8 +391,8 @@ write_anova_docx <- function(content, file, response_name = NULL, stratum_label 
 
   combined_anova <- combined_anova %>%
     mutate(
-      SumSq = round(SumSq, 3),
-      Fvalue = round(Fvalue, 3)
+      SumSq = round(SumSq, 4),
+      Fvalue = round(Fvalue, 4)
     ) %>%
     format_p("PrF") %>%
     arrange(Response, Stratum, Term)
@@ -485,4 +491,3 @@ write_anova_docx <- function(content, file, response_name = NULL, stratum_label 
   doc <- add_blank_line(doc, "Significance level: p < 0.05 (bold values).")
   print(doc, target = file)
 }
-

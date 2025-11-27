@@ -410,7 +410,7 @@ write_lm_docx <- function(model, file, subtitle = NULL) {
 
   # Round numeric columns and format p-values
   for (col in names(anova_tbl)) {
-    if (is.numeric(anova_tbl[[col]])) anova_tbl[[col]] <- round(anova_tbl[[col]], 3)
+    if (is.numeric(anova_tbl[[col]])) anova_tbl[[col]] <- round(anova_tbl[[col]], 4)
   }
   p_col <- grep("^Pr", names(anova_tbl), value = TRUE)
   if (length(p_col) > 0) {
@@ -434,8 +434,8 @@ write_lm_docx <- function(model, file, subtitle = NULL) {
       rand_df <- rand_df[, c("grp", "var1", "var2", "vcov", "sdcor"), drop = FALSE]
       rand_df$var2 <- ifelse(is.na(rand_df$var2), "-", rand_df$var2)
       names(rand_df) <- c("Grouping", "Effect 1", "Effect 2", "Variance", "Std. Dev.")
-      rand_df$Variance <- round(rand_df$Variance, 3)
-      rand_df$`Std. Dev.` <- round(rand_df$`Std. Dev.`, 3)
+      rand_df$Variance <- round(rand_df$Variance, 4)
+      rand_df$`Std. Dev.` <- round(rand_df$`Std. Dev.`, 4)
       ft_rand <- format_table(rand_df, bold_p = FALSE)
       doc <- body_add_flextable(doc, ft_rand)
     } else {
@@ -452,7 +452,7 @@ write_lm_docx <- function(model, file, subtitle = NULL) {
       doc <- add_blank_line(doc)
       doc <- body_add_fpar(doc, fpar(ftext("Intraclass Correlation (ICC)", prop = fp_text(bold = TRUE))))
       doc <- add_blank_line(doc)
-      icc_df$ICC <- round(icc_df$ICC, 3)
+      icc_df$ICC <- round(icc_df$ICC, 4)
       ft_icc <- format_table(icc_df, bold_p = FALSE)
       doc <- body_add_flextable(doc, ft_icc)
     }
@@ -487,4 +487,3 @@ write_lm_docx <- function(model, file, subtitle = NULL) {
   # Save file
   print(doc, target = file)
 }
-
