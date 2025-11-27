@@ -62,6 +62,11 @@ visualize_server <- function(id, filtered_data, model_fit) {
         ui = function(ns) visualize_twoway_ui(ns("twoway")),
         server = function() visualize_twoway_server("twoway", filtered_data, model_info)
       ),
+      lm = list(
+        id = "lm",
+        ui = function(ns) visualize_lm_ui(ns("lm")),
+        server = function() visualize_lm_server("lm", filtered_data, model_info)
+      ),
       pairs = list(
         id = "ggpairs",
         ui = function(ns) visualize_ggpairs_ui(ns("ggpairs")),
