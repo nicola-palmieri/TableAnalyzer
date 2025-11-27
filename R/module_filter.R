@@ -11,6 +11,7 @@ filter_ui <- function(id) {
       p("Select the columns to focus on and adjust the filters to refine the dataset for analysis."),
       hr(),
       uiOutput(ns("column_selector")),
+      uiOutput(ns("na_controls")),
       uiOutput(ns("filter_widgets"))
     ),
     mainPanel(
@@ -122,6 +123,33 @@ filter_server <- function(id, uploaded_data) {
       )
     })
 
+    # --- 1b. NA handling controls ---
+    output$na_controls <- renderUI({
+      data <- req(df())
+      cols <- names(data)
+      tagList(
+        checkboxInput(
+          ns("drop_na_rows"),
+          label = "Drop rows with any NA in selected columns",
+          value = FALSE
+        ),
+        conditionalPanel(
+          condition = sprintf("input['%s'] === true", ns("drop_na_rows")),
+          with_help_tooltip(
+            selectInput(
+              ns("na_columns"),
+              label = "Columns to check for NA",
+              choices = cols,
+              selected = cols,
+              multiple = TRUE
+            ),
+            "Rows containing at least one NA in these columns will be removed."
+          )
+        ),
+        tags$hr()
+      )
+    })
+
     # --- 2. Dynamic filter widgets ---
     output$filter_widgets <- renderUI({
       cols <- req(input$columns)
@@ -132,8 +160,17 @@ filter_server <- function(id, uploaded_data) {
     filtered_df <- reactive({
       data <- req(df())
       cols <- input$columns
-      if (!length(cols)) return(droplevels(data))
-      filtered <- Reduce(filter_column, cols, init = data, right = FALSE)
+      filtered <- data
+      if (length(cols)) {
+        filtered <- Reduce(filter_column, cols, init = data, right = FALSE)
+      }
+      if (isTRUE(input$drop_na_rows)) {
+        na_cols <- input$na_columns %||% character(0)
+        na_cols <- intersect(na_cols, names(filtered))
+        if (length(na_cols) > 0) {
+          filtered <- filtered[stats::complete.cases(filtered[, na_cols, drop = FALSE]), , drop = FALSE]
+        }
+      }
       droplevels(filtered)
     })
 
