@@ -15,121 +15,49 @@ plot_anova_lineplot_meanse <- function(data,
   data <- context$data
   factor1 <- context$factor1
   factor2 <- context$factor2
-  
+
   allowed_positions <- c("bottom", "top", "left", "right")
   legend_position_value <- if (!is.null(legend_position) && legend_position %in% allowed_positions) {
     legend_position
   } else {
     "bottom"
   }
-  
+
   shared_y_limits <- if (isTRUE(share_y_axis)) {
     compute_lineplot_shared_limits(context, data, factor1, factor2)
   } else {
     NULL
   }
-  
-  response_plots <- list()
-  strata_panel_count <- context$initial_strata_panels
-  
-  for (resp in context$responses) {
-    if (context$has_strata && !is.null(context$strat_var) && context$strat_var %in% names(data)) {
-      stratum_stats <- list()
-      y_values <- c()
-      
-      for (stratum in context$strata_levels) {
-        subset_rows <- !is.na(data[[context$strat_var]]) & data[[context$strat_var]] == stratum
-        subset_data <- data[subset_rows, , drop = FALSE]
-        if (nrow(subset_data) == 0) {
-          next
-        }
-        
-        stats_df <- anova_summarise_stats(subset_data, resp, factor1, factor2)
-        if (nrow(stats_df) == 0) {
-          next
-        }
-        
-        stats_df <- apply_anova_factor_levels(stats_df, factor1, factor2, context$order1, context$order2)
-        y_values <- c(y_values, stats_df$mean - stats_df$se, stats_df$mean + stats_df$se)
-        stratum_stats[[stratum]] <- list(
-          stats = stats_df,
-          raw = prepare_lineplot_raw_data(subset_data, resp, factor1, factor2)
-        )
-      }
-      
-      if (length(stratum_stats) == 0) {
-        next
-      }
-      
-      y_limits <- range(y_values, na.rm = TRUE)
-      if (!all(is.finite(y_limits))) {
-        y_limits <- NULL
-      }
-      y_limits_to_use <- if (!is.null(shared_y_limits)) shared_y_limits else y_limits
-      
-      strata_panel_count <- max(strata_panel_count, length(stratum_stats))
-      
-      strata_plot_list <- lapply(names(stratum_stats), function(stratum_name) {
-        entry <- stratum_stats[[stratum_name]]
-        build_line_plot_panel(
-          stats_df = entry$stats,
-          title_text = stratum_name,
-          y_limits = y_limits_to_use,
-          factor1 = factor1,
-          factor2 = factor2,
-          line_colors = line_colors,
-          base_size = base_size,
-          raw_data = entry$raw,
-          response_var = resp,
-          show_lines = show_lines,
-          show_jitter = show_jitter,
-          use_dodge = use_dodge
-        )
-      })
 
-      combined <- patchwork::wrap_plots(
-        plotlist = strata_plot_list,
-        nrow = context$strata_layout$nrow,
-        ncol = context$strata_layout$ncol
-      )
-      
-      if (isTRUE(common_legend)) {
-        combined <- collect_guides_safe(combined)
-      }
-      
-      response_plots[[resp]] <- combined
-    } else {
-      stats_df <- anova_summarise_stats(data, resp, factor1, factor2)
-      if (nrow(stats_df) == 0) {
-        next
-      }
-      
-      stats_df <- apply_anova_factor_levels(stats_df, factor1, factor2, context$order1, context$order2)
-      y_values <- c(stats_df$mean - stats_df$se, stats_df$mean + stats_df$se)
-      y_limits <- range(y_values, na.rm = TRUE)
-      if (!all(is.finite(y_limits))) {
-        y_limits <- NULL
-      }
-      
-      y_limits_to_use <- if (!is.null(shared_y_limits)) shared_y_limits else y_limits
-      
-      response_plots[[resp]] <- build_line_plot_panel(
-        stats_df = stats_df,
-        title_text = "",
-        y_limits = y_limits_to_use,
+  response_results <- lapply(
+    context$responses,
+    function(resp) {
+      build_response_lineplot(
+        resp = resp,
+        context = context,
+        data = data,
         factor1 = factor1,
         factor2 = factor2,
         line_colors = line_colors,
         base_size = base_size,
-        raw_data = prepare_lineplot_raw_data(data, resp, factor1, factor2),
-        response_var = resp,
         show_lines = show_lines,
         show_jitter = show_jitter,
-        use_dodge = use_dodge
+        use_dodge = use_dodge,
+        shared_y_limits = shared_y_limits,
+        common_legend = common_legend
       )
     }
-  }
-  
+  )
+
+  strata_panel_count <- max(
+    context$initial_strata_panels,
+    vapply(response_results, function(x) if (is.null(x$strata_panels)) 0L else x$strata_panels, integer(1))
+  )
+
+  response_plots <- lapply(response_results, `[[`, "plot")
+  names(response_plots) <- context$responses
+  response_plots <- Filter(Negate(is.null), response_plots)
+
   finalize_anova_plot_result(
     response_plots = response_plots,
     context = context,
@@ -169,23 +97,186 @@ compute_lineplot_shared_limits <- function(context, data, factor1, factor2) {
   combined
 }
 
+build_response_lineplot <- function(resp,
+                                    context,
+                                    data,
+                                    factor1,
+                                    factor2,
+                                    line_colors,
+                                    base_size,
+                                    show_lines,
+                                    show_jitter,
+                                    use_dodge,
+                                    shared_y_limits,
+                                    common_legend) {
+  has_strata <- context$has_strata && !is.null(context$strat_var) && context$strat_var %in% names(data)
+  if (has_strata) {
+    return(build_stratified_lineplot(
+      resp = resp,
+      context = context,
+      data = data,
+      factor1 = factor1,
+      factor2 = factor2,
+      line_colors = line_colors,
+      base_size = base_size,
+      show_lines = show_lines,
+      show_jitter = show_jitter,
+      use_dodge = use_dodge,
+      shared_y_limits = shared_y_limits,
+      common_legend = common_legend
+    ))
+  }
+
+  build_unstratified_lineplot(
+    resp = resp,
+    context = context,
+    data = data,
+    factor1 = factor1,
+    factor2 = factor2,
+    line_colors = line_colors,
+    base_size = base_size,
+    show_lines = show_lines,
+    show_jitter = show_jitter,
+    use_dodge = use_dodge,
+    shared_y_limits = shared_y_limits
+  )
+}
+
+build_stratified_lineplot <- function(resp,
+                                      context,
+                                      data,
+                                      factor1,
+                                      factor2,
+                                      line_colors,
+                                      base_size,
+                                      show_lines,
+                                      show_jitter,
+                                      use_dodge,
+                                      shared_y_limits,
+                                      common_legend) {
+  stratum_stats <- list()
+  y_values <- c()
+
+  for (stratum in context$strata_levels) {
+    subset_rows <- !is.na(data[[context$strat_var]]) & data[[context$strat_var]] == stratum
+    subset_data <- data[subset_rows, , drop = FALSE]
+    if (nrow(subset_data) == 0) {
+      next
+    }
+
+    stats_df <- anova_summarise_stats(subset_data, resp, factor1, factor2)
+    if (nrow(stats_df) == 0) {
+      next
+    }
+
+    stats_df <- apply_anova_factor_levels(stats_df, factor1, factor2, context$order1, context$order2)
+    y_values <- c(y_values, stats_df$mean - stats_df$se, stats_df$mean + stats_df$se)
+    stratum_stats[[stratum]] <- list(
+      stats = stats_df,
+      raw = prepare_lineplot_raw_data(subset_data, resp, factor1, factor2)
+    )
+  }
+
+  if (length(stratum_stats) == 0) {
+    return(list(plot = NULL, strata_panels = 0L))
+  }
+
+  y_limits <- range(y_values, na.rm = TRUE)
+  if (!all(is.finite(y_limits))) {
+    y_limits <- NULL
+  }
+  y_limits_to_use <- if (!is.null(shared_y_limits)) shared_y_limits else y_limits
+
+  strata_plot_list <- lapply(names(stratum_stats), function(stratum_name) {
+    entry <- stratum_stats[[stratum_name]]
+    build_line_plot_panel(
+      stats_df = entry$stats,
+      title_text = stratum_name,
+      y_limits = y_limits_to_use,
+      factor1 = factor1,
+      factor2 = factor2,
+      line_colors = line_colors,
+      base_size = base_size,
+      raw_data = entry$raw,
+      response_var = resp,
+      show_lines = show_lines,
+      show_jitter = show_jitter,
+      use_dodge = use_dodge
+    )
+  })
+
+  combined <- patchwork::wrap_plots(
+    plotlist = strata_plot_list,
+    nrow = context$strata_layout$nrow,
+    ncol = context$strata_layout$ncol
+  )
+
+  if (isTRUE(common_legend)) {
+    combined <- collect_guides_safe(combined)
+  }
+
+  list(plot = combined, strata_panels = length(stratum_stats))
+}
+
+build_unstratified_lineplot <- function(resp,
+                                        context,
+                                        data,
+                                        factor1,
+                                        factor2,
+                                        line_colors,
+                                        base_size,
+                                        show_lines,
+                                        show_jitter,
+                                        use_dodge,
+                                        shared_y_limits) {
+  stats_df <- anova_summarise_stats(data, resp, factor1, factor2)
+  if (nrow(stats_df) == 0) {
+    return(list(plot = NULL, strata_panels = 0L))
+  }
+
+  stats_df <- apply_anova_factor_levels(stats_df, factor1, factor2, context$order1, context$order2)
+  y_values <- c(stats_df$mean - stats_df$se, stats_df$mean + stats_df$se)
+  y_limits <- range(y_values, na.rm = TRUE)
+  if (!all(is.finite(y_limits))) {
+    y_limits <- NULL
+  }
+
+  y_limits_to_use <- if (!is.null(shared_y_limits)) shared_y_limits else y_limits
+
+  list(
+    plot = build_line_plot_panel(
+      stats_df = stats_df,
+      title_text = "",
+      y_limits = y_limits_to_use,
+      factor1 = factor1,
+      factor2 = factor2,
+      line_colors = line_colors,
+      base_size = base_size,
+      raw_data = prepare_lineplot_raw_data(data, resp, factor1, factor2),
+      response_var = resp,
+      show_lines = show_lines,
+      show_jitter = show_jitter,
+      use_dodge = use_dodge
+    ),
+    strata_panels = 0L
+  )
+}
 
 prepare_lineplot_raw_data <- function(df, response_var, factor1, factor2 = NULL) {
   if (is.null(df) || is.null(response_var) || is.null(factor1)) return(NULL)
   if (!response_var %in% names(df) || !factor1 %in% names(df)) return(NULL)
-  
+
   cols <- c(factor1, factor2, response_var)
   cols <- cols[!vapply(cols, is.null, FUN.VALUE = logical(1), USE.NAMES = FALSE)]
   cols <- unique(cols)
   cols <- cols[cols %in% names(df)]
   if (!response_var %in% cols || !factor1 %in% cols) return(NULL)
-  
+
   raw_subset <- df[, cols, drop = FALSE]
   raw_subset <- raw_subset[!is.na(raw_subset[[response_var]]), , drop = FALSE]
   if (nrow(raw_subset) == 0) return(NULL)
   raw_subset
 }
-
 
 build_line_plot_panel <- function(stats_df,
                                   title_text,
@@ -348,8 +439,4 @@ build_line_plot_panel <- function(stats_df,
     p
   }
 }
-
-
-
-
 

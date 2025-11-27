@@ -239,18 +239,6 @@ visualize_twoway_server <- function(id, filtered_data, model_info) {
     })
     
     # ------------------------------------------------------------------
-    # Layout helper (new core fix)
-    # ------------------------------------------------------------------
-    resolve_grid_layout <- function(n_items, rows_value, cols_value) {
-      layout <- list(
-        nrow = rows_value,
-        ncol = cols_value
-      )
-      adjusted <- adjust_grid_layout(n_items, layout)
-      list(rows = adjusted$nrow, cols = adjusted$ncol)
-    }
-    
-    # ------------------------------------------------------------------
     # APPLY BUTTON
     # ------------------------------------------------------------------
     observeEvent(input$apply_plot, {
@@ -275,23 +263,11 @@ visualize_twoway_server <- function(id, filtered_data, model_info) {
       n_responses <- if (!is.null(responses) && length(responses) > 0L) length(responses) else 1L
       
       # Final grid layouts
-      strata_layout <- resolve_grid_layout(
-        n_items = n_strata,
-        rows_value = strata_grid$rows(),
-        cols_value = strata_grid$cols()
-      )
-      
-      response_layout <- resolve_grid_layout(
-        n_items = n_responses,
-        rows_value = response_grid$rows(),
-        cols_value = response_grid$cols()
-      )
-      
       layout_inputs <- list(
-        strata_rows = strata_layout$rows,
-        strata_cols = strata_layout$cols,
-        resp_rows   = response_layout$rows,
-        resp_cols   = response_layout$cols
+        strata_rows = strata_grid$rows(),
+        strata_cols = strata_grid$cols(),
+        resp_rows   = response_grid$rows(),
+        resp_cols   = response_grid$cols()
       )
       
       # Legend handling
