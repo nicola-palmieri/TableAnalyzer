@@ -58,33 +58,63 @@ visualize_pca_ui <- function(id, filtered_data = NULL) {
         ),
         "Pick how the PCA results should be displayed."
       ),
-      with_help_tooltip(
-        uiOutput(ns("pca_color_ui")),
-        "Colour the samples using a grouping variable to spot patterns. Variables with more than 10 categories are not allowed."
+      fluidRow(
+        column(
+          6,
+          with_help_tooltip(
+            uiOutput(ns("pca_color_ui")),
+            "Colour the samples using a grouping variable to spot patterns. Variables with more than 10 categories are not allowed."
+          )
+        ),
+        column(
+          6,
+          conditionalPanel(
+            condition = sprintf("input['%s'] !== 'None'", ns("pca_color")),
+            with_help_tooltip(
+              div(
+                style = "padding-top: 24px;",
+                checkboxInput(
+                  ns("show_ellipses"),
+                  label = "Show group ellipses",
+                  value = FALSE
+                )
+              ),
+              "Draw confidence ellipses around each colour group."
+            )
+          )
+        )
+      ),
+      fluidRow(
+        column(
+          6,
+          with_help_tooltip(
+            selectInput(
+              ns("pca_label"),
+              label = "Label points by",
+              choices = all_choices,
+              selected = "None"
+            ),
+            "Add text labels from a column to identify each sample."
+          )
+        ),
+        column(
+          6,
+          with_help_tooltip(
+            numericInput(
+              ns("pca_label_size"),
+              label = "Label size",
+              value = 2,
+              min = 0.5,
+              max = 6,
+              step = 0.5
+            ),
+            "Control how large the text labels assigned to points appear on the plot."
+          )
+        )
       ),
       with_help_tooltip(
         uiOutput(ns("pca_shape_ui")),
         "Change the point shapes using a grouping variable for extra contrast. Variables with more than 10 categories are not allowed."
-      ),
-      with_help_tooltip(
-        selectInput(
-          ns("pca_label"),
-          label = "Label points by",
-          choices = all_choices,
-          selected = "None"
-        ),
-        "Add text labels from a column to identify each sample."
-      ),
-      with_help_tooltip(
-        numericInput(
-          ns("pca_label_size"),
-          label = "Label size",
-          value = 2,
-          min = 0.5,
-          max = 6,
-          step = 0.5
-        ),
-        "Control how large the text labels assigned to points appear on the plot."
       ),
       with_help_tooltip(
         selectInput(
@@ -96,21 +126,32 @@ visualize_pca_ui <- function(id, filtered_data = NULL) {
         "Split the plot into small multiples based on a grouping variable."
       ),
       uiOutput(ns("layout_controls")),
-      with_help_tooltip(
-        checkboxInput(
-          ns("show_loadings"),
-          label = "Show loadings",
-          value = FALSE
+      fluidRow(
+        column(
+          6,
+          with_help_tooltip(
+            div(
+              style = "padding-top: 24px;",
+              checkboxInput(
+                ns("show_loadings"),
+                label = "Show loadings",
+                value = FALSE
+              )
+            ),
+            "Display arrows that show how each original variable contributes to the components."
+          )
         ),
-        "Display arrows that show how each original variable contributes to the components."
-      ),
-      with_help_tooltip(
-        numericInput(
-          ns("loading_scale"),
-          label = "Loading arrow scale",
-          value = 1.2, min = 0.1, max = 5, step = 0.1
-        ),
-        "Stretch or shrink the loading arrows to make them easier to read."
+        column(
+          6,
+          with_help_tooltip(
+            numericInput(
+              ns("loading_scale"),
+              label = "Loading arrow scale",
+              value = 1.2, min = 0.1, max = 5, step = 0.1
+            ),
+            "Stretch or shrink the loading arrows to make them easier to read."
+          )
+        )
       ),
       fluidRow(
         column(
@@ -529,6 +570,7 @@ visualize_pca_server <- function(id, filtered_data, model_fit) {
           label_var = local_label,
           label_size = label_size,
           show_loadings = show_loadings,
+          show_ellipses = isTRUE(input$show_ellipses),
           loading_scale = loading_scale,
           custom_colors = custom_colors(),
           subset_rows = idx,
@@ -663,7 +705,7 @@ visualize_pca_server <- function(id, filtered_data, model_fit) {
 
 build_pca_biplot <- function(pca_obj, data, color_var = NULL, shape_var = NULL,
                              label_var = NULL, label_size = 2,
-                             show_loadings = FALSE, loading_scale = 1.2,
+                             show_loadings = FALSE, show_ellipses = FALSE, loading_scale = 1.2,
                              custom_colors = NULL, subset_rows = NULL,
                              color_levels = NULL, x_limits = NULL,
                              y_limits = NULL, base_size = 13) {
@@ -740,6 +782,10 @@ build_pca_biplot <- function(pca_obj, data, color_var = NULL, shape_var = NULL,
       axis.ticks = element_line(color = "#9ca3af"),
       legend.position = "right"
     )
+
+  if (!is.null(color_var) && isTRUE(show_ellipses)) {
+    g <- g + stat_ellipse(level = 0.68, linewidth = 0.6, alpha = 0.6)
+  }
   
   if (!is.null(color_var)) {
     palette <- resolve_palette_for_levels(levels(plot_data[[color_var]]), custom = custom_colors)
