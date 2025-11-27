@@ -11,6 +11,199 @@ compact_chr <- function(x) {
   x
 }
 
+# --------------------------------------------------------------
+# Combined LM/LMM docx writer (aligned with ANOVA output layout)
+# --------------------------------------------------------------
+write_lm_docx_combined <- function(flat_models, file) {
+  if (length(flat_models) == 0) stop("No models provided for export.")
+
+  add_blank_line <- function(doc, text = "", style = "Normal") {
+    body_add_par(doc, text, style = style)
+  }
+
+  format_p <- function(df, p_col) {
+    if (is.null(p_col) || !p_col %in% names(df)) return(df)
+    p_vals <- as.numeric(df[[p_col]])
+    df[[p_col]] <- ifelse(p_vals < 0.0001, "<0.0001", sprintf("%.4f", p_vals))
+    df
+  }
+
+  format_table <- function(df, p_col = NULL, bold_p = TRUE, header_labels = NULL, merge_cols = NULL) {
+    ft <- flextable(df)
+    if (!is.null(header_labels)) {
+      ft <- set_header_labels(ft, values = header_labels)
+    }
+
+    ft <- fontsize(ft, part = "all", size = 10)
+    ft <- bold(ft, part = "header", bold = TRUE)
+    ft <- color(ft, part = "header", color = "black")
+
+    numeric_cols <- names(df)[sapply(df, is.numeric)]
+    text_cols <- setdiff(ft$col_keys, numeric_cols)
+    if (length(text_cols) > 0) ft <- align(ft, j = text_cols, align = "left", part = "all")
+    if (length(numeric_cols) > 0) {
+      ft <- align(ft, j = numeric_cols, align = "right", part = "all")
+      ft <- colformat_num(ft, j = numeric_cols, digits = 4)
+    }
+
+    ft <- border_remove(ft)
+    black <- fp_border(color = "black", width = 1)
+    ft <- border(ft, part = "header", border.top = black, border.bottom = black)
+
+    if (!is.null(merge_cols)) {
+      ft <- merge_v(ft, j = intersect(merge_cols, ft$col_keys))
+    }
+
+    if ("Stratum" %in% names(df)) {
+      group_cols <- c(if ("Response" %in% names(df)) "Response", "Stratum")
+      strata_factor <- interaction(df[, group_cols, drop = FALSE], drop = TRUE)
+      change_rows <- which(diff(as.numeric(strata_factor)) != 0)
+      if (length(change_rows) > 0) {
+        ft <- border(ft, i = change_rows, part = "body", border.bottom = fp_border(color = "black", width = 0.5))
+      }
+    } else if ("Response" %in% names(df)) {
+      change_rows <- which(diff(as.numeric(factor(df$Response))) != 0)
+      if (length(change_rows) > 0) {
+        ft <- border(ft, i = change_rows, part = "body", border.bottom = fp_border(color = "black", width = 0.5))
+      }
+    }
+
+    if (nrow(df) > 0) {
+      ft <- border(ft, i = nrow(df), part = "body", border.bottom = black)
+    }
+
+    if (bold_p && !is.null(p_col) && p_col %in% ft$col_keys) {
+      sig_rows <- suppressWarnings(which(as.numeric(df[[p_col]]) < 0.05))
+      lt_rows <- grep("^<", df[[p_col]])
+      sig_rows <- unique(c(sig_rows, lt_rows))
+      if (length(sig_rows) > 0) {
+        ft <- bold(ft, i = sig_rows, j = p_col, bold = TRUE)
+      }
+    }
+
+    ft <- set_table_properties(ft, layout = "autofit", width = 0.9)
+    ft <- autofit(ft)
+    ft <- padding(ft, padding.top = 2, padding.bottom = 2, padding.left = 2, padding.right = 2)
+    ft
+  }
+
+  anova_entries <- list()
+  coef_entries <- list()
+
+  for (entry in flat_models) {
+    model <- entry$model
+    resp <- entry$response %||% all.vars(formula(model))[1]
+    strat <- entry$stratum %||% "None"
+    is_lmm <- inherits(model, "merMod")
+
+    anova_tbl <- if (is_lmm) as.data.frame(anova(model, type = 3)) else as.data.frame(car::Anova(model, type = 3))
+    anova_tbl <- tibble::rownames_to_column(anova_tbl, "Effect")
+    for (col in names(anova_tbl)) {
+      if (is.numeric(anova_tbl[[col]])) anova_tbl[[col]] <- round(anova_tbl[[col]], 4)
+    }
+    p_col <- grep("^Pr", names(anova_tbl), value = TRUE)
+    if (length(p_col) > 0) {
+      names(anova_tbl)[names(anova_tbl) == p_col[1]] <- "Pr(>F)"
+      p_col <- "Pr(>F)"
+      anova_tbl <- format_p(anova_tbl, p_col)
+    } else {
+      p_col <- NULL
+    }
+    anova_tbl$Response <- resp
+    anova_tbl$Stratum <- strat
+    anova_entries[[length(anova_entries) + 1]] <- anova_tbl
+
+    coef_tbl <- as.data.frame(summary(model)$coefficients)
+    coef_tbl <- tibble::rownames_to_column(coef_tbl, "Term")
+    names(coef_tbl)[1] <- "Term"
+    names(coef_tbl) <- gsub("Pr\\(>\\|t\\|\\)", "Pr(>|t|)", names(coef_tbl))
+    for (col in names(coef_tbl)) {
+      if (is.numeric(coef_tbl[[col]])) coef_tbl[[col]] <- round(coef_tbl[[col]], 4)
+    }
+    p_col_coef <- grep("^Pr", names(coef_tbl), value = TRUE)
+    if (length(p_col_coef) > 0) {
+      p_col_coef <- p_col_coef[1]
+      coef_tbl <- format_p(coef_tbl, p_col_coef)
+    } else {
+      p_col_coef <- NULL
+    }
+    coef_tbl$Response <- resp
+    coef_tbl$Stratum <- strat
+    coef_entries[[length(coef_entries) + 1]] <- coef_tbl
+  }
+
+  combined_anova <- dplyr::bind_rows(anova_entries)
+  combined_coef <- dplyr::bind_rows(coef_entries)
+
+  show_strata_anova <- !(length(unique(combined_anova$Stratum)) == 1 && unique(combined_anova$Stratum) == "None")
+  show_strata_coef <- !(length(unique(combined_coef$Stratum)) == 1 && unique(combined_coef$Stratum) == "None")
+
+  anova_p_col <- intersect(c("Pr(>F)", "p.value"), names(combined_anova))
+  anova_p_col <- if (length(anova_p_col) > 0) anova_p_col[1] else NULL
+  coef_p_col <- intersect(c("Pr(>|t|)", "Pr(>|z|)", "p.value"), names(combined_coef))
+  coef_p_col <- if (length(coef_p_col) > 0) coef_p_col[1] else NULL
+
+  anova_cols <- c("Response", if (show_strata_anova) "Stratum", "Effect", setdiff(names(combined_anova), c("Response", "Stratum", "Effect")))
+  combined_anova <- combined_anova[, anova_cols, drop = FALSE]
+
+  coef_cols <- c("Response", if (show_strata_coef) "Stratum", "Term", setdiff(names(combined_coef), c("Response", "Stratum", "Term")))
+  combined_coef <- combined_coef[, coef_cols, drop = FALSE]
+
+  header_anova <- setNames(
+    c("Response", if (show_strata_anova) "Stratum", "Effect", gsub("\\.", " ", setdiff(names(combined_anova), c("Response", "Stratum", "Effect")))),
+    names(combined_anova)
+  )
+  if (!is.null(anova_p_col)) header_anova[[anova_p_col]] <- "p-value"
+
+  header_coef <- setNames(
+    c("Response", if (show_strata_coef) "Stratum", "Term", gsub("\\.", " ", setdiff(names(combined_coef), c("Response", "Stratum", "Term")))),
+    names(combined_coef)
+  )
+  if (!is.null(coef_p_col)) header_coef[[coef_p_col]] <- "p-value"
+
+  merge_cols_anova <- c("Response", if (show_strata_anova) "Stratum")
+  merge_cols_coef <- c("Response", if (show_strata_coef) "Stratum")
+
+  doc <- read_docx()
+  doc_title <- if (any(vapply(flat_models, function(x) inherits(x$model, "merMod"), logical(1)))) {
+    "Linear Mixed Model Results"
+  } else {
+    "Linear Model Results"
+  }
+  doc <- body_add_fpar(doc, fpar(ftext(doc_title, prop = fp_text(bold = TRUE, font.size = 12))))
+  doc <- add_blank_line(doc)
+
+  doc <- body_add_fpar(doc, fpar(ftext("ANOVA (Type III)", prop = fp_text(bold = TRUE))))
+  doc <- add_blank_line(doc)
+  doc <- body_add_flextable(
+    doc,
+    format_table(
+      combined_anova,
+      p_col = anova_p_col,
+      header_labels = header_anova,
+      merge_cols = merge_cols_anova
+    )
+  )
+  doc <- add_blank_line(doc)
+
+  doc <- body_add_fpar(doc, fpar(ftext("Model Coefficients", prop = fp_text(bold = TRUE))))
+  doc <- add_blank_line(doc)
+  doc <- body_add_flextable(
+    doc,
+    format_table(
+      combined_coef,
+      p_col = coef_p_col,
+      header_labels = header_coef,
+      merge_cols = merge_cols_coef
+    )
+  )
+
+  doc <- add_blank_line(doc)
+  doc <- add_blank_line(doc, "Significance level: p < 0.05 (bold values).")
+
+  print(doc, target = file)
+}
+
 reg_protect_vars <- function(vars) {
   if (is.null(vars) || length(vars) == 0) return(vars)
 
@@ -323,7 +516,7 @@ compile_regression_results <- function(model_info, engine) {
 # Results export
 # ===============================================================
 
-write_lm_docx <- function(model, file, subtitle = NULL) {
+write_lm_docx <- function(model, file, subtitle = NULL, response_name = NULL, stratum_label = NULL) {
 
   # Determine model type
   is_lmm <- inherits(model, "merMod")
@@ -333,39 +526,53 @@ write_lm_docx <- function(model, file, subtitle = NULL) {
     body_add_par(doc, text, style = style)
   }
 
+  # Helper: format p-values with labels and significance flag
+  format_p <- function(df, p_col) {
+    if (is.null(p_col) || !p_col %in% names(df)) return(df)
+    p_vals <- as.numeric(df[[p_col]])
+    df$sig <- p_vals < 0.05
+    df[[p_col]] <- ifelse(p_vals < 0.0001, "<0.0001", sprintf("%.4f", p_vals))
+    df
+  }
+
   # Helper for consistent table formatting
-  format_table <- function(df, bold_p = TRUE) {
+  format_table <- function(df, p_col = NULL, bold_p = TRUE, header_labels = NULL) {
     ft <- flextable(df)
+    if (!is.null(header_labels)) {
+      ft <- set_header_labels(ft, values = header_labels)
+    } else {
+      ft <- set_header_labels(ft, values = setNames(names(df), names(df)))
+    }
+
     ft <- fontsize(ft, part = "all", size = 10)
     ft <- bold(ft, part = "header", bold = TRUE)
     ft <- color(ft, part = "header", color = "black")
-    ft <- align(ft, align = "center", part = "all")
+
+    numeric_cols <- names(df)[sapply(df, is.numeric)]
+    if (length(setdiff(ft$col_keys, numeric_cols)) > 0) {
+      ft <- align(ft, j = setdiff(ft$col_keys, numeric_cols), align = "left", part = "all")
+    }
+    if (length(numeric_cols) > 0) {
+      ft <- align(ft, j = numeric_cols, align = "right", part = "all")
+      ft <- colformat_num(ft, j = numeric_cols, digits = 4)
+    }
+
     ft <- border_remove(ft)
     black <- fp_border(color = "black", width = 1)
-    ft <- border(ft, part = "header", border.top = black)
-    ft <- border(ft, part = "header", border.bottom = black)
+    ft <- border(ft, part = "header", border.top = black, border.bottom = black)
     if (nrow(df) > 0) {
       ft <- border(ft, i = nrow(df), part = "body", border.bottom = black)
     }
 
-    # Bold significant p-values
-    if (bold_p) {
-      p_cols <- names(df)[grepl("Pr", names(df), fixed = TRUE)]
-      for (pcol in p_cols) {
-        if (is.numeric(df[[pcol]]) || all(grepl("^[0-9.<]+$", df[[pcol]]))) {
-          sig_rows <- suppressWarnings(which(as.numeric(df[[pcol]]) < 0.05))
-          if (length(sig_rows) == 0) {
-            # handle formatted p-values like "<0.001"
-            sig_rows <- grep("<0\\.0*1", df[[pcol]])
-          }
-          if (length(sig_rows) > 0 && pcol %in% ft$col_keys) {
-            ft <- bold(ft, i = sig_rows, j = pcol, bold = TRUE)
-          }
-        }
+    if (bold_p && !is.null(p_col) && "sig" %in% names(df) && p_col %in% ft$col_keys) {
+      sig_rows <- which(df$sig %in% TRUE)
+      if (length(sig_rows) > 0) {
+        ft <- bold(ft, i = sig_rows, j = p_col, bold = TRUE)
       }
     }
 
     ft <- set_table_properties(ft, layout = "autofit", width = 0.9)
+    ft <- autofit(ft)
     ft <- padding(ft, padding.top = 2, padding.bottom = 2, padding.left = 2, padding.right = 2)
     ft
   }
@@ -374,20 +581,26 @@ write_lm_docx <- function(model, file, subtitle = NULL) {
   doc <- read_docx()
 
   # ---- Title ----
-  title_text <- sprintf(
-    "%s Results — %s",
+  title_parts <- c(
     if (is_lmm) "Linear Mixed Model" else "Linear Model",
-    dep_var
+    "Results"
   )
+  if (!is.null(response_name) && nzchar(response_name)) {
+    title_parts <- c(title_parts, paste("—", response_name))
+  } else {
+    title_parts <- c(title_parts, paste("—", dep_var))
+  }
+  title_text <- paste(title_parts, collapse = " ")
   doc <- body_add_fpar(
     doc,
     fpar(ftext(title_text, prop = fp_text(bold = TRUE, font.size = 12)))
   )
 
   # ---- Subtitle (Stratum, if any) ----
-  if (!is.null(subtitle) && nzchar(subtitle)) {
+  sub_label <- subtitle %||% stratum_label
+  if (!is.null(sub_label) && nzchar(sub_label)) {
     subtitle_text <- ftext(
-      subtitle,
+      sub_label,
       prop = fp_text(bold = TRUE, font.size = 11)
     )
     doc <- body_add_fpar(doc, fpar(subtitle_text))
@@ -415,9 +628,24 @@ write_lm_docx <- function(model, file, subtitle = NULL) {
   p_col <- grep("^Pr", names(anova_tbl), value = TRUE)
   if (length(p_col) > 0) {
     colnames(anova_tbl)[colnames(anova_tbl) == p_col[1]] <- "Pr(>F)"
+    p_col <- "Pr(>F)"
+    anova_tbl <- format_p(anova_tbl, p_col)
+  } else {
+    p_col <- NULL
   }
 
-  ft_anova <- format_table(anova_tbl)
+  ft_anova <- format_table(
+    anova_tbl,
+    p_col = p_col,
+    header_labels = c(
+      Effect = "Effect",
+      Sum.Sq = "Sum Sq",
+      Mean.Sq = "Mean Sq",
+      Df = "Df",
+      F.value = "F value",
+      `Pr(>F)` = "p-value"
+    )
+  )
   doc <- body_add_flextable(doc, ft_anova)
   doc <- add_blank_line(doc)
 
@@ -436,7 +664,7 @@ write_lm_docx <- function(model, file, subtitle = NULL) {
       names(rand_df) <- c("Grouping", "Effect 1", "Effect 2", "Variance", "Std. Dev.")
       rand_df$Variance <- round(rand_df$Variance, 4)
       rand_df$`Std. Dev.` <- round(rand_df$`Std. Dev.`, 4)
-      ft_rand <- format_table(rand_df, bold_p = FALSE)
+      ft_rand <- format_table(rand_df, p_col = NULL, bold_p = FALSE)
       doc <- body_add_flextable(doc, ft_rand)
     } else {
       doc <- add_blank_line(doc, "No random-effect variance components were estimated.")
@@ -453,7 +681,7 @@ write_lm_docx <- function(model, file, subtitle = NULL) {
       doc <- body_add_fpar(doc, fpar(ftext("Intraclass Correlation (ICC)", prop = fp_text(bold = TRUE))))
       doc <- add_blank_line(doc)
       icc_df$ICC <- round(icc_df$ICC, 4)
-      ft_icc <- format_table(icc_df, bold_p = FALSE)
+      ft_icc <- format_table(icc_df, p_col = NULL, bold_p = FALSE)
       doc <- body_add_flextable(doc, ft_icc)
     }
 
@@ -474,8 +702,25 @@ write_lm_docx <- function(model, file, subtitle = NULL) {
   for (col in names(coef_tbl)) {
     if (is.numeric(coef_tbl[[col]])) coef_tbl[[col]] <- round(coef_tbl[[col]], 4)
   }
+  p_col_coef <- grep("^Pr", names(coef_tbl), value = TRUE)
+  if (length(p_col_coef) > 0) {
+    p_col_coef <- p_col_coef[1]
+    coef_tbl <- format_p(coef_tbl, p_col_coef)
+  } else {
+    p_col_coef <- NULL
+  }
 
-  ft_coef <- format_table(coef_tbl)
+  ft_coef <- format_table(
+    coef_tbl,
+    p_col = p_col_coef,
+    header_labels = c(
+      Term = "Term",
+      Estimate = "Estimate",
+      `Std. Error` = "Std. Error",
+      `t value` = "t value",
+      `Pr(>|t|)` = "p-value"
+    )
+  )
   doc <- body_add_flextable(doc, ft_coef)
 
   # ==========================================================

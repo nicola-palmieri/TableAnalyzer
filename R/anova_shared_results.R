@@ -300,7 +300,7 @@ write_anova_docx <- function(content, file, response_name = NULL, stratum_label 
     if (is.null(p_col) || !p_col %in% names(df)) return(df)
     p_vals <- as.numeric(df[[p_col]])
     df[[p_col]] <- p_vals
-    df[[paste0(p_col, "_label")]] <- ifelse(p_vals < 0.001, "<0.001", sprintf("%.3f", p_vals))
+    df[[paste0(p_col, "_label")]] <- ifelse(p_vals < 0.0001, "<0.0001", sprintf("%.4f", p_vals))
     df$sig <- p_vals < 0.05
     df
   }
@@ -317,7 +317,13 @@ write_anova_docx <- function(content, file, response_name = NULL, stratum_label 
     ft <- fontsize(ft, part = "all", size = 10)
     ft <- bold(ft, part = "header", bold = TRUE)
     ft <- color(ft, part = "header", color = "black")
-    ft <- align(ft, align = "center", part = "all")
+    # Align text left, numbers right
+    numeric_cols <- names(df[, visible_cols, drop = FALSE])[sapply(df[, visible_cols, drop = FALSE], is.numeric)]
+    ft <- align(ft, j = setdiff(ft$col_keys, numeric_cols), align = "left", part = "all")
+    if (length(numeric_cols) > 0) {
+      ft <- align(ft, j = numeric_cols, align = "right", part = "all")
+      ft <- colformat_num(ft, j = numeric_cols, digits = 4)
+    }
     ft <- border_remove(ft)
 
     black <- fp_border(color = "black", width = 1)
@@ -349,6 +355,7 @@ write_anova_docx <- function(content, file, response_name = NULL, stratum_label 
     }
 
     ft <- set_table_properties(ft, layout = "autofit", width = 0.9)
+    ft <- autofit(ft)
     ft <- padding(ft, padding.top = 2, padding.bottom = 2, padding.left = 2, padding.right = 2)
     ft
   }

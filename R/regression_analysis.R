@@ -599,22 +599,7 @@ regression_server <- function(id, data, engine = c("lm", "lmm"), allow_multi_res
         flat_models <- mod$flat_models
         if (length(flat_models) == 0) stop("No models available. Please run the analysis first.")
 
-        if (length(flat_models) == 1) {
-          write_lm_docx(flat_models[[1]]$model, file)
-        } else {
-          doc <- officer::read_docx()
-          for (entry in flat_models) {
-            tmp <- tempfile(fileext = ".docx")
-            sublab <- if (!is.null(entry$stratum)) paste("Stratum:", entry$stratum) else NULL
-            
-            # pass subtitle so it appears RIGHT under the title
-            write_lm_docx(entry$model, tmp, subtitle = sublab)
-            
-            doc <- officer::body_add_docx(doc, src = tmp)
-            doc <- officer::body_add_par(doc, "", style = "Normal")
-          }
-          print(doc, target = file)
-        }
+        write_lm_docx_combined(flat_models, file)
       }
     )
 
