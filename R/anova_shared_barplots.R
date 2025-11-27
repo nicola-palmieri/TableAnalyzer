@@ -35,66 +35,30 @@ plot_anova_barplot_meanse <- function(data,
   
   base_fill <- if (!is.null(line_colors) && length(line_colors) > 0) unname(line_colors)[1] else "#3E8FC4"
 
-  response_plots <- list()
-  strata_panel_count <- context$initial_strata_panels
-
-  build_response_plot <- function(resp) {
-    posthoc_entry <- get_posthoc_entry_for_response(posthoc_all, resp)
-    stats_entries <- generate_anova_stats_entries(
-      context = context,
-      data = data,
-      resp = resp,
-      factor1 = factor1,
-      factor2 = factor2,
-      posthoc_entry = posthoc_entry
-    )
-
-    if (context$has_strata && !is.null(context$strat_var) && context$strat_var %in% names(data)) {
-      stratum_plots <- lapply(stats_entries, function(entry) {
-        build_bar_plot_panel(
-          stats_df = entry$stats_df,
-          title_text = entry$label,
-          factor1 = factor1,
-          factor2 = factor2,
-          line_colors = line_colors,
-          base_fill = base_fill,
-          base_size = base_size,
-          posthoc_entry = entry$posthoc,
-          nested_posthoc = entry$posthoc,
-          y_limits = shared_y_limits,
-          response_var = resp
-        )
-      })
-      names(stratum_plots) <- vapply(stats_entries, function(x) x$label, character(1))
-      stratum_plots <- Filter(Negate(is.null), stratum_plots)
-
-      if (!length(stratum_plots)) return(NULL)
-
-      strata_panel_count <<- max(strata_panel_count, length(stratum_plots))
-      patchwork::wrap_plots(
-        plotlist = stratum_plots,
-        nrow = context$strata_layout$nrow,
-        ncol = context$strata_layout$ncol
-      )
-    } else if (length(stats_entries) > 0) {
-      entry <- stats_entries[[1]]
-      build_bar_plot_panel(
-        stats_df = entry$stats_df,
-        title_text = "",
+  response_results <- lapply(
+    context$responses,
+    function(resp) {
+      build_response_barplot(
+        resp = resp,
+        context = context,
+        data = data,
         factor1 = factor1,
         factor2 = factor2,
         line_colors = line_colors,
         base_fill = base_fill,
         base_size = base_size,
-        posthoc_entry = entry$posthoc,
-        nested_posthoc = entry$posthoc,
-        y_limits = shared_y_limits,
-        response_var = resp
+        shared_y_limits = shared_y_limits,
+        posthoc_all = posthoc_all
       )
     }
-  }
+  )
 
-  response_plots <- lapply(context$responses, build_response_plot)
+  strata_panel_count <- max(
+    context$initial_strata_panels,
+    vapply(response_results, function(x) x$strata_panels, integer(1))
+  )
+
+  response_plots <- lapply(response_results, `[[`, "plot")
   names(response_plots) <- context$responses
   response_plots <- Filter(Negate(is.null), response_plots)
 
@@ -174,6 +138,83 @@ ensure_barplot_zero_baseline <- function(range_vals) {
 get_posthoc_entry_for_response <- function(posthoc_all, resp) {
   if (is.null(posthoc_all) || is.null(posthoc_all[[resp]])) return(NULL)
   posthoc_all[[resp]]
+}
+
+build_response_barplot <- function(resp,
+                                   context,
+                                   data,
+                                   factor1,
+                                   factor2,
+                                   line_colors,
+                                   base_fill,
+                                   base_size,
+                                   shared_y_limits,
+                                   posthoc_all) {
+  posthoc_entry <- get_posthoc_entry_for_response(posthoc_all, resp)
+  stats_entries <- generate_anova_stats_entries(
+    context = context,
+    data = data,
+    resp = resp,
+    factor1 = factor1,
+    factor2 = factor2,
+    posthoc_entry = posthoc_entry
+  )
+
+  has_strata <- context$has_strata && !is.null(context$strat_var) && context$strat_var %in% names(data)
+  if (has_strata) {
+    stratum_plots <- lapply(stats_entries, function(entry) {
+      build_bar_plot_panel(
+        stats_df = entry$stats_df,
+        title_text = entry$label,
+        factor1 = factor1,
+        factor2 = factor2,
+        line_colors = line_colors,
+        base_fill = base_fill,
+        base_size = base_size,
+        posthoc_entry = entry$posthoc,
+        nested_posthoc = entry$posthoc,
+        y_limits = shared_y_limits,
+        response_var = resp
+      )
+    })
+    names(stratum_plots) <- vapply(stats_entries, function(x) x$label, character(1))
+    stratum_plots <- Filter(Negate(is.null), stratum_plots)
+
+    if (!length(stratum_plots)) {
+      return(list(plot = NULL, strata_panels = 0L))
+    }
+
+    return(list(
+      plot = patchwork::wrap_plots(
+        plotlist = stratum_plots,
+        nrow = context$strata_layout$nrow,
+        ncol = context$strata_layout$ncol
+      ),
+      strata_panels = length(stratum_plots)
+    ))
+  }
+
+  if (length(stats_entries) > 0) {
+    entry <- stats_entries[[1]]
+    return(list(
+      plot = build_bar_plot_panel(
+        stats_df = entry$stats_df,
+        title_text = "",
+        factor1 = factor1,
+        factor2 = factor2,
+        line_colors = line_colors,
+        base_fill = base_fill,
+        base_size = base_size,
+        posthoc_entry = entry$posthoc,
+        nested_posthoc = entry$posthoc,
+        y_limits = shared_y_limits,
+        response_var = resp
+      ),
+      strata_panels = 0L
+    ))
+  }
+
+  list(plot = NULL, strata_panels = 0L)
 }
 
 generate_anova_stats_entries <- function(context,

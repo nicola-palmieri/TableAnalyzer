@@ -229,7 +229,6 @@ compute_descriptive_summary <- function(data, group_var = NULL) {
   top_counts_full <- function(x) skimr::top_counts(x, max_char = 200, max_levels = 10)
   skim_full <- skimr::skim_with(
     factor = skimr::sfl(
-      ordered    = is.ordered,
       n_unique   = skimr::n_unique,
       top_counts = top_counts_full
     ),
@@ -265,6 +264,26 @@ compute_descriptive_summary <- function(data, group_var = NULL) {
       numeric_vars,
       "distribution",
       ~ most_likely_distribution(.x)
+    ),
+    skewness = summarise_numeric(
+      group_data,
+      numeric_vars,
+      "skewness",
+      ~ {
+        x <- stats::na.omit(.x)
+        if (length(x) < 3 || stats::sd(x) == 0) return(NA_real_)
+        mean(((x - mean(x)) / stats::sd(x))^3)
+      }
+    ),
+    kurtosis = summarise_numeric(
+      group_data,
+      numeric_vars,
+      "kurtosis",
+      ~ {
+        x <- stats::na.omit(.x)
+        if (length(x) < 4 || stats::sd(x) == 0) return(NA_real_)
+        mean(((x - mean(x)) / stats::sd(x))^4) - 3
+      }
     )
   )
 }
@@ -323,11 +342,17 @@ safe_fitdist <- function(values, dist_name) {
 
 # ---- Shared printing ----
 print_summary_sections <- function(results) {
-  # 1) Print skim AS-IS (unchanged)
-  cat(paste(capture.output(print(results$skim)), collapse = "\n"), "\n\n", sep = "")
+  # 1) Print skim (shortened headers for variable types)
+  skim_lines <- capture.output(print(results$skim))
+  skim_lines <- sub(
+    "^── Variable type: ([[:alpha:]]+) ─+",
+    "── Variable type: \\1 ──",
+    skim_lines
+  )
+  cat(paste(skim_lines, collapse = "\n"), "\n\n", sep = "")
   
   # 2) Helper to detect if a grouping column exists and what it's called
-  metric_prefix <- "^(cv_|outliers_|missing_|distribution_)"
+  metric_prefix <- "^(cv_|outliers_|missing_|distribution_|skewness_|kurtosis_)"
   first_col <- if (!is.null(results$cv) && ncol(results$cv) > 0) names(results$cv)[1] else NULL
   group_col <- if (!is.null(first_col) && !grepl(metric_prefix, first_col)) first_col else NULL
   
@@ -355,14 +380,16 @@ print_summary_sections <- function(results) {
   cv_long   <- to_long(results$cv, "cv")
   out_long  <- to_long(results$outliers, "outliers")
   dist_long <- to_long(results$distribution, "distribution")
+  skew_long <- to_long(results$skewness, "skewness")
+  kurt_long <- to_long(results$kurtosis, "kurtosis")
 
   # 5) Join by the right keys
   join_keys <- c(if (!is.null(group_col)) group_col, "variable")
   merged <- dplyr::full_join(cv_long, out_long, by = join_keys) |>
     dplyr::full_join(dist_long, by = join_keys) |>
-    dplyr::mutate(
-      cv = round(cv, 2)
-    )
+    dplyr::full_join(skew_long, by = join_keys) |>
+    dplyr::full_join(kurt_long, by = join_keys) |>
+    dplyr::mutate(cv = round(cv, 2))
 
   numeric_order <- NULL
   if (is.data.frame(results$skim) && all(c("skim_type", "skim_variable") %in% names(results$skim))) {
@@ -383,7 +410,15 @@ print_summary_sections <- function(results) {
 
   # 7) Print with/without group column
   cat("── Numeric variables summary ──\n")
-  final_cols <- c("variable", arrange_cols[-length(arrange_cols)], "cv", "outliers", "distribution")
+  final_cols <- c(
+    "variable",
+    arrange_cols[-length(arrange_cols)],
+    "cv",
+    "outliers",
+    "distribution",
+    "skewness",
+    "kurtosis"
+  )
   final_df <- merged[, final_cols, drop = FALSE]
   print(as.data.frame(final_df), row.names = FALSE)
 
