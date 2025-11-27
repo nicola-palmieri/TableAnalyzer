@@ -72,11 +72,6 @@ visualize_server <- function(id, filtered_data, model_fit) {
         ui = function(ns) visualize_pca_ui(ns("pca"), filtered_data()),
         server = function() visualize_pca_server("pca", filtered_data, model_info)
       ),
-      lm = list(
-        id = "lm",
-        ui = function(ns) visualize_lm_ui(ns("lm")),
-        server = function() visualize_lm_server("lm", filtered_data, model_info)
-      ),
       descriptive = list(
         id = "descriptive",
         ui = function(ns) visualize_descriptive_ui(ns("descriptive")),
