@@ -343,6 +343,35 @@ reg_fit_model <- function(dep, rhs, data, engine = c("lm","lmm")) {
 reg_display_summary <- function(model, engine = c("lm", "lmm")) {
   engine <- match.arg(engine)
 
+  format_coefs <- function(coef_mat) {
+    if (is.null(coef_mat)) return(NULL)
+    df <- data.frame(
+      Term = rownames(coef_mat),
+      stringsAsFactors = FALSE
+    )
+
+    num_cols <- c("Estimate", "Std. Error", "t value", "z value", "Std. error", "Std.Error", "Std error")
+    stat_col <- intersect(colnames(coef_mat), c("t value", "z value"))
+    p_col <- intersect(colnames(coef_mat), grep("^Pr", colnames(coef_mat), value = TRUE))
+
+    if ("Estimate" %in% colnames(coef_mat)) {
+      df$Estimate <- formatC(coef_mat[, "Estimate"], format = "f", digits = 6, drop0trailing = FALSE)
+    }
+    if ("Std. Error" %in% colnames(coef_mat)) {
+      df$Std.Error <- formatC(coef_mat[, "Std. Error"], format = "f", digits = 6, drop0trailing = FALSE)
+    }
+    if ("Std error" %in% colnames(coef_mat)) {
+      df$Std.Error <- formatC(coef_mat[, "Std error"], format = "f", digits = 6, drop0trailing = FALSE)
+    }
+    if (length(stat_col) > 0) {
+      df$Statistic <- formatC(coef_mat[, stat_col[1]], format = "f", digits = 6, drop0trailing = FALSE)
+    }
+    if (length(p_col) > 0) {
+      df$p.value <- format.pval(coef_mat[, p_col[1]], digits = 3, eps = 1e-04)
+    }
+    capture.output(print(df, row.names = FALSE))
+  }
+
   if (engine == "lm") {
     aout <- capture.output(car::Anova(model, type = 3))
     signif_idx <- grep("^Signif\\. codes", aout)
@@ -352,24 +381,16 @@ reg_display_summary <- function(model, engine = c("lm", "lmm")) {
     }
     cat(paste(aout, collapse = "\n"), "\n\n")
 
-    sout <- capture.output(summary(model))
-    sout <- trim_output_section(sout, "^Residuals:", "^Signif\\. codes", 2)
-    cat(paste(sout, collapse = "\n"))
+    coef_lines <- format_coefs(summary(model)$coefficients)
+    cat("Coefficients:\n")
+    cat(paste(coef_lines, collapse = "\n"), "\n")
   } else {
     aout <- capture.output(anova(model, type = 3))
     cat(paste(aout, collapse = "\n"), "\n\n")
 
-    sout <- capture.output(summary(model))
-    sout <- trim_output_section(sout, "^Scaled residuals:", "^Correlation of Fixed Effects:", 1)
-
-    icc_df <- compute_icc(model)
-    if (!is.null(icc_df) && nrow(icc_df) > 0) {
-      icc_line <- paste(paste0("ICC (", icc_df$Group, "): ", icc_df$ICC), collapse = "; ")
-      random_idx <- grep("^Random effects:", sout)[1]
-      if (!is.na(random_idx)) sout <- append(sout, paste0("\n", icc_line), after = random_idx + 4)
-      else sout <- c(sout, icc_line)
-    }
-    cat(paste(sout, collapse = "\n"))
+    coef_lines <- format_coefs(summary(model)$coefficients)
+    cat("Coefficients:\n")
+    cat(paste(coef_lines, collapse = "\n"), "\n")
   }
 }
 

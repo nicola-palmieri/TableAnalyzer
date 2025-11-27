@@ -136,6 +136,8 @@ bind_single_model_outputs <- function(output, summary_id, download_id,
                                       model_entry, response_name, factors,
                                       stratum_label = NULL) {
   output[[summary_id]] <- renderPrint({
+    old_opts <- options(scipen = 6)
+    on.exit(options(old_opts), add = TRUE)
     print_anova_summary_and_posthoc(model_entry, factors)
   })
 

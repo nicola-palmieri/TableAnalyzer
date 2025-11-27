@@ -129,6 +129,8 @@ fit_all_models <- function(df, responses, rhs, strat_details, engine, allow_mult
 }
 
 render_model_summary <- function(engine, model_obj) {
+  old_opts <- options(scipen = 6)
+  on.exit(options(old_opts), add = TRUE)
   if (engine == "lm") {
     reg_display_lm_summary(model_obj)
   } else {
@@ -534,6 +536,17 @@ regression_server <- function(id, data, engine = c("lm", "lmm"), allow_multi_res
             need(stats::var(df[[v]], na.rm = TRUE) > 0,
                  paste0("Numeric predictor '", v, "' has zero variance and cannot be used in the model."))
           )
+        }
+      }
+
+      # ---- Apply user-specified factor level orders (controls reference levels) ----
+      if (length(input$fixed) > 0) {
+        for (f in input$fixed) {
+          ord <- input[[paste0("order_", f)]]
+          if (!is.null(ord) && length(ord) > 1 && f %in% names(df)) {
+            df[[f]] <- factor(df[[f]], levels = ord)
+            df[[f]] <- droplevels(df[[f]])
+          }
         }
       }
       
