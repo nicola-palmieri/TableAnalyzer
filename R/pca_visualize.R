@@ -69,7 +69,7 @@ visualize_pca_ui <- function(id, filtered_data = NULL) {
         column(
           6,
           conditionalPanel(
-            condition = sprintf("input['%s'] !== 'None'", ns("pca_color")),
+            condition = sprintf("input.%s != 'None'", ns("pca_color")),
             with_help_tooltip(
               div(
                 style = "padding-top: 24px;",
@@ -574,7 +574,7 @@ visualize_pca_server <- function(id, filtered_data, model_fit) {
           loading_scale = loading_scale,
           custom_colors = custom_colors(),
           subset_rows = idx,
-          color_levels = color_level_order(),
+          color_levels = NULL,
           x_limits = x_limits,
           y_limits = y_limits,
           base_size = base_size()
@@ -703,72 +703,138 @@ visualize_pca_server <- function(id, filtered_data, model_fit) {
 }
 
 
-build_pca_biplot <- function(pca_obj, data, color_var = NULL, shape_var = NULL,
-                             label_var = NULL, label_size = 2,
-                             show_loadings = FALSE, show_ellipses = FALSE, loading_scale = 1.2,
-                             custom_colors = NULL, subset_rows = NULL,
-                             color_levels = NULL, x_limits = NULL,
-                             y_limits = NULL, base_size = 13) {
+build_pca_biplot <- function(
+  pca_obj, data,
+  color_var = NULL, shape_var = NULL,
+  label_var = NULL, label_size = 2,
+  show_loadings = FALSE, show_ellipses = FALSE,
+  loading_scale = 1.2,
+  custom_colors = NULL,
+  subset_rows = NULL,
+  color_levels = NULL,
+  x_limits = NULL, y_limits = NULL,
+  base_size = 13
+) {
+
   stopifnot(!is.null(pca_obj$x))
 
+  # ---- PCA scores (PC1, PC2) ----
   scores <- as.data.frame(pca_obj$x[, 1:2])
-  names(scores)[1:2] <- c("PC1", "PC2")
+  names(scores) <- c("PC1", "PC2")
 
+  # ---- Subset if needed ----
   if (!is.null(subset_rows)) {
     subset_rows <- unique(subset_rows)
     subset_rows <- subset_rows[subset_rows >= 1 & subset_rows <= nrow(scores)]
     scores <- scores[subset_rows, , drop = FALSE]
-    if (!is.null(data)) {
-      data <- data[subset_rows, , drop = FALSE]
-    }
+    if (!is.null(data)) data <- data[subset_rows, , drop = FALSE]
   }
 
-  var_exp <- 100 * (pca_obj$sdev^2 / sum(pca_obj$sdev^2))
-  x_lab <- sprintf("PC1 (%.1f%%)", var_exp[1])
-  y_lab <- sprintf("PC2 (%.1f%%)", var_exp[2])
-
+  # ---- Combine data + scores ----
   if (!is.null(data) && nrow(data) == nrow(scores)) {
     plot_data <- cbind(scores, data)
   } else {
     plot_data <- scores
   }
-  
-  if (!is.null(label_var) && !identical(label_var, "") && !is.null(plot_data[[label_var]])) {
-    label_values <- as.character(plot_data[[label_var]])
-    label_values[is.na(label_values) | trimws(label_values) == ""] <- NA_character_
-    if (any(!is.na(label_values))) {
-      plot_data$label_value <- label_values
+
+  # ---- Explained variance for axis labels ----
+  var_exp <- 100 * (pca_obj$sdev^2 / sum(pca_obj$sdev^2))
+  x_lab <- sprintf("PC1 (%.1f%%)", var_exp[1])
+  y_lab <- sprintf("PC2 (%.1f%%)", var_exp[2])
+
+  # ---- Labeling (optional) ----
+  if (!is.null(label_var) && label_var %in% names(plot_data)) {
+    labs <- as.character(plot_data[[label_var]])
+    labs[is.na(labs) | trimws(labs) == ""] <- NA
+    if (any(!is.na(labs))) {
+      plot_data$label_value <- labs
     } else {
       label_var <- NULL
     }
   } else {
     label_var <- NULL
   }
-  
-  if (!is.null(color_var) && !is.null(plot_data[[color_var]])) {
-    if (is.null(color_levels)) {
-      color_levels <- if (is.factor(plot_data[[color_var]])) {
-        levels(plot_data[[color_var]])
-      } else {
-        unique(as.character(plot_data[[color_var]]))
-      }
+
+  # ---- Colour factor handling ----
+  if (!is.null(color_var) && color_var %in% names(plot_data)) {
+    values <- plot_data[[color_var]]
+
+    if (is.factor(values)) {
+      lvls <- levels(droplevels(values))
+    } else {
+      lvls <- unique(as.character(values[!is.na(values)]))
     }
-    color_levels <- unique(color_levels[!is.na(color_levels)])
-    plot_data[[color_var]] <- factor(as.character(plot_data[[color_var]]), levels = color_levels)
+
+    lvls <- lvls[!is.na(lvls) & nzchar(lvls)]
+    plot_data[[color_var]] <- factor(as.character(values), levels = lvls)
   }
-  
+
+  # ---- Aesthetic mapping ----
   aes_args <- list(x = quote(PC1), y = quote(PC2))
   if (!is.null(color_var)) aes_args$colour <- rlang::expr(.data[[color_var]])
-  if (!is.null(shape_var)) aes_args$shape <- rlang::expr(.data[[shape_var]])
-  aes_mapping <- do.call(aes, aes_args)
-  
+  if (!is.null(shape_var)) aes_args$shape  <- rlang::expr(.data[[shape_var]])
+
+  aes_mapping <- do.call(ggplot2::aes, aes_args)
+
+  # ---- Single-color fallback ----
   single_color <- resolve_single_color(custom_colors)
-  g <- ggplot(plot_data, aes_mapping) +
-    geom_point(
+
+  # ---- Base plot (WITHOUT geom_point yet) ----
+  g <- ggplot(plot_data, aes_mapping)
+
+  # ---- Add geom_point depending on whether color_var is mapped ----
+  if (is.null(color_var)) {
+    g <- g + geom_point(
       size = 3,
       shape = if (is.null(shape_var)) 16 else NULL,
-      color = if (is.null(color_var)) single_color else NULL
-    ) +
+      color = single_color
+    )
+  } else {
+    g <- g + geom_point(
+      size = 3,
+      shape = if (is.null(shape_var)) 16 else NULL
+    )
+  }
+
+  # ---- Ellipses ----
+  if (!is.null(color_var) && isTRUE(show_ellipses)) {
+    g <- g + stat_ellipse(level = 0.68, linewidth = 0.6, alpha = 0.5)
+  }
+
+  # ---- Manual colours (only if a variable is mapped) ----
+  if (!is.null(color_var)) {
+    lvl <- levels(plot_data[[color_var]])
+
+    palette <- resolve_palette_for_levels(lvl, custom = custom_colors)
+
+    # Make sure names(palette) == levels(color_var)
+    if (is.null(names(palette)) || !all(names(palette) == lvl)) {
+      names(palette) <- lvl
+    }
+
+    g <- g + scale_color_manual(values = palette)
+  }
+
+  # ---- Axis limits ----
+  if (!is.null(x_limits) || !is.null(y_limits)) {
+    g <- g + coord_cartesian(xlim = x_limits, ylim = y_limits)
+  }
+
+  # ---- Labels ----
+  if (!is.null(label_var)) {
+    g <- g + ggrepel::geom_text_repel(
+      aes(label = label_value),
+      size = label_size,
+      color = if (is.null(color_var)) single_color else NULL,
+      max.overlaps = Inf,
+      box.padding = 0.3,
+      point.padding = 0.2,
+      segment.size = 0.2
+    )
+  }
+
+  # ---- Theme ----
+  g <- g +
     ta_plot_theme(base_size = base_size) +
     labs(
       x = x_lab,
@@ -784,59 +850,31 @@ build_pca_biplot <- function(pca_obj, data, color_var = NULL, shape_var = NULL,
       legend.position = "right"
     )
 
-  if (!is.null(color_var) && isTRUE(show_ellipses)) {
-    g <- g + stat_ellipse(level = 0.68, linewidth = 0.6, alpha = 0.6)
-  }
-  
-  if (!is.null(color_var)) {
-    palette <- resolve_palette_for_levels(levels(plot_data[[color_var]]), custom = custom_colors)
-    g <- g + scale_color_manual(values = palette)
-  }
-  
-  if (!is.null(x_limits) || !is.null(y_limits)) {
-    g <- g + coord_cartesian(xlim = x_limits, ylim = y_limits)
-  }
-
-  if (!is.null(label_var)) {
-    g <- g + ggrepel::geom_text_repel(
-      aes(label = label_value),
-      color = if (is.null(color_var)) single_color else NULL,
-      size = label_size,
-      max.overlaps = Inf,
-      min.segment.length = 0,
-      box.padding = 0.3,
-      point.padding = 0.2,
-      segment.size = 0.2,
-      na.rm = TRUE
-    )
-  }
-  
-  # ---- Loadings as arrows (optional) ----
+  # ---- Loadings arrows ----
   if (isTRUE(show_loadings) && !is.null(pca_obj$rotation)) {
-    R <- as.data.frame(pca_obj$rotation[, 1:2, drop = FALSE])
-    R$variable <- rownames(pca_obj$rotation)
-    
-    # scale arrows to score space
+    R <- as.data.frame(pca_obj$rotation[, 1:2])
+    R$variable <- rownames(R)
+
     rx <- diff(range(pca_obj$x[, 1], na.rm = TRUE))
     ry <- diff(range(pca_obj$x[, 2], na.rm = TRUE))
     sx <- ifelse(is.finite(rx) && rx > 0, rx, 1)
     sy <- ifelse(is.finite(ry) && ry > 0, ry, 1)
-    
+
     arrows_df <- transform(
       R,
       x = 0, y = 0,
       xend = PC1 * sx * loading_scale,
       yend = PC2 * sy * loading_scale
     )
-    
+
     g <- g +
       geom_segment(
         data = arrows_df,
         aes(x = x, y = y, xend = xend, yend = yend),
         inherit.aes = FALSE,
-        arrow = grid::arrow(length = grid::unit(0.02, "npc")),
+        color = "grey30",
         linewidth = 0.4,
-        color = "grey30"
+        arrow = grid::arrow(length = grid::unit(0.02, "npc"))
       ) +
       ggrepel::geom_text_repel(
         data = arrows_df,
@@ -844,12 +882,12 @@ build_pca_biplot <- function(pca_obj, data, color_var = NULL, shape_var = NULL,
         inherit.aes = FALSE,
         size = 3,
         color = "grey20",
-        max.overlaps = Inf,
-        segment.size = 0.2,
         box.padding = 0.2,
-        point.padding = 0.2
+        point.padding = 0.2,
+        segment.size = 0.2
       )
   }
-  
+
   g
 }
+
