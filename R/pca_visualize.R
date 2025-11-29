@@ -757,9 +757,10 @@ build_pca_biplot <- function(pca_obj, data, color_var = NULL, shape_var = NULL,
     plot_data[[color_var]] <- factor(as.character(plot_data[[color_var]]), levels = color_levels)
   }
   
-  aes_mapping <- aes(x = PC1, y = PC2)
-  if (!is.null(color_var)) aes_mapping <- modifyList(aes_mapping, aes(color = .data[[color_var]]))
-  if (!is.null(shape_var)) aes_mapping <- modifyList(aes_mapping, aes(shape = .data[[shape_var]]))
+  aes_args <- list(x = quote(PC1), y = quote(PC2))
+  if (!is.null(color_var)) aes_args$colour <- rlang::expr(.data[[color_var]])
+  if (!is.null(shape_var)) aes_args$shape <- rlang::expr(.data[[shape_var]])
+  aes_mapping <- do.call(aes, aes_args)
   
   single_color <- resolve_single_color(custom_colors)
   g <- ggplot(plot_data, aes_mapping) +
