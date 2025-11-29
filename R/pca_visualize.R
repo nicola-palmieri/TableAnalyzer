@@ -745,35 +745,46 @@ build_pca_biplot <- function(pca_obj, data, color_var = NULL, shape_var = NULL,
     label_var <- NULL
   }
   
-  if (!is.null(color_var) && !is.null(plot_data[[color_var]])) {
+  has_color <- !is.null(color_var) && !is.null(plot_data[[color_var]])
+
+  if (has_color) {
+    color_values <- plot_data[[color_var]]
+
     if (is.null(color_levels)) {
-      color_levels <- if (is.factor(plot_data[[color_var]])) {
-        levels(plot_data[[color_var]])
+      color_levels <- if (is.factor(color_values)) {
+        levels(color_values)
       } else {
-        unique(as.character(plot_data[[color_var]]))
+        unique(as.character(color_values))
       }
     }
-    color_levels <- unique(color_levels[!is.na(color_levels)])
-    plot_data[[color_var]] <- factor(as.character(plot_data[[color_var]]), levels = color_levels)
+
+    color_levels <- unique(color_levels[!is.na(color_levels) & nzchar(color_levels)])
+    has_color <- length(color_levels) > 0 && any(!is.na(color_values))
+
+    if (has_color) {
+      plot_data[[color_var]] <- factor(as.character(color_values), levels = color_levels)
+    }
   }
-  
+
+  has_shape <- !is.null(shape_var) && !is.null(plot_data[[shape_var]])
+
   aes_mapping <- aes(x = PC1, y = PC2)
-  if (!is.null(color_var)) aes_mapping <- modifyList(aes_mapping, aes(color = .data[[color_var]]))
-  if (!is.null(shape_var)) aes_mapping <- modifyList(aes_mapping, aes(shape = .data[[shape_var]]))
-  
+  if (has_color) aes_mapping <- modifyList(aes_mapping, aes(color = .data[[color_var]]))
+  if (has_shape) aes_mapping <- modifyList(aes_mapping, aes(shape = .data[[shape_var]]))
+
   single_color <- resolve_single_color(custom_colors)
   g <- ggplot(plot_data, aes_mapping) +
     geom_point(
       size = 3,
-      shape = if (is.null(shape_var)) 16 else NULL,
-      color = if (is.null(color_var)) single_color else NULL
+      shape = if (has_shape) NULL else 16,
+      color = if (has_color) NULL else single_color
     ) +
     ta_plot_theme(base_size = base_size) +
     labs(
       x = x_lab,
       y = y_lab,
-      color = if (!is.null(color_var)) color_var else NULL,
-      shape = if (!is.null(shape_var)) shape_var else NULL
+      color = if (has_color) color_var else NULL,
+      shape = if (has_shape) shape_var else NULL
     ) +
     theme(
       panel.grid.major = element_blank(),
@@ -783,11 +794,11 @@ build_pca_biplot <- function(pca_obj, data, color_var = NULL, shape_var = NULL,
       legend.position = "right"
     )
 
-  if (!is.null(color_var) && isTRUE(show_ellipses)) {
+  if (has_color && isTRUE(show_ellipses)) {
     g <- g + stat_ellipse(level = 0.68, linewidth = 0.6, alpha = 0.6)
   }
-  
-  if (!is.null(color_var)) {
+
+  if (has_color) {
     palette <- resolve_palette_for_levels(levels(plot_data[[color_var]]), custom = custom_colors)
     g <- g + scale_color_manual(values = palette)
   }
