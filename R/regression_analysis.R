@@ -196,6 +196,8 @@ render_qq_plot <- function(model_obj) {
 
 
 assign_model_outputs <- function(output, engine, response, idx, model_obj, stratum_idx = NULL) {
+  model_obj <- force(model_obj)
+  engine <- force(engine)
   suffix <- if (is.null(stratum_idx)) idx else paste(idx, stratum_idx, sep = "_")
   summary_id <- paste0("summary_", suffix)
   resid_id <- paste0("resid_", suffix)
@@ -544,6 +546,21 @@ regression_server <- function(id, data, engine = c("lm", "lmm"), allow_multi_res
         }
       }
 
+      if (engine == "lmm") {
+        validate(
+          need(length(input$random) > 0,
+               "Select at least one random effect for the LMM; otherwise use the LM option.")
+        )
+        for (r in input$random) {
+          if (!r %in% names(df)) next
+          df[[r]] <- droplevels(factor(df[[r]]))
+          validate(
+            need(dplyr::n_distinct(df[[r]]) > 1,
+                 paste0("Random effect '", r, "' must contain at least two levels."))
+          )
+        }
+      }
+
       # ---- Apply user-specified factor level orders (controls reference levels) ----
       if (length(input$fixed) > 0) {
         for (f in input$fixed) {
@@ -573,6 +590,18 @@ regression_server <- function(id, data, engine = c("lm", "lmm"), allow_multi_res
                 need(dplyr::n_distinct(sub[[f]]) > 1,
                      paste0("In stratum '", lev, "', predictor '", f,
                             "' contains fewer than two levels."))
+              )
+            }
+          }
+
+          if (engine == "lmm" && length(input$random) > 0) {
+            for (r in input$random) {
+              if (!r %in% names(sub)) next
+              sub[[r]] <- droplevels(factor(sub[[r]]))
+              validate(
+                need(dplyr::n_distinct(sub[[r]]) > 1,
+                     paste0("In stratum '", lev, "', random effect '", r,
+                            "' must have at least two levels."))
               )
             }
           }

@@ -89,6 +89,8 @@ write_lm_docx_combined <- function(flat_models, file) {
 
   anova_entries <- list()
   coef_entries <- list()
+  rand_entries <- list()
+  icc_entries <- list()
 
   for (entry in flat_models) {
     model <- entry$model
@@ -130,13 +132,45 @@ write_lm_docx_combined <- function(flat_models, file) {
     coef_tbl$Response <- resp
     coef_tbl$Stratum <- strat
     coef_entries[[length(coef_entries) + 1]] <- coef_tbl
+
+    if (is_lmm) {
+      rand_df <- tryCatch(as.data.frame(lme4::VarCorr(model)), error = function(e) NULL)
+      if (!is.null(rand_df) && nrow(rand_df) > 0) {
+        rand_df <- data.frame(
+          Response = resp,
+          Stratum = strat,
+          Grouping = rand_df$grp,
+          Name = rand_df$var1,
+          Variance = round(rand_df$vcov, 4),
+          StdDev = round(rand_df$sdcor, 4),
+          stringsAsFactors = FALSE
+        )
+        rand_entries[[length(rand_entries) + 1]] <- rand_df
+      }
+
+      icc_df <- if (exists("compute_icc") && is.function(compute_icc)) compute_icc(model) else NULL
+      if (!is.null(icc_df) && nrow(icc_df) > 0) {
+        icc_df <- data.frame(
+          Response = resp,
+          Stratum = strat,
+          Group = icc_df$Group,
+          ICC = as.numeric(icc_df$ICC),
+          stringsAsFactors = FALSE
+        )
+        icc_entries[[length(icc_entries) + 1]] <- icc_df
+      }
+    }
   }
 
   combined_anova <- dplyr::bind_rows(anova_entries)
   combined_coef <- dplyr::bind_rows(coef_entries)
+  combined_rand <- if (length(rand_entries) > 0) dplyr::bind_rows(rand_entries) else NULL
+  combined_icc <- if (length(icc_entries) > 0) dplyr::bind_rows(icc_entries) else NULL
 
   show_strata_anova <- !(length(unique(combined_anova$Stratum)) == 1 && unique(combined_anova$Stratum) == "None")
   show_strata_coef <- !(length(unique(combined_coef$Stratum)) == 1 && unique(combined_coef$Stratum) == "None")
+  show_strata_rand <- if (!is.null(combined_rand)) !(length(unique(combined_rand$Stratum)) == 1 && unique(combined_rand$Stratum) == "None") else FALSE
+  show_strata_icc <- if (!is.null(combined_icc)) !(length(unique(combined_icc$Stratum)) == 1 && unique(combined_icc$Stratum) == "None") else FALSE
 
   anova_p_col <- intersect(c("Pr(>F)", "p.value"), names(combined_anova))
   anova_p_col <- if (length(anova_p_col) > 0) anova_p_col[1] else NULL
@@ -148,6 +182,17 @@ write_lm_docx_combined <- function(flat_models, file) {
 
   coef_cols <- c("Response", if (show_strata_coef) "Stratum", "Term", setdiff(names(combined_coef), c("Response", "Stratum", "Term")))
   combined_coef <- combined_coef[, coef_cols, drop = FALSE]
+
+  if (!is.null(combined_rand)) {
+    rand_cols <- c("Response", if (show_strata_rand) "Stratum", "Grouping", "Name", "Variance", "StdDev")
+    combined_rand <- combined_rand[, rand_cols, drop = FALSE]
+  }
+
+  if (!is.null(combined_icc)) {
+    combined_icc$ICC <- round(combined_icc$ICC, 4)
+    icc_cols <- c("Response", if (show_strata_icc) "Stratum", "Group", "ICC")
+    combined_icc <- combined_icc[, icc_cols, drop = FALSE]
+  }
 
   header_anova <- setNames(
     c("Response", if (show_strata_anova) "Stratum", "Effect", gsub("\\.", " ", setdiff(names(combined_anova), c("Response", "Stratum", "Effect")))),
@@ -163,6 +208,18 @@ write_lm_docx_combined <- function(flat_models, file) {
 
   merge_cols_anova <- c("Response", if (show_strata_anova) "Stratum")
   merge_cols_coef <- c("Response", if (show_strata_coef) "Stratum")
+  merge_cols_rand <- if (!is.null(combined_rand)) c("Response", if (show_strata_rand) "Stratum") else NULL
+  merge_cols_icc <- if (!is.null(combined_icc)) c("Response", if (show_strata_icc) "Stratum") else NULL
+
+  header_rand <- if (!is.null(combined_rand)) setNames(
+    c("Response", if (show_strata_rand) "Stratum", "Grouping", "Name", "Variance", "Std. Dev."),
+    names(combined_rand)
+  ) else NULL
+
+  header_icc <- if (!is.null(combined_icc)) setNames(
+    c("Response", if (show_strata_icc) "Stratum", "Group", "ICC"),
+    names(combined_icc)
+  ) else NULL
 
   doc <- read_docx()
   doc_title <- if (any(vapply(flat_models, function(x) inherits(x$model, "merMod"), logical(1)))) {
@@ -185,6 +242,38 @@ write_lm_docx_combined <- function(flat_models, file) {
     )
   )
   doc <- add_blank_line(doc)
+
+  if (!is.null(combined_rand) && nrow(combined_rand) > 0) {
+    doc <- body_add_fpar(doc, fpar(ftext("Random Effects", prop = fp_text(bold = TRUE))))
+    doc <- add_blank_line(doc)
+    doc <- body_add_flextable(
+      doc,
+      format_table(
+        combined_rand,
+        p_col = NULL,
+        bold_p = FALSE,
+        header_labels = header_rand,
+        merge_cols = merge_cols_rand
+      )
+    )
+    doc <- add_blank_line(doc)
+  }
+
+  if (!is.null(combined_icc) && nrow(combined_icc) > 0) {
+    doc <- body_add_fpar(doc, fpar(ftext("Intraclass Correlation (ICC)", prop = fp_text(bold = TRUE))))
+    doc <- add_blank_line(doc)
+    doc <- body_add_flextable(
+      doc,
+      format_table(
+        combined_icc,
+        p_col = NULL,
+        bold_p = FALSE,
+        header_labels = header_icc,
+        merge_cols = merge_cols_icc
+      )
+    )
+    doc <- add_blank_line(doc)
+  }
 
   doc <- body_add_fpar(doc, fpar(ftext("Model Coefficients", prop = fp_text(bold = TRUE))))
   doc <- add_blank_line(doc)
@@ -402,6 +491,23 @@ reg_display_summary <- function(model, engine = c("lm", "lmm")) {
   } else {
     aout <- capture.output(anova(model, type = 3))
     cat(paste(aout, collapse = "\n"), "\n\n")
+
+    rand_var <- tryCatch(lme4::VarCorr(model), error = function(e) NULL)
+    cat("Random effects:\n")
+    if (!is.null(rand_var)) {
+      print(rand_var, comp = c("Variance", "Std.Dev."))
+    } else {
+      cat("  None\n")
+    }
+    cat("\n")
+
+    icc_df <- if (exists("compute_icc") && is.function(compute_icc)) compute_icc(model) else NULL
+    if (!is.null(icc_df) && nrow(icc_df) > 0) {
+      cat("Intraclass Correlation (ICC):\n")
+      icc_df$ICC <- formatC(icc_df$ICC, format = "f", digits = 6, drop0trailing = FALSE)
+      print(icc_df, row.names = FALSE)
+      cat("\n")
+    }
 
     coef_lines <- format_coefs(summary(model)$coefficients)
     cat("Coefficients:\n")
@@ -695,9 +801,8 @@ write_lm_docx <- function(model, file, subtitle = NULL, response_name = NULL, st
 
     rand_df <- as.data.frame(lme4::VarCorr(model))
     if (nrow(rand_df) > 0) {
-      rand_df <- rand_df[, c("grp", "var1", "var2", "vcov", "sdcor"), drop = FALSE]
-      rand_df$var2 <- ifelse(is.na(rand_df$var2), "-", rand_df$var2)
-      names(rand_df) <- c("Grouping", "Effect 1", "Effect 2", "Variance", "Std. Dev.")
+      rand_df <- rand_df[, c("grp", "var1", "vcov", "sdcor"), drop = FALSE]
+      names(rand_df) <- c("Grouping", "Name", "Variance", "Std. Dev.")
       rand_df$Variance <- round(rand_df$Variance, 4)
       rand_df$`Std. Dev.` <- round(rand_df$`Std. Dev.`, 4)
       ft_rand <- format_table(rand_df, p_col = NULL, bold_p = FALSE)
