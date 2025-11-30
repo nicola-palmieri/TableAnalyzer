@@ -451,13 +451,16 @@ regression_server <- function(id, data, engine = c("lm", "lmm"), allow_multi_res
         req(data())
         types <- reg_detect_types(data())
         with_help_tooltip(
-          selectInput(
-            ns("random"),
-            "Random effect (categorical)",
-            choices = types$fac,
-            selected = NULL
+          tagList(
+            selectInput(
+              ns("random"),
+              "Random effect(s) (categorical)",
+              choices = types$fac,
+              multiple = TRUE
+            ),
+            checkboxInput(ns("random_nested"), "Nest random effects in selection order", value = FALSE)
           ),
-          "Choose a grouping factor for random intercepts in the mixed model."
+          "Choose grouping factors for random intercepts in the mixed model. Select multiple to include several random effects, or nest them to model hierarchical structure."
         )
       })
     }
@@ -476,6 +479,7 @@ regression_server <- function(id, data, engine = c("lm", "lmm"), allow_multi_res
         input$covar,
         input$interactions,
         if (engine == "lmm") input$random else NULL,
+        random_nested = if (engine == "lmm") isTRUE(input$random_nested) else FALSE,
         engine = engine
       )
       reg_formula_preview_ui(ns, responses[1], rhs)
@@ -493,6 +497,7 @@ regression_server <- function(id, data, engine = c("lm", "lmm"), allow_multi_res
         input$covar,
         input$interactions,
         if (engine == "lmm") input$random else NULL,
+        random_nested = if (engine == "lmm") isTRUE(input$random_nested) else FALSE,
         engine = engine
       )
 

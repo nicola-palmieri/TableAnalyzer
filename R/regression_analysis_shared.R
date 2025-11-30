@@ -269,8 +269,11 @@ reg_variable_selectors_ui <- function(ns, types, allow_random = FALSE) {
   if (allow_random) {
     out <- c(out, list(
       with_help_tooltip(
-        selectInput(ns("random"), "Random effect (categorical)", choices = types$fac, selected = NULL),
-        "Choose a grouping factor for random intercepts when using mixed models."
+        tagList(
+          selectInput(ns("random"), "Random effect(s) (categorical)", choices = types$fac, multiple = TRUE),
+          checkboxInput(ns("random_nested"), "Nest random effects in selection order", value = FALSE)
+        ),
+        "Choose grouping factors for random intercepts when using mixed models. Select multiple to include several random effects, or nest them to model hierarchical structure."
       )
     ))
   }
@@ -298,16 +301,28 @@ reg_interactions_ui <- function(ns, fixed, fac_vars) {
 # Formula construction
 # ---------------------------------------------------------------
 
-reg_compose_rhs <- function(fixed, covar, interactions, random = NULL, engine = c("lm","lmm")) {
+reg_compose_random_terms <- function(random, nested = FALSE) {
+  random <- reg_protect_vars(compact_chr(random))
+  if (length(random) == 0) return(character(0))
+
+  if (isTRUE(nested) && length(random) > 1) {
+    nested_term <- paste(random, collapse = "/")
+    return(paste0("(1|", nested_term, ")"))
+  }
+
+  paste0("(1|", random, ")")
+}
+
+reg_compose_rhs <- function(fixed, covar, interactions, random = NULL, random_nested = FALSE, engine = c("lm","lmm")) {
   engine <- match.arg(engine)
   fixed <- reg_protect_vars(compact_chr(fixed))
   covar <- reg_protect_vars(compact_chr(covar))
   interactions <- reg_protect_interactions(compact_chr(interactions))
 
   rhs <- c(fixed, covar, interactions)
-  if (engine == "lmm" && !is.null(random) && nzchar(random)) {
-    rand <- reg_protect_vars(random)
-    rhs <- c(rhs, paste0("(1|", rand, ")"))
+  if (engine == "lmm") {
+    rand_terms <- reg_compose_random_terms(random, random_nested)
+    rhs <- c(rhs, rand_terms)
   }
   rhs
 }
