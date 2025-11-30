@@ -37,8 +37,8 @@ ui <- navbarPage(
     tags$style(HTML("
       .container-fluid { max-width: 100%; margin: auto; }
       .hero {
-        background: linear-gradient(135deg, #eef1f5 0%, #d9e7f7 100%);
-        border: 1px solid #d0d9e5;
+        background: #ecf0f1;
+        border: 1px solid #dce4ec;
         border-radius: 16px;
         padding: 40px 24px;
         margin-top: 20px;
