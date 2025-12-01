@@ -321,7 +321,7 @@ pca_server <- function(id, filtered_data) {
         entry$excluded_rows,
         options = list(
           scrollX = TRUE,
-          pageLength = 5,
+          pageLength = 10,
           columnDefs = list(list(targets = "_all", className = "dt-nowrap"))
         ),
         rownames = FALSE,
