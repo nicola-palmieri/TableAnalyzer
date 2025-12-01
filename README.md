@@ -84,7 +84,7 @@ If you use Table Analyzer in a publication, please cite it as:
 
 > Table Analyzer (version X.Y.Z). GitHub repository: https://github.com/nicola-palmieri/TableAnalyzer. Accessed YYYY-MM-DD.
 
-Replace `X.Y.Z` with the app version you ran (or commit hash) and update the access date. You may also acknowledge the key R packages noted above (e.g., `shiny`, `dplyr`, `ggplot2`, `car`, `lmerTest`, `emmeans`, `GGally`).
+Replace `X.Y.Z` with the app version you ran (or commit hash) and update the access date.
 
 ---
 ## 🔍 Transparency for users and reviewers
