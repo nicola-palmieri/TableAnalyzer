@@ -64,7 +64,6 @@ shiny::runApp(".")
 ## 📂 Data expectations
 
 - Columns are automatically typed as numeric or categorical based on their contents on upload, so you can load tidy-long files or two-row-header wide sheets without pre-cleaning.
-- Ambiguous numeric columns (numbers with ≤10 distinct values) are flagged in the Upload tab so you can choose whether to treat them as continuous or categorical; that choice controls whether descriptive statistics return means/SDs or counts/percentages and whether linear models encode the variable as a covariate or a set of indicator levels.
 - Missing values are accepted—modules fall back to complete-case subsets where necessary.
 - Stratification is optional across modules; it works with categorical variables that have up to about ten levels.
 - Maximum upload size: ~200 MB (configured in `app.R`).
