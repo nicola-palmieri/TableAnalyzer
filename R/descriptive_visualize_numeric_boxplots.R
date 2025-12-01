@@ -21,17 +21,16 @@ visualize_numeric_boxplots_ui <- function(id) {
     
     subplot_size_ui(
       ns,
-      width_value = 200,
-      height_value = 800,
-      width_help = "Control how wide each boxplot panel should be.",
-      height_help = "Control how tall each boxplot panel should be."
+      width_value = 400,
+      height_value = 300,
+      width_help = "Set the width of each boxplot panel in pixels.",
+      height_help = "Set the height of each boxplot panel in pixels."
     ),
     
     plot_grid_ui(
       id = ns("plot_grid"),
       rows_help = "Choose how many rows of plots to display.",
-      cols_help = "Choose how many columns of plots to display.",
-      cols_max = 100L
+      cols_help = "Choose how many columns of plots to display."
     ),
     
     fluidRow(
@@ -89,8 +88,8 @@ visualize_numeric_boxplots_server <- function(id, filtered_data, summary_info, i
       plot = NULL,
       warning = NULL,
       layout = NULL,
-      plot_width = 200,
-      plot_height = 800
+      plot_width = 400,
+      plot_height = 300
     )
     
     df <- reactive(filtered_data())
@@ -443,17 +442,13 @@ build_descriptive_numeric_boxplot <- function(df,
   if (length(plots) == 0) return(NULL)
 
   n_panels <- length(plots)
-  defaults <- list(
-    rows = 1L,
-    cols = max(1L, as.integer(n_panels))
-  )
+  defaults <- compute_default_grid(n_panels)
 
   layout <- basic_grid_layout(
     rows = suppressWarnings(as.numeric(nrow_input)),
     cols = suppressWarnings(as.numeric(ncol_input)),
     default_rows = defaults$rows,
-    default_cols = defaults$cols,
-    max_cols = max(100L, as.integer(defaults$cols))
+    default_cols = defaults$cols
   )
 
   validation <- validate_grid(n_panels, layout$nrow, layout$ncol)

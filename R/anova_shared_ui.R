@@ -199,7 +199,22 @@ print_anova_summary_and_posthoc <- function(model_entry, factors) {
     cat("ANOVA results are unavailable.\n")
     return(invisible(NULL))
   }
-  print(results$anova_object)
+  anova_tbl <- results$anova_table
+  if (!is.null(anova_tbl)) {
+    if (!"p.label" %in% names(anova_tbl)) {
+      p_vals <- suppressWarnings(as.numeric(anova_tbl$p.value))
+      anova_tbl$p.label <- ifelse(
+        is.na(p_vals),
+        "",
+        ifelse(p_vals < 0.0001, "<0.0001", sprintf("%.4f", p_vals))
+      )
+    }
+    display_cols <- c("Effect", setdiff(names(anova_tbl), c("p.value", "p.label")), "Pr(>F)")
+    anova_tbl$`Pr(>F)` <- anova_tbl$p.label
+    print(anova_tbl[, intersect(display_cols, names(anova_tbl)), drop = FALSE], row.names = FALSE)
+  } else {
+    print(results$anova_object)
+  }
 
   if (length(results$posthoc_details) == 0) {
     cat("\nNo post-hoc Tukey comparisons were generated.\n")

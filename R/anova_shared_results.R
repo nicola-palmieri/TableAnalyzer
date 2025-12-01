@@ -51,6 +51,11 @@ prepare_anova_outputs <- function(model_obj, factor_names) {
   } else {
     anova_df$p.value <- NA_real_
   }
+  anova_df$p.label <- ifelse(
+    is.na(raw_p),
+    "",
+    ifelse(raw_p < 0.0001, "<0.0001", sprintf("%.4f", raw_p))
+  )
   
   # --- Post-hoc Tukey for each factor ---
   factor_names <- unique(factor_names[!is.na(factor_names) & nzchar(factor_names)])
@@ -298,7 +303,7 @@ write_anova_docx <- function(content, file, response_name = NULL, stratum_label 
   # Helper to format p-values consistently
   format_p <- function(df, p_col) {
     if (is.null(p_col) || !p_col %in% names(df)) return(df)
-    p_vals <- as.numeric(df[[p_col]])
+    p_vals <- suppressWarnings(as.numeric(df[[p_col]]))
     df[[p_col]] <- p_vals
     df[[paste0(p_col, "_label")]] <- ifelse(p_vals < 0.0001, "<0.0001", sprintf("%.4f", p_vals))
     df$sig <- p_vals < 0.05
