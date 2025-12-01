@@ -1,7 +1,5 @@
 #### Section: ANOVA Output Processing ####
 
-#### Section: ANOVA Output Processing ####
-
 prepare_anova_outputs <- function(model_obj, factor_names) {
   old_contrasts <- options("contrasts")
   on.exit(options(old_contrasts), add = TRUE)
@@ -51,10 +49,19 @@ prepare_anova_outputs <- function(model_obj, factor_names) {
   } else {
     anova_df$p.value <- NA_real_
   }
+  p_safe <- if (length(raw_p) == 0) rep(NA_real_, nrow(anova_df)) else raw_p
   anova_df$p.label <- ifelse(
-    is.na(raw_p),
+    is.na(p_safe),
     "",
-    ifelse(raw_p < 0.0001, "<0.0001", sprintf("%.4f", raw_p))
+    ifelse(p_safe < 0.0001, "<.0001", sprintf("%.4f", p_safe))
+  )
+  f_col <- grep("^F", names(anova_df), value = TRUE)
+  f_vals <- if (length(f_col) > 0) suppressWarnings(as.numeric(anova_df[[f_col[1]]])) else rep(NA_real_, nrow(anova_df))
+  if (length(f_vals) == 0) f_vals <- rep(NA_real_, nrow(anova_df))
+  anova_df$Fvalue_label <- ifelse(
+    is.na(f_vals),
+    "",
+    sprintf("%.4f", f_vals)
   )
   
   # --- Post-hoc Tukey for each factor ---
@@ -305,7 +312,7 @@ write_anova_docx <- function(content, file, response_name = NULL, stratum_label 
     if (is.null(p_col) || !p_col %in% names(df)) return(df)
     p_vals <- suppressWarnings(as.numeric(df[[p_col]]))
     df[[p_col]] <- p_vals
-    df[[paste0(p_col, "_label")]] <- ifelse(p_vals < 0.0001, "<0.0001", sprintf("%.4f", p_vals))
+    df[[paste0(p_col, "_label")]] <- ifelse(p_vals < 0.0001, "<.0001", sprintf("%.4f", p_vals))
     df$sig <- p_vals < 0.05
     df
   }
@@ -404,7 +411,8 @@ write_anova_docx <- function(content, file, response_name = NULL, stratum_label 
   combined_anova <- combined_anova %>%
     mutate(
       SumSq = round(SumSq, 4),
-      Fvalue = round(Fvalue, 4)
+      Fvalue = round(Fvalue, 4),
+      Fvalue_label = ifelse(is.na(Fvalue), "", sprintf("%.4f", Fvalue))
     ) %>%
     format_p("PrF") %>%
     arrange(Response, Stratum, Term)
@@ -447,7 +455,7 @@ write_anova_docx <- function(content, file, response_name = NULL, stratum_label 
 
   doc <- add_blank_line(doc)
 
-  doc <- body_add_fpar(doc, fpar(ftext("ANOVA Table", prop = fp_text(bold = TRUE))))
+  doc <- body_add_fpar(doc, fpar(ftext("ANOVA (Type III)", prop = fp_text(bold = TRUE))))
   doc <- add_blank_line(doc)
   doc <- body_add_flextable(
     doc,

@@ -199,18 +199,34 @@ print_anova_summary_and_posthoc <- function(model_entry, factors) {
     cat("ANOVA results are unavailable.\n")
     return(invisible(NULL))
   }
+  resp_name <- tryCatch(all.vars(formula(model_entry$model))[1], error = function(...) "Response")
+  cat("Anova Table (Type III tests)\n\n")
+  cat(sprintf("Response: %s\n", resp_name))
   anova_tbl <- results$anova_table
   if (!is.null(anova_tbl)) {
     if (!"p.label" %in% names(anova_tbl)) {
       p_vals <- suppressWarnings(as.numeric(anova_tbl$p.value))
+      if (length(p_vals) == 0) p_vals <- rep(NA_real_, nrow(anova_tbl))
       anova_tbl$p.label <- ifelse(
         is.na(p_vals),
         "",
-        ifelse(p_vals < 0.0001, "<0.0001", sprintf("%.4f", p_vals))
+        ifelse(p_vals < 0.0001, "<.0001", sprintf("%.4f", p_vals))
+      )
+    }
+    if (!"Fvalue_label" %in% names(anova_tbl)) {
+      f_vals <- suppressWarnings(as.numeric(anova_tbl$Fvalue))
+      if (length(f_vals) == 0) f_vals <- rep(NA_real_, nrow(anova_tbl))
+      anova_tbl$Fvalue_label <- ifelse(
+        is.na(f_vals),
+        "",
+        sprintf("%.4f", f_vals)
       )
     }
     display_cols <- c("Effect", setdiff(names(anova_tbl), c("p.value", "p.label")), "Pr(>F)")
     anova_tbl$`Pr(>F)` <- anova_tbl$p.label
+    if ("Fvalue_label" %in% names(anova_tbl)) {
+      anova_tbl$`F value` <- anova_tbl$Fvalue_label
+    }
     print(anova_tbl[, intersect(display_cols, names(anova_tbl)), drop = FALSE], row.names = FALSE)
   } else {
     print(results$anova_object)
@@ -240,5 +256,4 @@ print_anova_summary_and_posthoc <- function(model_entry, factors) {
   invisible(results)
 }
 
-#### Section: Model Fitting & Preparation ####
 
