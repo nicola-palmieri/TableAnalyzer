@@ -163,6 +163,9 @@ descriptive_server <- function(id, filtered_data) {
           tagList(
             strong("Variable type: factor"),
             tags$ul(
+              tags$li("skim_variable: column name (plus group column if you stratified)."),
+              tags$li("n_missing: number of missing entries."),
+              tags$li("complete_rate: proportion of non-missing rows."),
               tags$li("n_unique: how many categories."),
               tags$li("n_singletons: categories seen only once."),
               tags$li("top_counts: most common categories with their counts.")
@@ -170,7 +173,17 @@ descriptive_server <- function(id, filtered_data) {
             br(),
             strong("Variable type: numeric"),
             tags$ul(
-              tags$li("mean, sd, min/max, quartiles, missing: basic descriptive stats.")
+              tags$li("skim_variable: column name (plus group column if you stratified)."),
+              tags$li("n_missing: number of missing entries."),
+              tags$li("complete_rate: proportion of non-missing rows."),
+              tags$li("mean: arithmetic average of non-missing values."),
+              tags$li("sd: standard deviation."),
+              tags$li("p0: minimum observed value."),
+              tags$li("p25: first quartile (25th percentile)."),
+              tags$li("p50: median (50th percentile)."),
+              tags$li("p75: third quartile (75th percentile)."),
+              tags$li("p100: maximum observed value."),
+              tags$li("hist: sparkline showing the distribution shape.")
             ),
             br(),
             strong("Numeric variables summary"),

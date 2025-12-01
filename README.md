@@ -41,13 +41,19 @@ Table Analyzer is a modular R/Shiny application for analysing tabular datasets w
 
 ---
 
+## 📚 User guide
+
+For a step-by-step manual (including tips for basic users and how to reclassify columns via the Upload tab), see `docs/user-guide.md`.
+
+---
+
 ## 🔧 Installation & local launch
 
 ```r
 # Install packages (run once)
 install.packages(c(
-  "bslib", "dplyr", "DT", "emmeans", "fitdistrplus", "flextable",
-  "GGally", "ggplot2", "lmerTest", "officer", "patchwork",
+  "bslib", "car", "dplyr", "DT", "emmeans", "fitdistrplus", "flextable",
+  "GGally", "ggplot2", "ggrepel", "lmerTest", "officer", "patchwork",
   "readxl", "shiny", "skimr", "tidyr", "zoo"
 ))
 

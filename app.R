@@ -3,6 +3,7 @@
 # ===============================================================
 
 library(bslib)
+library(car)
 library(dplyr)
 library(DT)
 library(emmeans)
@@ -10,6 +11,7 @@ library(fitdistrplus)
 library(flextable)
 library(GGally)
 library(ggplot2)
+library(ggrepel)
 library(lmerTest)
 library(officer)
 library(patchwork)
