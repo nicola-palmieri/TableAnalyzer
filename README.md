@@ -78,6 +78,15 @@ shiny::runApp(".")
 - All plots download as publication-ready PNG files (300 dpi) with customizable width and height; PCA, correlation, and descriptive visuals can also be saved via each plot’s built-in controls.
 
 ---
+## 📝 How to cite
+
+If you use Table Analyzer in a publication, please cite it as:
+
+> Table Analyzer (version X.Y.Z). GitHub repository: https://github.com/nicola-palmieri/TableAnalyzer. Accessed YYYY-MM-DD.
+
+Replace `X.Y.Z` with the app version you ran (or commit hash) and update the access date. You may also acknowledge the key R packages noted above (e.g., `shiny`, `dplyr`, `ggplot2`, `car`, `lmerTest`, `emmeans`, `GGally`).
+
+---
 ## 🔍 Transparency for users and reviewers
 
 Every analysis tab in Table Analyzer maps directly to familiar R functions. The table below summarizes what is executed and which options the UI fills in on your behalf.
