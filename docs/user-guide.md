@@ -143,7 +143,7 @@ If a control references a grouping variable that does not appear, return to **Up
 
 ---
 
-## Interpreting outputs (plain-language)
+## Interpreting outputs
 
 ### Descriptive summary
 - **variable:** Column name (and group if stratified).
