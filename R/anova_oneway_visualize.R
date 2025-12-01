@@ -160,6 +160,22 @@ visualize_oneway_server <- function(id, filtered_data, model_info) {
       stored$warning <- chosen_result$warning
       stored$plot    <- chosen_result$plot
       stored$layout  <- chosen_result$layout
+
+      apply_grid_defaults_if_empty(
+        input,
+        session,
+        "strata_grid",
+        defaults = chosen_result$defaults$strata,
+        n_items = chosen_result$panel_counts$strata
+      )
+
+      apply_grid_defaults_if_empty(
+        input,
+        session,
+        "response_grid",
+        defaults = chosen_result$defaults$responses,
+        n_items = chosen_result$panel_counts$responses
+      )
     })
     
     output$plot_warning <- renderUI({

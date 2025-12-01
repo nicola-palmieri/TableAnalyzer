@@ -311,10 +311,26 @@ visualize_twoway_server <- function(id, filtered_data, model_info) {
       
       chosen <- input$plot_type
       chosen_result <- results[[chosen]]
-      
+
       stored$warning <- chosen_result$warning
       stored$plot    <- chosen_result$plot
       stored$layout  <- chosen_result$layout
+
+      apply_grid_defaults_if_empty(
+        input,
+        session,
+        "strata_grid",
+        defaults = chosen_result$defaults$strata,
+        n_items = chosen_result$panel_counts$strata
+      )
+
+      apply_grid_defaults_if_empty(
+        input,
+        session,
+        "response_grid",
+        defaults = chosen_result$defaults$responses,
+        n_items = chosen_result$panel_counts$responses
+      )
     })
     
     # ------------------------------------------------------------------
