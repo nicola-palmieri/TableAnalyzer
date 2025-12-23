@@ -141,6 +141,21 @@ visualize_categorical_barplots_server <- function(id, filtered_data, summary_inf
     # ==========================================================
     # APPLY LOGIC - the only place where the plot is computed
     # ==========================================================
+    pending_auto <- reactiveVal(FALSE)
+
+    auto_render_if_ready <- function() {
+      info <- summary_info()
+      if (is.null(info$type) || !identical(info$type, "descriptive")) return(FALSE)
+      if (!is.null(is_active) && !isTRUE(is_active())) return(FALSE)
+      if (is.null(input$plot_width) || is.null(input$plot_height)) {
+        pending_auto(TRUE)
+        return(FALSE)
+      }
+      pending_auto(FALSE)
+      compute_plot()
+      TRUE
+    }
+
     compute_plot <- function() {
       data <- df()
       info <- summary_info()
@@ -190,20 +205,20 @@ visualize_categorical_barplots_server <- function(id, filtered_data, summary_inf
     })
 
     observeEvent(summary_info(), {
-      info <- summary_info()
-      if (is.null(info$type) || !identical(info$type, "descriptive")) return()
-      if (!is.null(is_active) && !isTRUE(is_active())) return()
-      compute_plot()
+      auto_render_if_ready()
     }, ignoreInit = FALSE)
     
     if (!is.null(is_active)) {
       observeEvent(is_active(), {
-        info <- summary_info()
-        if (is.null(info$type) || !identical(info$type, "descriptive")) return()
-        if (!isTRUE(is_active())) return()
-        compute_plot()
+        auto_render_if_ready()
       }, ignoreInit = FALSE)
     }
+
+    observeEvent(list(input$plot_width, input$plot_height), {
+      if (isTRUE(pending_auto())) {
+        auto_render_if_ready()
+      }
+    }, ignoreInit = TRUE)
     
     # -------------------------
     # UI: warnings

@@ -146,6 +146,21 @@ visualize_numeric_histograms_server <- function(id, filtered_data, summary_info,
     # ================================================================
     # APPLY - compute histogram only when user clicks
     # ================================================================
+    pending_auto <- reactiveVal(FALSE)
+
+    auto_render_if_ready <- function() {
+      info <- summary_info()
+      if (is.null(info$type) || !identical(info$type, "descriptive")) return(FALSE)
+      if (!is.null(is_active) && !isTRUE(is_active())) return(FALSE)
+      if (is.null(input$plot_width) || is.null(input$plot_height)) {
+        pending_auto(TRUE)
+        return(FALSE)
+      }
+      pending_auto(FALSE)
+      compute_plot()
+      TRUE
+    }
+
     compute_plot <- function() {
       stored$plot_width  <- input$plot_width %||% 400
       stored$plot_height <- input$plot_height %||% 300
@@ -198,20 +213,20 @@ visualize_numeric_histograms_server <- function(id, filtered_data, summary_info,
     })
 
     observeEvent(summary_info(), {
-      info <- summary_info()
-      if (is.null(info$type) || !identical(info$type, "descriptive")) return()
-      if (!is.null(is_active) && !isTRUE(is_active())) return()
-      compute_plot()
+      auto_render_if_ready()
     }, ignoreInit = FALSE)
     
     if (!is.null(is_active)) {
       observeEvent(is_active(), {
-        info <- summary_info()
-        if (is.null(info$type) || !identical(info$type, "descriptive")) return()
-        if (!isTRUE(is_active())) return()
-        compute_plot()
+        auto_render_if_ready()
       }, ignoreInit = FALSE)
     }
+
+    observeEvent(list(input$plot_width, input$plot_height), {
+      if (isTRUE(pending_auto())) {
+        auto_render_if_ready()
+      }
+    }, ignoreInit = TRUE)
     
     # ================================================================
     # Warning box

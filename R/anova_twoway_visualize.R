@@ -357,6 +357,12 @@ visualize_twoway_server <- function(id, filtered_data, model_info) {
       if (is.null(info$type) || !identical(info$type, "twoway_anova")) return()
       compute_plot()
     }, ignoreInit = FALSE)
+
+    observeEvent(input$plot_type, {
+      info <- model_info()
+      if (is.null(info$type) || !identical(info$type, "twoway_anova")) return()
+      compute_plot()
+    }, ignoreInit = TRUE)
     
     # ------------------------------------------------------------------
     # Outputs

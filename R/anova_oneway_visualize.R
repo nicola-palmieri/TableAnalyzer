@@ -202,6 +202,12 @@ visualize_oneway_server <- function(id, filtered_data, model_info) {
       if (is.null(info$type) || !identical(info$type, "oneway_anova")) return()
       compute_plot()
     }, ignoreInit = FALSE)
+
+    observeEvent(input$plot_type, {
+      info <- model_info()
+      if (is.null(info$type) || !identical(info$type, "oneway_anova")) return()
+      compute_plot()
+    }, ignoreInit = TRUE)
     
     output$plot_warning <- renderUI({
       if (!is.null(stored$warning)) {
