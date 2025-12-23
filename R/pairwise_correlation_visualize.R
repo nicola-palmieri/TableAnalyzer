@@ -47,6 +47,23 @@ visualize_ggpairs_server <- function(id, filtered_data, model_fit) {
       }
       info
     })
+    
+    apply_id <- reactiveVal(0L)
+    apply_counter <- 0L
+    bump_apply <- function() {
+      apply_counter <<- apply_counter + 1L
+      apply_id(apply_counter)
+    }
+    
+    observeEvent(input$apply_plot, {
+      bump_apply()
+    })
+    
+    observeEvent(correlation_info(), {
+      session$onFlushed(function() {
+        bump_apply()
+      }, once = TRUE)
+    }, ignoreInit = FALSE)
 
     output$sub_controls <- renderUI({
       info <- correlation_info()
@@ -61,7 +78,7 @@ visualize_ggpairs_server <- function(id, filtered_data, model_fit) {
       "ggpairs",
       filtered_data,
       correlation_info,
-      apply_trigger = reactive(input$apply_plot)
+      apply_trigger = reactive(apply_id())
     )
 
     output$plot_warning <- renderUI({

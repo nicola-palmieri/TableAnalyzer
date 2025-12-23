@@ -63,7 +63,7 @@ visualize_categorical_barplots_plot_ui <- function(id) {
 }
 
 
-visualize_categorical_barplots_server <- function(id, filtered_data, summary_info) {
+visualize_categorical_barplots_server <- function(id, filtered_data, summary_info, is_active = NULL) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
@@ -139,14 +139,14 @@ visualize_categorical_barplots_server <- function(id, filtered_data, summary_inf
     })
     
     # ==========================================================
-    # APPLY LOGIC — the only place where the plot is computed
+    # APPLY LOGIC - the only place where the plot is computed
     # ==========================================================
-    observeEvent(input$apply_plot, {
+    compute_plot <- function() {
       data <- df()
       info <- summary_info()
       
-      stored$plot_width  <- input$plot_width
-      stored$plot_height <- input$plot_height
+      stored$plot_width  <- input$plot_width %||% 400
+      stored$plot_height <- input$plot_height %||% 300
       
       if (is.null(info) || is.null(data) || nrow(data) == 0) {
         stored$warning <- "No data available."
@@ -183,7 +183,27 @@ visualize_categorical_barplots_server <- function(id, filtered_data, summary_inf
         res$defaults,
         n_items = res$panels
       )
+    }
+
+    observeEvent(input$apply_plot, {
+      compute_plot()
     })
+
+    observeEvent(summary_info(), {
+      info <- summary_info()
+      if (is.null(info$type) || !identical(info$type, "descriptive")) return()
+      if (!is.null(is_active) && !isTRUE(is_active())) return()
+      compute_plot()
+    }, ignoreInit = FALSE)
+    
+    if (!is.null(is_active)) {
+      observeEvent(is_active(), {
+        info <- summary_info()
+        if (is.null(info$type) || !identical(info$type, "descriptive")) return()
+        if (!isTRUE(is_active())) return()
+        compute_plot()
+      }, ignoreInit = FALSE)
+    }
     
     # -------------------------
     # UI: warnings

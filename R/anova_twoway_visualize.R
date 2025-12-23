@@ -136,6 +136,9 @@ visualize_twoway_server <- function(id, filtered_data, model_info) {
     )
     
     base_size <- base_size_server(input = input, default = 13)
+    subplot_defaults <- subplot_size_defaults()
+    plot_width_default <- subplot_defaults$width$value
+    plot_height_default <- subplot_defaults$height$value
     
     # ------------------------------------------------------------------
     # Grid modules
@@ -242,12 +245,21 @@ visualize_twoway_server <- function(id, filtered_data, model_info) {
     # ------------------------------------------------------------------
     # APPLY BUTTON
     # ------------------------------------------------------------------
-    observeEvent(input$apply_plot, {
+    compute_plot <- function() {
       data <- df()
       info <- model_info()
       
-      stored$plot_width  <- input$plot_width  %||% 600
-      stored$plot_height <- input$plot_height %||% 600
+      plot_width <- suppressWarnings(as.numeric(input$plot_width))
+      if (length(plot_width) == 0 || is.na(plot_width) || plot_width <= 0) {
+        plot_width <- plot_width_default
+      }
+      plot_height <- suppressWarnings(as.numeric(input$plot_height))
+      if (length(plot_height) == 0 || is.na(plot_height) || plot_height <= 0) {
+        plot_height <- plot_height_default
+      }
+
+      stored$plot_width <- plot_width
+      stored$plot_height <- plot_height
       
       if (is.null(info) || is.null(data) || nrow(data) == 0) {
         stored$warning <- "No data or ANOVA results available."
@@ -282,10 +294,10 @@ visualize_twoway_server <- function(id, filtered_data, model_info) {
           data, info, layout_inputs,
           line_colors      = custom_colors(),
           base_size        = base_size(),
-          show_lines       = input$lineplot_show_lines,
-          show_jitter      = input$lineplot_show_jitter,
-          use_dodge        = input$lineplot_use_dodge,
-          share_y_axis     = input$share_y_axis,
+          show_lines       = isTRUE(input$lineplot_show_lines %||% TRUE),
+          show_jitter      = isTRUE(input$lineplot_show_jitter),
+          use_dodge        = isTRUE(input$lineplot_use_dodge),
+          share_y_axis     = isTRUE(input$share_y_axis),
           common_legend    = use_common_legend,
           legend_position  = legend_position
         ),
@@ -295,7 +307,7 @@ visualize_twoway_server <- function(id, filtered_data, model_info) {
           line_colors      = custom_colors(),
           base_size        = base_size(),
           posthoc_all      = info$posthoc,
-          share_y_axis     = input$share_y_axis,
+          share_y_axis     = isTRUE(input$share_y_axis),
           common_legend    = use_common_legend,
           legend_position  = legend_position
         ),
@@ -303,13 +315,16 @@ visualize_twoway_server <- function(id, filtered_data, model_info) {
           data, info, layout_inputs,
           line_colors      = custom_colors(),
           base_size        = base_size(),
-          share_y_axis     = input$share_y_axis,
+          share_y_axis     = isTRUE(input$share_y_axis),
           common_legend    = use_common_legend,
           legend_position  = legend_position
         )
       )
       
       chosen <- input$plot_type
+      if (is.null(chosen) || !chosen %in% names(results)) {
+        chosen <- "lineplot_mean_se"
+      }
       chosen_result <- results[[chosen]]
 
       stored$warning <- chosen_result$warning
@@ -331,7 +346,17 @@ visualize_twoway_server <- function(id, filtered_data, model_info) {
         defaults = chosen_result$defaults$responses,
         n_items = chosen_result$panel_counts$responses
       )
+    }
+
+    observeEvent(input$apply_plot, {
+      compute_plot()
     })
+
+    observeEvent(model_info(), {
+      info <- model_info()
+      if (is.null(info$type) || !identical(info$type, "twoway_anova")) return()
+      compute_plot()
+    }, ignoreInit = FALSE)
     
     # ------------------------------------------------------------------
     # Outputs
@@ -351,13 +376,13 @@ visualize_twoway_server <- function(id, filtered_data, model_info) {
         lay <- stored$layout
         if (is.null(lay)) return(600)
         cols <- (lay$strata$cols %||% 1) * (lay$responses$cols %||% 1)
-        stored$plot_width * cols
+        (stored$plot_width %||% plot_width_default) * cols
       },
       height = function() {
         lay <- stored$layout
         if (is.null(lay)) return(600)
         rows <- (lay$strata$rows %||% 1) * (lay$responses$rows %||% 1)
-        stored$plot_height * rows
+        (stored$plot_height %||% plot_height_default) * rows
       },
       res = 96
     )
@@ -374,8 +399,8 @@ visualize_twoway_server <- function(id, filtered_data, model_info) {
         cols <- (lay$strata$cols %||% 1) * (lay$responses$cols %||% 1)
         rows <- (lay$strata$rows %||% 1) * (lay$responses$rows %||% 1)
         
-        w_in <- (stored$plot_width  * cols) / 96
-        h_in <- (stored$plot_height * rows) / 96
+        w_in <- ((stored$plot_width %||% plot_width_default) * cols) / 96
+        h_in <- ((stored$plot_height %||% plot_height_default) * rows) / 96
         
         ggsave(file, p,
                dpi = 300,

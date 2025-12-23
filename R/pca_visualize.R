@@ -297,6 +297,38 @@ visualize_pca_server <- function(id, filtered_data, model_fit) {
       input = input,
       default = 14
     )
+    
+    apply_id <- reactiveVal(0L)
+    apply_counter <- 0L
+    bump_apply <- function() {
+      apply_counter <<- apply_counter + 1L
+      apply_id(apply_counter)
+    }
+    
+    pending_auto <- reactiveVal(FALSE)
+    
+    observeEvent(input$apply_plot, {
+      bump_apply()
+    })
+    
+    observeEvent(model_fit(), {
+      info <- tryCatch(model_fit(), shiny.silent.stop = function(e) NULL)
+      if (is.null(info) || !identical(info$type, "pca")) return()
+      if (!is.null(input$plot_type)) {
+        pending_auto(FALSE)
+        bump_apply()
+      } else {
+        pending_auto(TRUE)
+      }
+    }, ignoreInit = FALSE)
+    
+    observeEvent(input$plot_type, {
+      if (!isTRUE(pending_auto())) return()
+      info <- tryCatch(model_fit(), shiny.silent.stop = function(e) NULL)
+      if (is.null(info) || !identical(info$type, "pca")) return()
+      pending_auto(FALSE)
+      bump_apply()
+    }, ignoreInit = TRUE)
 
     max_levels <- if (exists("MAX_STRATIFICATION_LEVELS")) MAX_STRATIFICATION_LEVELS else 10L
 
@@ -439,14 +471,16 @@ visualize_pca_server <- function(id, filtered_data, model_fit) {
       }
     }
 
-    plot_info <- eventReactive(input$apply_plot, {
-      req(isTRUE(input$apply_plot > 0))
+    plot_info <- eventReactive(apply_id(), {
+      req(isTRUE(apply_id() > 0))
       req(input$plot_type)
       validate(need(input$plot_type == "biplot", "Unsupported plot type."))
 
       entry <- pca_entry()
-      plot_w <- ifelse(is.na(input$plot_width) || input$plot_width <= 0, 800, input$plot_width)
-      plot_h <- ifelse(is.na(input$plot_height) || input$plot_height <= 0, 600, input$plot_height)
+      plot_w <- suppressWarnings(as.numeric(input$plot_width))
+      if (length(plot_w) == 0 || is.na(plot_w) || plot_w <= 0) plot_w <- 800
+      plot_h <- suppressWarnings(as.numeric(input$plot_height))
+      if (length(plot_h) == 0 || is.na(plot_h) || plot_h <= 0) plot_h <- 600
 
       empty_result <- function(message) {
         defaults <- compute_default_grid(1L)
@@ -890,4 +924,3 @@ build_pca_biplot <- function(
 
   g
 }
-

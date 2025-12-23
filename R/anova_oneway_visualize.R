@@ -87,6 +87,9 @@ visualize_oneway_server <- function(id, filtered_data, model_info) {
     )
     
     base_size <- base_size_server(input = input, default = 14)
+    subplot_defaults <- subplot_size_defaults()
+    plot_width_default <- subplot_defaults$width$value
+    plot_height_default <- subplot_defaults$height$value
     
     strata_grid <- plot_grid_server("strata_grid")
     response_grid <- plot_grid_server("response_grid")
@@ -97,12 +100,21 @@ visualize_oneway_server <- function(id, filtered_data, model_info) {
       build_anova_layout_controls(ns, input, info)
     })
     
-    observeEvent(input$apply_plot, {
+    compute_plot <- function() {
       data <- df()
       info <- model_info()
       
-      stored$plot_width  <- input$plot_width  %||% 600
-      stored$plot_height <- input$plot_height %||% 600
+      plot_width <- suppressWarnings(as.numeric(input$plot_width))
+      if (length(plot_width) == 0 || is.na(plot_width) || plot_width <= 0) {
+        plot_width <- plot_width_default
+      }
+      plot_height <- suppressWarnings(as.numeric(input$plot_height))
+      if (length(plot_height) == 0 || is.na(plot_height) || plot_height <= 0) {
+        plot_height <- plot_height_default
+      }
+
+      stored$plot_width <- plot_width
+      stored$plot_height <- plot_height
       
       if (is.null(info) || is.null(data) || nrow(data) == 0) {
         stored$warning <- "No data or ANOVA results available."
@@ -131,9 +143,9 @@ visualize_oneway_server <- function(id, filtered_data, model_info) {
           layout_values = layout_inputs,
           line_colors   = custom_colors(),
           base_size     = base_size(),
-          show_lines    = input$lineplot_show_lines,
-          show_jitter   = input$lineplot_show_jitter,
-          share_y_axis  = input$share_y_axis
+          show_lines    = isTRUE(input$lineplot_show_lines %||% TRUE),
+          show_jitter   = isTRUE(input$lineplot_show_jitter),
+          share_y_axis  = isTRUE(input$share_y_axis)
         ),
         barplot_mean_se = plot_anova_barplot_meanse(
           data,
@@ -142,7 +154,7 @@ visualize_oneway_server <- function(id, filtered_data, model_info) {
           line_colors   = custom_colors(),
           base_size     = base_size(),
           posthoc_all   = info$posthoc,
-          share_y_axis  = input$share_y_axis
+          share_y_axis  = isTRUE(input$share_y_axis)
         ),
         boxplot = plot_anova_boxplot(
           data,
@@ -150,11 +162,14 @@ visualize_oneway_server <- function(id, filtered_data, model_info) {
           layout_values = layout_inputs,
           line_colors   = custom_colors(),
           base_size     = base_size(),
-          share_y_axis  = input$share_y_axis
+          share_y_axis  = isTRUE(input$share_y_axis)
         )
       )
       
       chosen <- input$plot_type
+      if (is.null(chosen) || !chosen %in% names(results)) {
+        chosen <- "lineplot_mean_se"
+      }
       chosen_result <- results[[chosen]]
       
       stored$warning <- chosen_result$warning
@@ -176,7 +191,17 @@ visualize_oneway_server <- function(id, filtered_data, model_info) {
         defaults = chosen_result$defaults$responses,
         n_items = chosen_result$panel_counts$responses
       )
+    }
+
+    observeEvent(input$apply_plot, {
+      compute_plot()
     })
+
+    observeEvent(model_info(), {
+      info <- model_info()
+      if (is.null(info$type) || !identical(info$type, "oneway_anova")) return()
+      compute_plot()
+    }, ignoreInit = FALSE)
     
     output$plot_warning <- renderUI({
       if (!is.null(stored$warning)) {
@@ -197,7 +222,7 @@ visualize_oneway_server <- function(id, filtered_data, model_info) {
         cols_strata    <- lay$strata$cols %||% 1
         cols_responses <- lay$responses$cols %||% 1
         
-        (stored$plot_width %||% 600) * cols_strata * cols_responses
+        (stored$plot_width %||% plot_width_default) * cols_strata * cols_responses
       },
       height = function() {
         lay <- stored$layout
@@ -206,7 +231,7 @@ visualize_oneway_server <- function(id, filtered_data, model_info) {
         rows_strata    <- lay$strata$rows %||% 1
         rows_responses <- lay$responses$rows %||% 1
         
-        (stored$plot_height %||% 600) * rows_strata * rows_responses
+        (stored$plot_height %||% plot_height_default) * rows_strata * rows_responses
       },
       res = 96
     )
@@ -230,8 +255,8 @@ visualize_oneway_server <- function(id, filtered_data, model_info) {
         total_cols <- cols_strata * cols_responses
         total_rows <- rows_strata * rows_responses
         
-        w_in <- ((stored$plot_width  %||% 600) * total_cols) / 96
-        h_in <- ((stored$plot_height %||% 600) * total_rows) / 96
+        w_in <- ((stored$plot_width  %||% plot_width_default) * total_cols) / 96
+        h_in <- ((stored$plot_height %||% plot_height_default) * total_rows) / 96
         
         ggsave(
           filename = file,
