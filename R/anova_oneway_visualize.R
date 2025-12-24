@@ -100,7 +100,7 @@ visualize_oneway_server <- function(id, filtered_data, model_info) {
       build_anova_layout_controls(ns, input, info)
     })
     
-    compute_plot <- function() {
+    compute_plot <- function(allow_reset = FALSE) {
       data <- df()
       info <- model_info()
       
@@ -129,48 +129,67 @@ visualize_oneway_server <- function(id, filtered_data, model_info) {
       responses <- info$responses
       n_responses <- if (!is.null(responses) && length(responses) > 0L) length(responses) else 1L
       
+      build_results <- function(layout_inputs) {
+        list(
+          lineplot_mean_se = plot_anova_lineplot_meanse(
+            data,
+            info,
+            layout_values = layout_inputs,
+            line_colors   = custom_colors(),
+            base_size     = base_size(),
+            show_lines    = isTRUE(input$lineplot_show_lines %||% TRUE),
+            show_jitter   = isTRUE(input$lineplot_show_jitter),
+            share_y_axis  = isTRUE(input$share_y_axis)
+          ),
+          barplot_mean_se = plot_anova_barplot_meanse(
+            data,
+            info,
+            layout_values = layout_inputs,
+            line_colors   = custom_colors(),
+            base_size     = base_size(),
+            posthoc_all   = info$posthoc,
+            share_y_axis  = isTRUE(input$share_y_axis)
+          ),
+          boxplot = plot_anova_boxplot(
+            data,
+            info,
+            layout_values = layout_inputs,
+            line_colors   = custom_colors(),
+            base_size     = base_size(),
+            share_y_axis  = isTRUE(input$share_y_axis)
+          )
+        )
+      }
+
       layout_inputs <- list(
         strata_rows = strata_grid$rows(),
         strata_cols = strata_grid$cols(),
         resp_rows   = response_grid$rows(),
         resp_cols   = response_grid$cols()
       )
-      
-      results <- list(
-        lineplot_mean_se = plot_anova_lineplot_meanse(
-          data,
-          info,
-          layout_values = layout_inputs,
-          line_colors   = custom_colors(),
-          base_size     = base_size(),
-          show_lines    = isTRUE(input$lineplot_show_lines %||% TRUE),
-          show_jitter   = isTRUE(input$lineplot_show_jitter),
-          share_y_axis  = isTRUE(input$share_y_axis)
-        ),
-        barplot_mean_se = plot_anova_barplot_meanse(
-          data,
-          info,
-          layout_values = layout_inputs,
-          line_colors   = custom_colors(),
-          base_size     = base_size(),
-          posthoc_all   = info$posthoc,
-          share_y_axis  = isTRUE(input$share_y_axis)
-        ),
-        boxplot = plot_anova_boxplot(
-          data,
-          info,
-          layout_values = layout_inputs,
-          line_colors   = custom_colors(),
-          base_size     = base_size(),
-          share_y_axis  = isTRUE(input$share_y_axis)
-        )
-      )
+
+      results <- build_results(layout_inputs)
       
       chosen <- input$plot_type
       if (is.null(chosen) || !chosen %in% names(results)) {
         chosen <- "lineplot_mean_se"
       }
       chosen_result <- results[[chosen]]
+
+      is_grid_warning <- function(msg) {
+        !is.null(msg) && grepl("Grid", msg, fixed = TRUE)
+      }
+
+      if (isTRUE(allow_reset) && !is.null(chosen_result) && is_grid_warning(chosen_result$warning)) {
+        default_inputs <- list(
+          strata_rows = chosen_result$defaults$strata$rows,
+          strata_cols = chosen_result$defaults$strata$cols,
+          resp_rows   = chosen_result$defaults$responses$rows,
+          resp_cols   = chosen_result$defaults$responses$cols
+        )
+        results <- build_results(default_inputs)
+        chosen_result <- results[[chosen]]
+      }
       
       stored$warning <- chosen_result$warning
       stored$plot    <- chosen_result$plot
@@ -194,19 +213,19 @@ visualize_oneway_server <- function(id, filtered_data, model_info) {
     }
 
     observeEvent(input$apply_plot, {
-      compute_plot()
+      compute_plot(allow_reset = FALSE)
     })
 
     observeEvent(model_info(), {
       info <- model_info()
       if (is.null(info$type) || !identical(info$type, "oneway_anova")) return()
-      compute_plot()
+      compute_plot(allow_reset = TRUE)
     }, ignoreInit = FALSE)
 
     observeEvent(input$plot_type, {
       info <- model_info()
       if (is.null(info$type) || !identical(info$type, "oneway_anova")) return()
-      compute_plot()
+      compute_plot(allow_reset = TRUE)
     }, ignoreInit = TRUE)
     
     output$plot_warning <- renderUI({

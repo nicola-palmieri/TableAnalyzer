@@ -30,7 +30,7 @@ ggpairs_ui <- function(id) {
   )
 }
 
-ggpairs_server <- function(id, data_reactive) {
+ggpairs_server <- function(id, data_reactive, reset_trigger = reactive(NULL)) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     df <- reactive(data_reactive())
@@ -73,6 +73,15 @@ ggpairs_server <- function(id, data_reactive) {
     }
 
     correlation_store <- reactiveVal(NULL)
+
+    last_reset_token <- reactiveVal(NULL)
+
+    observeEvent(reset_trigger(), {
+      token <- reset_trigger()
+      if (is.null(token) || identical(token, last_reset_token())) return()
+      correlation_store(NULL)
+      last_reset_token(token)
+    }, ignoreInit = FALSE)
 
     # ---- Compute correlation matrix ----
     observeEvent(input$run, {

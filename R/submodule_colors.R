@@ -34,7 +34,8 @@ add_color_customization_server <- function(ns,
                                            data,
                                            color_var_reactive,
                                            multi_group = TRUE,
-                                           level_order_reactive = NULL) {
+                                           level_order_reactive = NULL,
+                                           reset_token = NULL) {
   default_color <- "steelblue"
 
   # ---- Dynamic UI ----
@@ -43,38 +44,51 @@ add_color_customization_server <- function(ns,
 
     color_var <- color_var_reactive() %||% ""
     level_override <- if (is.null(level_order_reactive)) NULL else level_order_reactive()
+    reset_id <- if (is.null(reset_token)) NULL else resolve_reactive(reset_token)
+    id_suffix <- if (is.null(reset_id)) "" else paste0("_", reset_id)
 
     # Single color UI shown when multi-group off or no color_var available
     if (!isTRUE(multi_group) || color_var %in% c("", "None")) {
+      single_id <- paste0("single_color", id_suffix)
+      single_selected <- isolate(input[[single_id]]) %||% default_color
       tagList(
         h5("Color"),
         with_help_tooltip(
-          color_dropdown_input(ns, "single_color", basic_color_palette, ncol = 4),
+          color_dropdown_input(
+            ns,
+            single_id,
+            basic_color_palette,
+            ncol = 4,
+            selected = single_selected
+          ),
           "Choose the colour used for the entire plot."
         )
       )
     } else {
-      render_color_inputs(ns, data, color_var, level_override)
+      render_color_inputs(ns, data, color_var, level_override, input, id_suffix = id_suffix)
     }
   })
 
   # ---- Reactive color mapping ----
   reactive({
+    reset_id <- if (is.null(reset_token)) NULL else resolve_reactive(reset_token)
+    id_suffix <- if (is.null(reset_id)) "" else paste0("_", reset_id)
+
     # --- Single-color mode (no grouping variable or disabled) ---
     if (!isTRUE(multi_group)) {
-      return(input$single_color %||% default_color)
+      return(input[[paste0("single_color", id_suffix)]] %||% default_color)
     }
 
     color_var <- color_var_reactive() %||% ""
     if (color_var %in% c("", "None")) {
-      return(input$single_color %||% default_color)
+      return(input[[paste0("single_color", id_suffix)]] %||% default_color)
     }
 
     dataset <- data()
     req(dataset)
 
     if (!color_var %in% names(dataset)) {
-      return(input$single_color %||% default_color)
+      return(input[[paste0("single_color", id_suffix)]] %||% default_color)
     }
 
     values <- dataset[[color_var]]
@@ -95,7 +109,7 @@ add_color_customization_server <- function(ns,
     base_palette <- rep(basic_color_palette, length.out = length(lvls))
 
     cols <- vapply(seq_along(lvls), function(i) {
-      input[[paste0("col_", color_var, "_", i)]] %||% base_palette[i]
+      input[[paste0("col_", color_var, "_", i, id_suffix)]] %||% base_palette[i]
     }, character(1))
 
     names(cols) <- lvls
@@ -107,7 +121,7 @@ add_color_customization_server <- function(ns,
 # 🎨 UI helper to assign colors per level of a factor
 # ===============================================================
 
-render_color_inputs <- function(ns, data, color_var, level_order = NULL) {
+render_color_inputs <- function(ns, data, color_var, level_order = NULL, input = NULL, id_suffix = "") {
   if (is.null(color_var) || color_var == "None") return(NULL)
   if (!color_var %in% names(data())) return(NULL)
 
@@ -129,13 +143,16 @@ render_color_inputs <- function(ns, data, color_var, level_order = NULL) {
     h5("Colors"),
     lapply(seq_along(lvls), function(i) {
       selected <- default_palette[i]
+      if (!is.null(input)) {
+        selected <- isolate(input[[paste0("col_", color_var, "_", i, id_suffix)]]) %||% default_palette[i]
+      }
       tags$div(
         style = "margin-bottom: 8px;",
         tags$label(lvls[i], style = "display:block; margin-bottom: 4px;"),
         with_help_tooltip(
           color_dropdown_input(
             ns,
-            id = paste0("col_", color_var, "_", i),
+            id = paste0("col_", color_var, "_", i, id_suffix),
             palette = basic_color_palette,
             ncol = 4,
             selected = selected

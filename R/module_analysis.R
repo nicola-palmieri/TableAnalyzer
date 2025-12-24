@@ -58,6 +58,18 @@ analysis_server <- function(id, filtered_data) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     df <- reactive(filtered_data())
+
+    pairs_reset_token <- reactiveVal(0L)
+    last_selection <- reactiveVal(NULL)
+
+    observeEvent(input$analysis_type, {
+      current <- input$analysis_type
+      previous <- last_selection()
+      if (!identical(current, previous) && identical(current, "Pairwise Correlation")) {
+        pairs_reset_token(pairs_reset_token() + 1L)
+      }
+      last_selection(current)
+    }, ignoreInit = FALSE)
     
     # ---- Mapping of available modules ----
     modules <- list(
@@ -66,7 +78,12 @@ analysis_server <- function(id, filtered_data) {
       "Two-way ANOVA"          = list(id = "anova2", ui = two_way_anova_ui, server = two_way_anova_server, type = "anova2"),
       "Linear Model (LM)"      = list(id = "lm",     ui = lm_ui, server = lm_server, type = "lm"),
       "Linear Mixed Model (LMM)" = list(id = "lmm",  ui = lmm_ui, server = lmm_server, type = "lmm"),
-      "Pairwise Correlation"   = list(id = "pairs",  ui = ggpairs_ui, server = ggpairs_server, type = "pairs"),
+      "Pairwise Correlation"   = list(
+        id = "pairs",
+        ui = ggpairs_ui,
+        server = function(id, df) ggpairs_server(id, df, reset_trigger = pairs_reset_token),
+        type = "pairs"
+      ),
       "PCA"                    = list(id = "pca",    ui = pca_ui, server = pca_server, type = "pca")
     )
     
@@ -158,7 +175,9 @@ analysis_server <- function(id, filtered_data) {
       srv()
     })
     
-    # Return the active model output as a reactive
-    model_out
+    list(
+      results = model_out,
+      selection = reactive(input$analysis_type)
+    )
   })
 }

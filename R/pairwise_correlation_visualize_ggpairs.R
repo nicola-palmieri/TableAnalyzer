@@ -2,8 +2,10 @@
 # 🧪 Pairwise Correlation — GGPairs Visualization Module
 # ===============================================================
 
-pairwise_correlation_visualize_ggpairs_ui <- function(id) {
+pairwise_correlation_visualize_ggpairs_ui <- function(id, base_size_value = NULL) {
   ns <- NS(id)
+  base_size_value <- suppressWarnings(as.numeric(base_size_value))
+  if (length(base_size_value) == 0 || is.na(base_size_value)) base_size_value <- 11
   tagList(
     uiOutput(ns("size_controls")),
     uiOutput(ns("grid_controls")),
@@ -11,7 +13,7 @@ pairwise_correlation_visualize_ggpairs_ui <- function(id) {
       column(6, add_color_customization_ui(ns, multi_group = TRUE)),
       column(6, base_size_ui(
         ns,
-        default = 11,
+        default = base_size_value,
         help_text = "Adjust the base font size used for the correlation plot."
       ))
     )
@@ -20,7 +22,12 @@ pairwise_correlation_visualize_ggpairs_ui <- function(id) {
 
 
 pairwise_correlation_visualize_ggpairs_server <- function(
-    id, filtered_data, correlation_info, apply_trigger = reactive(NULL)
+    id,
+    filtered_data,
+    correlation_info,
+    apply_trigger = reactive(NULL),
+    apply_reason = reactive(NULL),
+    reset_trigger = reactive(NULL)
 ) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
@@ -57,16 +64,27 @@ pairwise_correlation_visualize_ggpairs_server <- function(
       data = df,
       color_var_reactive = group_var,
       multi_group = TRUE,
-      level_order_reactive = strata_order
+      level_order_reactive = strata_order,
+      reset_token = reset_trigger
     )
     
     grid <- plot_grid_server("plot_grid")
 
     output$size_controls <- renderUI({
+      width_value <- isolate(input$plot_width)
+      width_value <- suppressWarnings(as.numeric(width_value))
+      if (length(width_value) == 0 || is.na(width_value) || width_value <= 0) {
+        width_value <- 800
+      }
+      height_value <- isolate(input$plot_height)
+      height_value <- suppressWarnings(as.numeric(height_value))
+      if (length(height_value) == 0 || is.na(height_value) || height_value <= 0) {
+        height_value <- 600
+      }
       subplot_size_ui(
         ns,
-        width_value = 800,
-        height_value = 600,
+        width_value = width_value,
+        height_value = height_value,
         width_help = "Set the width in pixels for each panel of the correlation matrix.",
         height_help = "Set the height in pixels for each panel of the correlation matrix."
       )
@@ -224,7 +242,11 @@ pairwise_correlation_visualize_ggpairs_server <- function(
 
     observeEvent(plot_info(), {
       info <- plot_info()
-      apply_grid_defaults_if_empty(input, session, "plot_grid", info$defaults, n_items = info$panels)
+      if (is.null(info)) return()
+      if (!is.null(apply_reason) && identical(apply_reason(), "analysis")) {
+        updateNumericInput(session, "plot_grid-rows", value = info$defaults$rows)
+        updateNumericInput(session, "plot_grid-cols", value = info$defaults$cols)
+      }
     }, ignoreNULL = TRUE)
 
     # ---- Unified sizing -------------------------------------------------------

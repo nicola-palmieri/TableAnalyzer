@@ -245,7 +245,7 @@ visualize_twoway_server <- function(id, filtered_data, model_info) {
     # ------------------------------------------------------------------
     # APPLY BUTTON
     # ------------------------------------------------------------------
-    compute_plot <- function() {
+    compute_plot <- function(allow_reset = FALSE) {
       data <- df()
       info <- model_info()
       
@@ -289,43 +289,62 @@ visualize_twoway_server <- function(id, filtered_data, model_info) {
       legend_position <- if (use_common_legend) legend_state$position else NULL
       
       # Compute plots
-      results <- list(
-        lineplot_mean_se = plot_anova_lineplot_meanse(
-          data, info, layout_inputs,
-          line_colors      = custom_colors(),
-          base_size        = base_size(),
-          show_lines       = isTRUE(input$lineplot_show_lines %||% TRUE),
-          show_jitter      = isTRUE(input$lineplot_show_jitter),
-          use_dodge        = isTRUE(input$lineplot_use_dodge),
-          share_y_axis     = isTRUE(input$share_y_axis),
-          common_legend    = use_common_legend,
-          legend_position  = legend_position
-        ),
-        
-        barplot_mean_se = plot_anova_barplot_meanse(
-          data, info, layout_inputs,
-          line_colors      = custom_colors(),
-          base_size        = base_size(),
-          posthoc_all      = info$posthoc,
-          share_y_axis     = isTRUE(input$share_y_axis),
-          common_legend    = use_common_legend,
-          legend_position  = legend_position
-        ),
-        boxplot = plot_anova_boxplot(
-          data, info, layout_inputs,
-          line_colors      = custom_colors(),
-          base_size        = base_size(),
-          share_y_axis     = isTRUE(input$share_y_axis),
-          common_legend    = use_common_legend,
-          legend_position  = legend_position
+      build_results <- function(layout_inputs) {
+        list(
+          lineplot_mean_se = plot_anova_lineplot_meanse(
+            data, info, layout_inputs,
+            line_colors      = custom_colors(),
+            base_size        = base_size(),
+            show_lines       = isTRUE(input$lineplot_show_lines %||% TRUE),
+            show_jitter      = isTRUE(input$lineplot_show_jitter),
+            use_dodge        = isTRUE(input$lineplot_use_dodge),
+            share_y_axis     = isTRUE(input$share_y_axis),
+            common_legend    = use_common_legend,
+            legend_position  = legend_position
+          ),
+          
+          barplot_mean_se = plot_anova_barplot_meanse(
+            data, info, layout_inputs,
+            line_colors      = custom_colors(),
+            base_size        = base_size(),
+            posthoc_all      = info$posthoc,
+            share_y_axis     = isTRUE(input$share_y_axis),
+            common_legend    = use_common_legend,
+            legend_position  = legend_position
+          ),
+          boxplot = plot_anova_boxplot(
+            data, info, layout_inputs,
+            line_colors      = custom_colors(),
+            base_size        = base_size(),
+            share_y_axis     = isTRUE(input$share_y_axis),
+            common_legend    = use_common_legend,
+            legend_position  = legend_position
+          )
         )
-      )
+      }
+
+      results <- build_results(layout_inputs)
       
       chosen <- input$plot_type
       if (is.null(chosen) || !chosen %in% names(results)) {
         chosen <- "lineplot_mean_se"
       }
       chosen_result <- results[[chosen]]
+
+      is_grid_warning <- function(msg) {
+        !is.null(msg) && grepl("Grid", msg, fixed = TRUE)
+      }
+
+      if (isTRUE(allow_reset) && !is.null(chosen_result) && is_grid_warning(chosen_result$warning)) {
+        default_inputs <- list(
+          strata_rows = chosen_result$defaults$strata$rows,
+          strata_cols = chosen_result$defaults$strata$cols,
+          resp_rows   = chosen_result$defaults$responses$rows,
+          resp_cols   = chosen_result$defaults$responses$cols
+        )
+        results <- build_results(default_inputs)
+        chosen_result <- results[[chosen]]
+      }
 
       stored$warning <- chosen_result$warning
       stored$plot    <- chosen_result$plot
@@ -349,19 +368,19 @@ visualize_twoway_server <- function(id, filtered_data, model_info) {
     }
 
     observeEvent(input$apply_plot, {
-      compute_plot()
+      compute_plot(allow_reset = FALSE)
     })
 
     observeEvent(model_info(), {
       info <- model_info()
       if (is.null(info$type) || !identical(info$type, "twoway_anova")) return()
-      compute_plot()
+      compute_plot(allow_reset = TRUE)
     }, ignoreInit = FALSE)
 
     observeEvent(input$plot_type, {
       info <- model_info()
       if (is.null(info$type) || !identical(info$type, "twoway_anova")) return()
-      compute_plot()
+      compute_plot(allow_reset = TRUE)
     }, ignoreInit = TRUE)
     
     # ------------------------------------------------------------------

@@ -1,0 +1,120 @@
+UI Stress Test Checklist
+========================
+
+Purpose
+-------
+This checklist covers high-stress, edge-case, and regression tests for the Table Analyzer UI.
+Focus on consistency between analysis parameters and visualizations, state persistence, and
+performance under repeated changes.
+
+How to use
+----------
+- Start a fresh session.
+- Use a medium-sized dataset with mixed numeric/categorical columns and missing values.
+- Repeat each test multiple times and in different orders.
+- Note any mismatch between widgets, plots, warnings, and results panels.
+
+Core navigation and state
+-------------------------
+1) Cold start: open app, verify only Upload is enabled.
+2) Upload data, confirm Filter, Analyze, Visualize tabs enable.
+3) Switch tabs rapidly (Home -> Upload -> Filter -> Analyze -> Visualize) 10+ times.
+4) Refresh browser and confirm app state resets cleanly.
+5) Open Visualize before running any analysis and confirm empty state messaging.
+
+Analysis selection vs results gating
+------------------------------------
+6) Run Descriptive, see results; switch Analyze selection to One-way ANOVA without running.
+   Go to Visualize and confirm it shows the run-required empty state (not previous plots).
+7) Run One-way ANOVA, then switch selection to PCA without running, then Visualize.
+8) Run Pairwise Correlation, then switch to Two-way ANOVA without running.
+9) Run Two-way ANOVA, then switch to Descriptive without running.
+10) Switch to blank analysis selection (if possible) and confirm Visualize empty state.
+
+Analysis rerun consistency
+--------------------------
+11) Run Descriptive; open Visualize; change plot options; Apply.
+    Rerun Descriptive with different variable selections; return to Visualize.
+    Verify plot updates with same widget state (except any invalid grid reset).
+12) Run One-way ANOVA; set barplot; tweak colors; Apply.
+    Change factor order; rerun; Visualize should keep barplot and colors.
+13) Run Two-way ANOVA; set boxplot; change legend settings; Apply.
+    Change responses; rerun; Visualize should keep plot type and settings.
+14) Run PCA; set color/shape/labels; Apply; rerun PCA; Visualize should keep inputs.
+15) Run Pairwise Correlation; set grid/size; Apply; rerun; Visualize keeps inputs.
+
+Plot type switching (auto-render)
+---------------------------------
+16) One-way ANOVA: switch line/bar/box repeatedly; confirm plot updates immediately.
+17) Two-way ANOVA: switch line/bar/box repeatedly; confirm plot updates immediately.
+18) Descriptive: switch categorical/boxplots/histograms; confirm plot updates immediately.
+19) PCA: toggle facets on/off; confirm plot updates without Apply.
+20) Pairwise correlation: trigger auto-render on analysis run without Apply.
+
+Grid layout stress
+------------------
+21) Descriptive with 1 variable: set grid to 3x3; rerun analysis; ensure defaults reset cleanly.
+22) Descriptive with many variables: set grid too small; observe warning; Apply; then rerun analysis.
+23) One-way ANOVA with multiple responses: set response grid too small; warning; rerun analysis.
+24) Two-way ANOVA with strata + responses: set strata grid too large; warning; rerun analysis.
+25) Resize grid to max values (10x10) and verify render and scroll behavior.
+
+Plot size stress
+----------------
+26) Set subplot width/height to minimum and maximum values; ensure render scales correctly.
+27) Set extreme sizes, apply, rerun analysis, verify sizes persist.
+28) Change plot size while on Visualize then rerun analysis without Apply.
+
+Color customization stress
+--------------------------
+29) Set single color; rerun analysis; confirm color persists.
+30) Set multi-group colors for many levels; rerun analysis; confirm mapping persists.
+31) Change grouping variable; verify color inputs update and do not crash.
+32) Change factor order; verify color mapping remains aligned to levels.
+
+Legend controls
+---------------
+33) Enable common legend; change position; rerun analysis; verify persistence.
+34) Toggle legend on/off rapidly; confirm plots update without errors.
+35) For ANOVA twoway with multiple responses/strata: toggle common legend and re-render.
+
+Stratification stress
+---------------------
+36) Enable stratification with many levels; run analysis; verify plots and grids.
+37) Reduce strata levels and rerun; ensure grids reset to defaults if invalid.
+38) Use stratification with missing levels (filtered out) and verify warnings.
+
+Variable selection and data changes
+-----------------------------------
+39) Remove variables used in plots; rerun analysis; ensure plots update or warn gracefully.
+40) Change variable types (e.g., numeric to categorical via Upload editor); rerun analysis.
+41) Filter data to near-empty; rerun analysis; confirm no crashes and proper warnings.
+42) Use data with all NA in selected variable; verify error/warning handling.
+
+Performance and repeated actions
+--------------------------------
+43) Run analysis 10 times in a row with small changes; ensure no memory or UI lag issues.
+44) Rapidly change plot type + grid size + color, then rerun analysis; verify no crashes.
+45) Open Visualize in another browser tab (if possible) and compare consistency.
+
+Download and export
+-------------------
+46) Download plots after customizing sizes; verify file dimensions match UI.
+47) Rerun analysis then download; ensure download reflects latest plot and settings.
+48) Download ANOVA results; rerun; ensure file names and contents update.
+
+Regression smoke tests (minimal)
+--------------------------------
+49) Descriptive: default categorical plot renders immediately after run.
+50) One-way ANOVA: default lineplot renders immediately after run.
+51) Two-way ANOVA: default lineplot renders immediately after run.
+52) Pairwise correlation: plot renders immediately after run without Apply.
+53) PCA: plot renders immediately after run without Apply.
+
+Notes to capture for each failure
+---------------------------------
+- Steps to reproduce (exact order, tabs visited, inputs changed).
+- Expected vs actual behavior.
+- Any console errors.
+- Screenshot of UI state and warnings.
+

@@ -157,11 +157,11 @@ visualize_numeric_histograms_server <- function(id, filtered_data, summary_info,
         return(FALSE)
       }
       pending_auto(FALSE)
-      compute_plot()
+      compute_plot(allow_reset = TRUE)
       TRUE
     }
 
-    compute_plot <- function() {
+    compute_plot <- function(allow_reset = FALSE) {
       stored$plot_width  <- input$plot_width %||% 400
       stored$plot_height <- input$plot_height %||% 300
       
@@ -181,19 +181,30 @@ visualize_numeric_histograms_server <- function(id, filtered_data, summary_info,
       processed <- resolve_reactive(info$processed_data)
       dat <- if (!is.null(processed)) processed else data
       
-      res <- build_descriptive_numeric_histogram(
-        df = dat,
-        selected_vars = s_vars,
-        group_var = g_var,
-        strata_levels = strata_levels,
-        use_density = input$use_density,
-        nrow_input = grid$rows(),
-        ncol_input = grid$cols(),
-        custom_colors = custom_colors(),
-        base_size = base_size(),
-        common_legend = legend_state$enabled,
-        legend_position = if (legend_state$enabled) legend_state$position else NULL
-      )
+      build_plot <- function(rows, cols) {
+        build_descriptive_numeric_histogram(
+          df = dat,
+          selected_vars = s_vars,
+          group_var = g_var,
+          strata_levels = strata_levels,
+          use_density = input$use_density,
+          nrow_input = rows,
+          ncol_input = cols,
+          custom_colors = custom_colors(),
+          base_size = base_size(),
+          common_legend = legend_state$enabled,
+          legend_position = if (legend_state$enabled) legend_state$position else NULL
+        )
+      }
+
+      is_grid_warning <- function(msg) {
+        !is.null(msg) && grepl("Grid", msg, fixed = TRUE)
+      }
+
+      res <- build_plot(grid$rows(), grid$cols())
+      if (isTRUE(allow_reset) && !is.null(res) && is_grid_warning(res$warning)) {
+        res <- build_plot(res$defaults$rows, res$defaults$cols)
+      }
 
       stored$plot    <- res$plot
       stored$layout  <- res$layout
@@ -209,7 +220,7 @@ visualize_numeric_histograms_server <- function(id, filtered_data, summary_info,
     }
 
     observeEvent(input$apply_plot, {
-      compute_plot()
+      compute_plot(allow_reset = FALSE)
     })
 
     observeEvent(summary_info(), {

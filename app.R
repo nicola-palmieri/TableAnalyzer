@@ -150,7 +150,7 @@ server <- function(input, output, session) {
   uploaded  <- upload_server("upload")
   filtered  <- filter_server("filter", uploaded)
   analyzed  <- analysis_server("analysis", filtered)
-  visualize_server("visualize", filtered, analyzed)
+  visualize_server("visualize", filtered, analyzed$results, analyzed$selection)
 
   observe({
     has_data <- !is.null(uploaded())

@@ -152,11 +152,11 @@ visualize_categorical_barplots_server <- function(id, filtered_data, summary_inf
         return(FALSE)
       }
       pending_auto(FALSE)
-      compute_plot()
+      compute_plot(allow_reset = TRUE)
       TRUE
     }
 
-    compute_plot <- function() {
+    compute_plot <- function(allow_reset = FALSE) {
       data <- df()
       info <- summary_info()
       
@@ -173,19 +173,30 @@ visualize_categorical_barplots_server <- function(id, filtered_data, summary_inf
       g_var  <- resolve_reactive(info$group_var)
       strata_levels <- resolve_reactive(info$strata_levels)
       
-      res <- build_descriptive_categorical_plot(
-        df = data,
-        selected_vars = s_vars,
-        group_var = g_var,
-        strata_levels = strata_levels,
-        show_proportions = input$show_proportions,
-        nrow_input = grid$rows(),
-        ncol_input = grid$cols(),
-        fill_colors = custom_colors(),
-        base_size = base_size(),
-        common_legend = legend_state$enabled,
-        legend_position = if (legend_state$enabled) legend_state$position else NULL
-      )
+      build_plot <- function(rows, cols) {
+        build_descriptive_categorical_plot(
+          df = data,
+          selected_vars = s_vars,
+          group_var = g_var,
+          strata_levels = strata_levels,
+          show_proportions = input$show_proportions,
+          nrow_input = rows,
+          ncol_input = cols,
+          fill_colors = custom_colors(),
+          base_size = base_size(),
+          common_legend = legend_state$enabled,
+          legend_position = if (legend_state$enabled) legend_state$position else NULL
+        )
+      }
+
+      is_grid_warning <- function(msg) {
+        !is.null(msg) && grepl("Grid", msg, fixed = TRUE)
+      }
+
+      res <- build_plot(grid$rows(), grid$cols())
+      if (isTRUE(allow_reset) && !is.null(res) && is_grid_warning(res$warning)) {
+        res <- build_plot(res$defaults$rows, res$defaults$cols)
+      }
 
       stored$plot    <- res$plot
       stored$warning <- res$warning
@@ -201,7 +212,7 @@ visualize_categorical_barplots_server <- function(id, filtered_data, summary_inf
     }
 
     observeEvent(input$apply_plot, {
-      compute_plot()
+      compute_plot(allow_reset = FALSE)
     })
 
     observeEvent(summary_info(), {
