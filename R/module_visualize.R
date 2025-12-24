@@ -69,6 +69,8 @@ visualize_server <- function(id, filtered_data, model_fit, analysis_selection = 
     })
 
     pairs_reset_token <- reactiveVal(0L)
+    pca_reset_token <- reactiveVal(0L)
+    vis_cache <- reactiveValues()
     last_selection <- reactiveVal(NULL)
 
     observeEvent(selection_type(), {
@@ -77,11 +79,14 @@ visualize_server <- function(id, filtered_data, model_fit, analysis_selection = 
       previous <- last_selection()
       if (!identical(current, previous) && identical(current, "pairs")) {
         pairs_reset_token(pairs_reset_token() + 1L)
+        vis_cache[["ggpairs"]] <- NULL
+      }
+      if (!identical(current, previous) && identical(current, "pca")) {
+        pca_reset_token(pca_reset_token() + 1L)
+        vis_cache[["pca"]] <- NULL
       }
       last_selection(current)
     }, ignoreInit = FALSE)
-
-    vis_cache <- reactiveValues()
 
     ensure_vis_server <- function(key, create_fn) {
       if (is.null(vis_cache[[key]])) {
@@ -114,7 +119,12 @@ visualize_server <- function(id, filtered_data, model_fit, analysis_selection = 
       pca = list(
         id = "pca",
         ui = function(ns) visualize_pca_ui(ns("pca"), filtered_data()),
-        server = function() visualize_pca_server("pca", filtered_data, model_info)
+        server = function() visualize_pca_server(
+          "pca",
+          filtered_data,
+          model_info,
+          reset_trigger = pca_reset_token
+        )
       ),
       descriptive = list(
         id = "descriptive",

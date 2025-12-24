@@ -209,7 +209,7 @@ visualize_pca_ui <- function(id, filtered_data = NULL) {
   )
 }
 
-visualize_pca_server <- function(id, filtered_data, model_fit) {
+visualize_pca_server <- function(id, filtered_data, model_fit, reset_trigger = reactive(NULL)) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     # -- Reactives ------------------------------------------------------------
@@ -290,7 +290,8 @@ visualize_pca_server <- function(id, filtered_data, model_fit) {
       data = color_data,
       color_var_reactive = color_var_reactive,
       multi_group = TRUE,
-      level_order_reactive = color_level_order
+      level_order_reactive = color_level_order,
+      reset_token = reset_trigger
     )
 
     base_size <- base_size_server(
@@ -306,6 +307,52 @@ visualize_pca_server <- function(id, filtered_data, model_fit) {
     }
     
     pending_auto <- reactiveVal(FALSE)
+
+    last_reset_token <- reactiveVal(NULL)
+    pending_reset_token <- reactiveVal(NULL)
+
+    reset_pca_inputs <- function() {
+      updateSelectInput(session, "plot_type", selected = "biplot")
+      updateSelectInput(session, "pca_color", selected = "None")
+      updateSelectInput(session, "pca_shape", selected = "None")
+      updateSelectInput(session, "pca_label", selected = "None")
+      updateSelectInput(session, "facet_var", selected = "None")
+      updateNumericInput(session, "pca_label_size", value = 2)
+      updateCheckboxInput(session, "show_ellipses", value = FALSE)
+      updateCheckboxInput(session, "show_loadings", value = FALSE)
+      updateNumericInput(session, "loading_scale", value = 1.2)
+      updateNumericInput(session, "plot_width", value = 800)
+      updateNumericInput(session, "plot_height", value = 600)
+      updateNumericInput(session, "plot_base_size", value = 13)
+      updateNumericInput(session, "facet_grid-rows", value = NA)
+      updateNumericInput(session, "facet_grid-cols", value = NA)
+    }
+
+    schedule_apply <- function(plot_type_value) {
+      if (!is.null(plot_type_value)) {
+        pending_auto(FALSE)
+        bump_apply()
+      } else {
+        pending_auto(TRUE)
+      }
+    }
+
+    observeEvent(reset_trigger(), {
+      token <- reset_trigger()
+      if (is.null(token) || identical(token, last_reset_token())) return()
+      info <- tryCatch(model_fit(), shiny.silent.stop = function(e) NULL)
+      if (is.null(info) || !identical(info$type, "pca")) {
+        pending_reset_token(token)
+        return()
+      }
+      plot_type_value <- isolate(input$plot_type)
+      session$onFlushed(function() {
+        reset_pca_inputs()
+        last_reset_token(token)
+        pending_reset_token(NULL)
+        schedule_apply(plot_type_value)
+      }, once = TRUE)
+    }, ignoreInit = TRUE)
     
     observeEvent(input$apply_plot, {
       bump_apply()
@@ -314,12 +361,18 @@ visualize_pca_server <- function(id, filtered_data, model_fit) {
     observeEvent(model_fit(), {
       info <- tryCatch(model_fit(), shiny.silent.stop = function(e) NULL)
       if (is.null(info) || !identical(info$type, "pca")) return()
-      if (!is.null(input$plot_type)) {
-        pending_auto(FALSE)
-        bump_apply()
-      } else {
-        pending_auto(TRUE)
+      plot_type_value <- isolate(input$plot_type)
+      token <- pending_reset_token()
+      if (!is.null(token) && !identical(token, last_reset_token())) {
+        session$onFlushed(function() {
+          reset_pca_inputs()
+          last_reset_token(token)
+          pending_reset_token(NULL)
+          schedule_apply(plot_type_value)
+        }, once = TRUE)
+        return()
       }
+      schedule_apply(plot_type_value)
     }, ignoreInit = FALSE)
     
     observeEvent(input$plot_type, {
