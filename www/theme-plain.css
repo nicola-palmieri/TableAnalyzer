@@ -43,3 +43,21 @@ pre.shiny-text-output {
   font-family: Fira Mono, Source Code Pro, Monaco, monospace;
   font-size: 0.9rem;
 }
+
+.well{
+  padding: 10px 12px;
+  border-radius: 14px;
+}
+.well h4{
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+.well p{
+  margin-bottom: 8px;
+}
+.well .form-group{
+  margin-bottom: 8px;
+}
+.well hr{
+  margin: 8px 0;
+}
