@@ -62,7 +62,6 @@ analysis_server <- function(id, filtered_data) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     df <- reactive(filtered_data())
-
     pairs_reset_token <- reactiveVal(0L)
     last_selection <- reactiveVal(NULL)
 
@@ -102,57 +101,8 @@ analysis_server <- function(id, filtered_data) {
       req(mod)
     })
     
-    # ---- Lazy server initialization ----
-    normalize_analysis_type <- function(mod_type) {
-      lookup <- c(
-        desc = "DESCRIPTIVE",
-        anova1 = "ANOVA",
-        anova2 = "ANOVA",
-        lm = "LM",
-        lmm = "LMM",
-        pairs = "CORR",
-        pca = "PCA"
-      )
-      lookup[[mod_type]] %||% toupper(mod_type)
-    }
-
-
     ensure_module_server <- function(mod) {
-      key <- mod$id
-      if (!is.null(server_cache[[key]])) return(server_cache[[key]])
-
-      result <- tryCatch(mod$server(mod$id, df), error = function(e) {
-        warning(sprintf("Module '%s' failed to initialize: %s", key, conditionMessage(e)))
-        NULL
-      })
-
-      defaults <- list(
-        analysis_type = normalize_analysis_type(mod$type),
-        type = mod$type,
-        data_used = NULL,
-        model = NULL,
-        summary = NULL,
-        posthoc = NULL,
-        effects = NULL,
-        stats = NULL
-      )
-
-      fill_defaults <- function(val) {
-        for (name in names(defaults)) {
-          if (is.null(val[[name]])) val[[name]] <- defaults[[name]]
-        }
-        val
-      }
-
-      # --- Standardize all outputs to a reactive returning a list ---
-      standardized <- reactive({
-        val <- resolve_reactive(result)
-        req(val)
-        fill_defaults(val)
-      })
-
-      server_cache[[key]] <- standardized
-      standardized
+      ensure_analysis_server(mod, df, server_cache)
     }
 
 
@@ -198,4 +148,63 @@ analysis_server <- function(id, filtered_data) {
       selection = reactive(input$analysis_type)
     )
   })
+}
+
+normalize_analysis_type <- function(mod_type) {
+  lookup <- c(
+    desc = "DESCRIPTIVE",
+    anova1 = "ANOVA",
+    anova2 = "ANOVA",
+    lm = "LM",
+    lmm = "LMM",
+    pairs = "CORR",
+    pca = "PCA"
+  )
+  lookup[[mod_type]] %||% toupper(mod_type)
+}
+
+analysis_defaults <- function(mod_type) {
+  list(
+    analysis_type = normalize_analysis_type(mod_type),
+    type = mod_type,
+    data_used = NULL,
+    model = NULL,
+    summary = NULL,
+    posthoc = NULL,
+    effects = NULL,
+    stats = NULL
+  )
+}
+
+fill_analysis_defaults <- function(val, defaults) {
+  for (name in names(defaults)) {
+    if (is.null(val[[name]])) {
+      val[[name]] <- defaults[[name]]
+    }
+  }
+  val
+}
+
+ensure_analysis_server <- function(mod, df, server_cache) {
+  key <- mod$id
+  cached <- server_cache[[key]]
+  if (!is.null(cached)) {
+    return(cached)
+  }
+
+  result <- tryCatch(mod$server(mod$id, df), error = function(e) {
+    warning(sprintf("Module '%s' failed to initialize: %s", key, conditionMessage(e)))
+    NULL
+  })
+
+  defaults <- analysis_defaults(mod$type)
+
+  standardized <- reactive({
+    val <- resolve_reactive(result)
+    req(val)
+    fill_analysis_defaults(val, defaults)
+  })
+
+  server_cache[[key]] <- standardized
+  standardized
 }
