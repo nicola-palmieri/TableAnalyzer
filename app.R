@@ -34,55 +34,9 @@ ui <- navbarPage(
   id = "main_nav",
   theme = bs_theme(bootswatch = "flatly"),
   
-  # ---- Custom CSS (copied from website) ----
+  # ---- Custom CSS ----
   header = tags$head(
-    tags$style(HTML("
-      .container-fluid { max-width: 100%; margin: auto; }
-      .hero {
-        background: #ecf0f1;
-        border: 1px solid #dce4ec;
-        border-radius: 16px;
-        padding: 40px 24px;
-        margin-top: 20px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-      }
-      h1, h2, h3 { margin-top: 0.4rem; }
-      .section { margin-top: 18px; }
-      .card { border-radius: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-      .nav-tabs > li > a { font-weight: 500; }
-      .empty-state { max-width: 420px; margin-left: auto; margin-right: auto; }
-      .empty-state-icon { font-size: 3rem; line-height: 1; }
-      .empty-state h4 { font-weight: 600; }
-      .ta-help-tooltip { cursor: help; display: inline-block; width: 100%; }
-      .home-wrapper {
-        min-height: calc(100vh - 180px);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .home-wrapper .hero {
-        max-width: 760px;
-        width: 100%;
-      }
-      a.nav-link.disabled {
-        pointer-events: none;
-        color: #6c757d !important;
-        opacity: 0.7;
-      }
-      .home-steps h5 {
-        font-weight: 600;
-      }
-      .home-steps p {
-        margin-bottom: 0;
-        color: #6c757d;
-      }
-      pre.shiny-text-output {
-        white-space: pre;
-        overflow-x: auto;
-        font-family: Fira Mono, Source Code Pro, Monaco, monospace;
-        font-size: 0.9rem;
-      }
-    ")),
+    tags$link(rel = "stylesheet", type = "text/css", href = "theme-plain.css"),
     tags$script(HTML("
       const tabManager = function(tab, disable) {
         var selector = 'a[data-value=\"' + tab + '\"]';
