@@ -25,7 +25,6 @@ descriptive_ui <- function(id) {
       hr()
     ),
     results = tagList(
-      actionLink(ns("summary_help"), "How to read the summary"),
       verbatimTextOutput(ns("summary_text"))
     )
   )
@@ -157,43 +156,65 @@ descriptive_server <- function(id, filtered_data) {
     observeEvent(input$summary_help, {
       showModal(
         modalDialog(
-          title = "How to read these numbers",
+          title = "Interpreting descriptive statistics",
           easyClose = TRUE,
-          size = "m",
+          size = "l",
           tagList(
-            strong("Variable type: factor"),
-            tags$ul(
-              tags$li("skim_variable: column name (plus group column if you stratified)."),
-              tags$li("n_missing: number of missing entries."),
-              tags$li("complete_rate: proportion of non-missing rows."),
-              tags$li("n_unique: how many categories."),
-              tags$li("n_singletons: categories seen only once."),
-              tags$li("top_counts: most common categories with their counts.")
+            tags$p(
+              class = "text-muted",
+              "Use this guide to interpret the summary fields shown below."
             ),
-            br(),
-            strong("Variable type: numeric"),
-            tags$ul(
-              tags$li("skim_variable: column name (plus group column if you stratified)."),
-              tags$li("n_missing: number of missing entries."),
-              tags$li("complete_rate: proportion of non-missing rows."),
-              tags$li("mean: arithmetic average of non-missing values."),
-              tags$li("sd: standard deviation."),
-              tags$li("p0: minimum observed value."),
-              tags$li("p25: first quartile (25th percentile)."),
-              tags$li("p50: median (50th percentile)."),
-              tags$li("p75: third quartile (75th percentile)."),
-              tags$li("p100: maximum observed value."),
-              tags$li("hist: sparkline showing the distribution shape.")
-            ),
-            br(),
-            strong("Numeric variables summary"),
-            tags$ul(
-              tags$li("variable: column name (plus group column if you stratified)."),
-              tags$li("cv: variability as % of the mean (higher = more spread)."),
-              tags$li("outliers: number of values outside the usual range (beyond 1.5×IQR)."),
-              tags$li("distribution: best-fitting curve (Normal, Log-normal, Gamma, Weibull, Exponential)."),
-              tags$li("skewness: whether values lean left (<0) or right (>0)."),
-              tags$li("kurtosis: tail heaviness (>0 = heavier tails than Normal).")
+            div(
+              class = "ta-modal-grid",
+              fluidRow(
+                column(
+                  6,
+                  div(
+                    class = "ta-modal-block",
+                    h4("Categorical variables"),
+                    tags$ul(
+                      tags$li("skim_variable: column name (plus group column if you stratified)."),
+                      tags$li("n_missing: number of missing entries."),
+                      tags$li("complete_rate: proportion of non-missing rows."),
+                      tags$li("n_unique: how many categories."),
+                      tags$li("n_singletons: categories seen only once."),
+                      tags$li("top_counts: most common categories with their counts.")
+                    )
+                  )
+                ),
+                column(
+                  6,
+                  div(
+                    class = "ta-modal-block",
+                    h4("Numeric variables"),
+                    tags$ul(
+                      tags$li("skim_variable: column name (plus group column if you stratified)."),
+                      tags$li("n_missing: number of missing entries."),
+                      tags$li("complete_rate: proportion of non-missing rows."),
+                      tags$li("mean: arithmetic average of non-missing values."),
+                      tags$li("sd: standard deviation."),
+                      tags$li("p0: minimum observed value."),
+                      tags$li("p25: first quartile (25th percentile)."),
+                      tags$li("p50: median (50th percentile)."),
+                      tags$li("p75: third quartile (75th percentile)."),
+                      tags$li("p100: maximum observed value."),
+                      tags$li("hist: sparkline showing the distribution shape.")
+                    )
+                  )
+                )
+              ),
+              div(
+                class = "ta-modal-block",
+                h4("Numeric summary metrics"),
+                tags$ul(
+                  tags$li("variable: column name (plus group column if you stratified)."),
+                  tags$li("cv: variability as % of the mean (higher = more spread)."),
+                  tags$li("outliers: number of values outside the usual range (beyond 1.5xIQR)."),
+                  tags$li("distribution: best-fitting curve (Normal, Log-normal, Gamma, Weibull, Exponential)."),
+                  tags$li("skewness: whether values lean left (<0) or right (>0)."),
+                  tags$li("kurtosis: tail heaviness (>0 = heavier tails than Normal).")
+                )
+              )
             )
           )
         )

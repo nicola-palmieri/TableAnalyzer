@@ -47,7 +47,11 @@ analysis_ui <- function(id) {
     
     mainPanel(
       width = 8,
-      h4("Analysis results"),
+      div(
+        class = "ta-results-header",
+        h4("Analysis results"),
+        uiOutput(ns("summary_help_icon"))
+      ),
       uiOutput(ns("results_panel"))
     )
   )
@@ -165,6 +169,20 @@ analysis_server <- function(id, filtered_data) {
       ui <- mod$ui(ns(mod$id))
       req(ui)
       ui$results
+    })
+
+    output$summary_help_icon <- renderUI({
+      if (!identical(input$analysis_type, "Descriptive Statistics")) {
+        return(NULL)
+      }
+
+      actionButton(
+        ns("desc-summary_help"),
+        label = NULL,
+        icon = icon("circle-question"),
+        class = "ta-help-icon",
+        title = "How to read the summary"
+      )
     })
 
     # ---- Unified model output ----

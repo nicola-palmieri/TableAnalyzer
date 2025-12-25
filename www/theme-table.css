@@ -98,6 +98,33 @@ h1, h2, h3, h4, .navbar-brand{
   box-shadow: var(--shadow);
 }
 
+.ta-results-header{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.ta-results-header h4{
+  margin: 0;
+}
+.ta-help-icon.btn{
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(29,78,216,.1);
+  border: 1px solid rgba(29,78,216,.3);
+  color: var(--accent);
+}
+.ta-help-icon.btn:hover,
+.ta-help-icon.btn:focus{
+  background: rgba(29,78,216,.18);
+  color: var(--accent);
+}
+
 .home-wrapper{
   min-height: calc(100vh - 180px);
   display: flex;
@@ -160,6 +187,26 @@ h1, h2, h3, h4, .navbar-brand{
   color: var(--muted);
   letter-spacing: 0.12em;
   text-transform: uppercase;
+}
+
+.ta-modal-grid{
+  margin-top: 6px;
+}
+.ta-modal-block{
+  background: var(--panel-soft);
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+.ta-modal-block h4{
+  font-size: 14px;
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+.ta-modal-block ul{
+  margin-bottom: 0;
+  padding-left: 18px;
 }
 
 .ta-cta{
@@ -230,6 +277,8 @@ select.form-control,
   border-radius: 10px;
   box-shadow: none;
   font-size: 13px;
+  font-family: var(--font-body);
+  line-height: 1.4;
   min-height: 30px;
   padding: 4px 8px;
 }
@@ -239,6 +288,22 @@ select.form-control,
   box-shadow: 0 0 0 2px rgba(29,78,216,.15);
 }
 .selectize-input input{
+  color: var(--txt);
+  font-family: var(--font-body);
+  font-size: 13px;
+}
+.selectize-dropdown,
+.selectize-dropdown-content{
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--txt);
+}
+.selectize-dropdown .option,
+.selectize-dropdown .active,
+.selectize-dropdown .selected{
+  font-family: var(--font-body);
+  font-size: 13px;
   color: var(--txt);
 }
 
@@ -271,8 +336,13 @@ select.form-control,
 
 .checkbox,
 .radio{
-  margin-top: 4px;
-  margin-bottom: 4px;
+  margin-top: 0;
+  margin-bottom: 2px;
+}
+.radio label,
+.checkbox label{
+  line-height: 1.3;
+  font-size: 12px;
 }
 
 hr{
