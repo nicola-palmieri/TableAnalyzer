@@ -62,17 +62,11 @@ analysis_server <- function(id, filtered_data) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     df <- reactive(filtered_data())
-    pairs_reset_token <- reactiveVal(0L)
-    last_selection <- reactiveVal(NULL)
+    analysis_switch_token <- reactiveVal(0L)
 
     observeEvent(input$analysis_type, {
-      current <- input$analysis_type
-      previous <- last_selection()
-      if (!identical(current, previous) && identical(current, "Pairwise Correlation")) {
-        pairs_reset_token(pairs_reset_token() + 1L)
-      }
-      last_selection(current)
-    }, ignoreInit = FALSE)
+      analysis_switch_token(analysis_switch_token() + 1L)
+    }, ignoreInit = TRUE)
     
     # ---- Mapping of available modules ----
     modules <- list(
@@ -84,7 +78,7 @@ analysis_server <- function(id, filtered_data) {
       "Pairwise Correlation"   = list(
         id = "pairs",
         ui = ggpairs_ui,
-        server = function(id, df) ggpairs_server(id, df, reset_trigger = pairs_reset_token),
+        server = ggpairs_server,
         type = "pairs"
       ),
       "PCA"                    = list(id = "pca",    ui = pca_ui, server = pca_server, type = "pca")
@@ -102,7 +96,7 @@ analysis_server <- function(id, filtered_data) {
     })
     
     ensure_module_server <- function(mod) {
-      ensure_analysis_server(mod, df, server_cache)
+      ensure_analysis_server(mod, df, server_cache, reset_trigger = analysis_switch_token)
     }
 
 
@@ -185,14 +179,22 @@ fill_analysis_defaults <- function(val, defaults) {
   val
 }
 
-ensure_analysis_server <- function(mod, df, server_cache) {
+ensure_analysis_server <- function(mod, df, server_cache, reset_trigger = NULL) {
   key <- mod$id
   cached <- server_cache[[key]]
   if (!is.null(cached)) {
     return(cached)
   }
 
-  result <- tryCatch(mod$server(mod$id, df), error = function(e) {
+  call_args <- list(mod$id, df)
+  if (!is.null(reset_trigger)) {
+    param_names <- names(formals(mod$server))
+    if (!is.null(param_names) && "reset_trigger" %in% param_names) {
+      call_args$reset_trigger <- reset_trigger
+    }
+  }
+
+  result <- tryCatch(do.call(mod$server, call_args), error = function(e) {
     warning(sprintf("Module '%s' failed to initialize: %s", key, conditionMessage(e)))
     NULL
   })
