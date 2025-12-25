@@ -7,8 +7,8 @@ upload_ui <- function(id) {
   sidebarLayout(
     sidebarPanel(
       width = 4,
-      h4("Step 1 — Upload data"),
-      p("Choose whether to load the example dataset or upload your own Excel file."),
+      h4(class = "ta-sidebar-title", "Step 1 - Upload data"),
+      p(class = "ta-sidebar-subtitle", "Choose whether to load the example dataset or upload your own Excel file."),
       hr(),
       with_help_tooltip(
         radioButtons(

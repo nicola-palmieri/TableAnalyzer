@@ -7,8 +7,8 @@ analysis_ui <- function(id) {
   sidebarLayout(
     sidebarPanel(
       width = 4,
-      h4("Step 3 — Analyze results"),
-      p("Select an analysis type to explore your data, then inspect the summaries on the right."),
+      h4(class = "ta-sidebar-title", "Step 3 - Analyze results"),
+      p(class = "ta-sidebar-subtitle", "Select an analysis type to explore your data, then inspect the summaries on the right."),
       hr(),
       
       # --- CSS: expand dropdown height for better visibility ---

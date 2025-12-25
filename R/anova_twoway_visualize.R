@@ -8,8 +8,8 @@ visualize_twoway_ui <- function(id) {
   sidebarLayout(
     sidebarPanel(
       width = 4,
-      h4("Step 4 — Visualize two-way ANOVA"),
-      p("Select visualization type and adjust subplot layout, axis scaling, and figure size."),
+      h4(class = "ta-sidebar-title", "Step 4 - Visualize two-way ANOVA"),
+      p(class = "ta-sidebar-subtitle", "Select visualization type and adjust subplot layout, axis scaling, and figure size."),
       hr(),
       
       with_help_tooltip(

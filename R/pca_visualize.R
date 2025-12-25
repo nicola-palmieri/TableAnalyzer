@@ -46,8 +46,8 @@ visualize_pca_ui <- function(id, filtered_data = NULL) {
   sidebarLayout(
     sidebarPanel(
       width = 4,
-      h4("Step 4 — Visualize principal component analysis (PCA)"),
-      p("Visualize multivariate structure using a PCA biplot."),
+      h4(class = "ta-sidebar-title", "Step 4 - Visualize principal component analysis (PCA)"),
+      p(class = "ta-sidebar-subtitle", "Visualize multivariate structure using a PCA biplot."),
       hr(),
       with_help_tooltip(
         selectInput(
