@@ -16,7 +16,7 @@ two_way_anova_ui <- function(id) {
       br(),
       fluidRow(
         column(6, with_help_tooltip(
-          actionButton(ns("run"), "Show results", width = "100%"),
+          actionButton(ns("run"), "Run analysis", width = "100%"),
           "Fit the two-way ANOVA with the selected factors and responses."
         )),
         column(6, with_help_tooltip(

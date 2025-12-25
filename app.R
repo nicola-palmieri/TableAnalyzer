@@ -41,12 +41,15 @@ ui <- navbarPage(
       const tabManager = function(tab, disable) {
         var selector = 'a[data-value=\"' + tab + '\"]';
         var $tab = $(selector);
+        var $li = $tab.closest('li');
         if (disable) {
           $tab.addClass('disabled');
           $tab.attr('aria-disabled', 'true');
+          $li.addClass('disabled');
         } else {
           $tab.removeClass('disabled');
           $tab.attr('aria-disabled', 'false');
+          $li.removeClass('disabled');
         }
       };
 

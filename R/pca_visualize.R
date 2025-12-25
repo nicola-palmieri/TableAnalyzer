@@ -195,7 +195,7 @@ visualize_pca_ui <- function(id, filtered_data = NULL) {
       fluidRow(
         column(6, actionButton(ns("apply_plot"), "Apply changes", width = "100%")),
         column(6, with_help_tooltip(
-          downloadButton(ns("download_plot"), "Download plot", style = "width: 100%;"),
+          downloadButton(ns("download_plot"), "Download results", style = "width: 100%;"),
           "Save the PCA figure as an image file."
         ))
       )

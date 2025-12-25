@@ -100,6 +100,18 @@ analysis_server <- function(id, filtered_data) {
     }
 
 
+    analysis_empty_state <- function(title, message, icon = "&#128221;") {
+      div(
+        class = "empty-state analysis-empty-state text-center my-4",
+        div(
+          class = "py-4 px-3",
+          div(class = "empty-state-icon text-primary mb-2", HTML(icon)),
+          h4(class = "mb-2", title),
+          p(class = "text-muted mb-0", message)
+        )
+      )
+    }
+
     # ---- Render active submodule UI ----
     output$config_panel <- renderUI({
       mod <- current_mod()
@@ -109,9 +121,25 @@ analysis_server <- function(id, filtered_data) {
     })
 
     output$results_panel <- renderUI({
+      selection <- input$analysis_type
+      if (is.null(selection) || !nzchar(selection)) {
+        return(analysis_empty_state(
+          "No analysis selected yet",
+          "Select an analysis type to view results."
+        ))
+      }
+
       mod <- current_mod()
       ui <- mod$ui(ns(mod$id))
       req(ui)
+
+      if (!analysis_result_ready(analysis_info_or_null())) {
+        return(analysis_empty_state(
+          "Run the selected analysis",
+          "Run the analysis to view results."
+        ))
+      }
+
       ui$results
     })
 
@@ -135,6 +163,14 @@ analysis_server <- function(id, filtered_data) {
       srv <- ensure_module_server(mod)
       req(srv)
       srv()
+    })
+
+    analysis_info_or_null <- reactive({
+      tryCatch(
+        model_out(),
+        shiny.silent.stop = function(e) NULL,
+        error = function(e) NULL
+      )
     })
     
     list(
@@ -209,4 +245,15 @@ ensure_analysis_server <- function(mod, df, server_cache, reset_trigger = NULL) 
 
   server_cache[[key]] <- standardized
   standardized
+}
+
+analysis_result_ready <- function(result) {
+  if (is.null(result) || !is.list(result)) {
+    return(FALSE)
+  }
+
+  core_fields <- c("summary", "model", "effects", "posthoc")
+  has_core <- any(!vapply(result[core_fields], is.null, logical(1)))
+  has_messages <- !is.null(result$message) || !is.null(result$messages)
+  has_core || has_messages
 }

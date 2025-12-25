@@ -352,7 +352,7 @@ regression_ui <- function(id, engine = c("lm", "lmm"), allow_multi_response = FA
       br(),
       fluidRow(
         column(6, with_help_tooltip(
-          actionButton(ns("run"), "Show results", width = "100%"),
+          actionButton(ns("run"), "Run analysis", width = "100%"),
           "Fit the model using the chosen predictors and options."
         )),
         column(6, with_help_tooltip(

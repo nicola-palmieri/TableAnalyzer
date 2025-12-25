@@ -16,10 +16,10 @@ pca_ui <- function(id) {
       ),
       br(),
       fluidRow(
-        column(6, with_help_tooltip(
-          actionButton(ns("run_pca"), "Show PCA summary", width = "100%"),
-          "Compute the principal components for the selected variables."
-        )),
+      column(6, with_help_tooltip(
+        actionButton(ns("run_pca"), "Run analysis", width = "100%"),
+        "Compute the principal components for the selected variables."
+      )),
         column(6, with_help_tooltip(
           downloadButton(ns("download_all"), "Download results", style = "width: 100%;"),
           "Export the PCA summaries, loadings, and diagnostics to a text file."

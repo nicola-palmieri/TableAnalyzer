@@ -14,11 +14,11 @@ descriptive_ui <- function(id) {
       br(),
       fluidRow(
         column(6, with_help_tooltip(
-          actionButton(ns("run"), "Show summary", width = "100%"),
+          actionButton(ns("run"), "Run analysis", width = "100%"),
           "Calculate the descriptive statistics for the selected variables."
         )),
         column(6, with_help_tooltip(
-          downloadButton(ns("download_summary"), "Download summary", style = "width: 100%;"),
+          downloadButton(ns("download_summary"), "Download results", style = "width: 100%;"),
           "Save the displayed summary as a text file for later reference."
         ))
       ),

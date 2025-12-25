@@ -14,7 +14,7 @@ ggpairs_ui <- function(id) {
       br(),
       fluidRow(
         column(6, with_help_tooltip(
-          actionButton(ns("run"), "Show correlation matrix", width = "100%"),
+          actionButton(ns("run"), "Run analysis", width = "100%"),
           "Calculate the correlation coefficients for the selected variables."
         )),
         column(6, with_help_tooltip(

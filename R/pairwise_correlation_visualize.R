@@ -30,7 +30,7 @@ visualize_ggpairs_ui <- function(id) {
       br(),
       fluidRow(
         column(6, actionButton(ns("apply_plot"), "Apply changes", width = "100%")),
-        column(6, downloadButton(ns("download_plot"), "Download Plot", style = "width: 100%;"))
+        column(6, downloadButton(ns("download_plot"), "Download results", style = "width: 100%;"))
       )
     ),
     mainPanel(

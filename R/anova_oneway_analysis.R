@@ -17,7 +17,7 @@ one_way_anova_ui <- function(id) {
         column(
           6,
           with_help_tooltip(
-            actionButton(ns("run"), "Show results", width = "100%"),
+            actionButton(ns("run"), "Run analysis", width = "100%"),
             "Run the ANOVA using the selected response and group variable."
           )
         ),

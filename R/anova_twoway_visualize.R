@@ -78,7 +78,7 @@ visualize_twoway_ui <- function(id) {
       
       fluidRow(
         column(6, actionButton(ns("apply_plot"), "Apply changes", width = "100%")),
-        column(6, downloadButton(ns("download_plot"), "Download plot", style = "width: 100%;"))
+        column(6, downloadButton(ns("download_plot"), "Download results", style = "width: 100%;"))
       )
     ),
     

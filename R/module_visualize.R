@@ -20,12 +20,17 @@ visualize_server <- function(id, filtered_data, model_fit, analysis_selection = 
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
-    empty_state <- function(icon, title, message) {
+    empty_state <- function(icon, title, message, extra_class = NULL) {
+      class_parts <- "empty-state text-center my-4"
+      if (!is.null(extra_class) && nzchar(extra_class)) {
+        class_parts <- c(class_parts, extra_class)
+      }
+      classes <- paste(class_parts, collapse = " ")
       div(
-        class = "empty-state card bg-light border-0 shadow-sm text-center my-5",
+        class = classes,
         div(
-          class = "card-body py-5 px-4",
-          div(class = "empty-state-icon text-primary mb-3", HTML(icon)),
+          class = "py-4 px-3",
+          div(class = "empty-state-icon text-primary mb-2", HTML(icon)),
           h4(class = "mb-2", title),
           p(class = "text-muted mb-0", message)
         )
@@ -35,7 +40,8 @@ visualize_server <- function(id, filtered_data, model_fit, analysis_selection = 
     model_info_or_null <- reactive({
       tryCatch(
         model_fit(),
-        shiny.silent.stop = function(e) NULL
+        shiny.silent.error = function(e) NULL,
+        error = function(e) NULL
       )
     })
 
@@ -136,6 +142,17 @@ visualize_server <- function(id, filtered_data, model_fit, analysis_selection = 
     ui_cache <- reactiveVal(NULL)
     current_key <- reactiveVal(NULL)
 
+    has_visual_results <- function(info) {
+      if (is.null(info)) return(FALSE)
+      fields <- c("summary", "model", "plots", "effects", "posthoc")
+      has_value <- function(val) {
+        if (is.null(val)) return(FALSE)
+        if (is.list(val) && length(val) == 0) return(FALSE)
+        TRUE
+      }
+      any(vapply(info[fields], has_value, logical(1)))
+    }
+
     display_state <- reactive({
       info <- model_info_or_null()
       selection_label <- if (is.null(analysis_selection)) NULL else analysis_selection()
@@ -149,7 +166,8 @@ visualize_server <- function(id, filtered_data, model_fit, analysis_selection = 
             empty_ui = empty_state(
               "&#128221;",
               "Run the selected analysis",
-              "Run the analysis in the Analyze tab to see visualizations for those results."
+              "Run the analysis in the Analyze tab to see visualizations for those results.",
+              extra_class = "analysis-empty-state"
             )
           ))
         }
@@ -159,7 +177,8 @@ visualize_server <- function(id, filtered_data, model_fit, analysis_selection = 
           empty_ui = empty_state(
             "&#128221;",
             "No analysis selected yet",
-            "Select an analysis in the Analyze tab to unlock tailored visualizations."
+            "Select an analysis in the Analyze tab to unlock tailored visualizations.",
+            extra_class = "analysis-empty-state"
           )
         ))
       }
@@ -170,7 +189,19 @@ visualize_server <- function(id, filtered_data, model_fit, analysis_selection = 
           empty_ui = empty_state(
             "&#128221;",
             "No analysis selected yet",
-            "Run an analysis in the Analyze tab to unlock tailored visualizations for your results."
+            "Run an analysis in the Analyze tab to unlock tailored visualizations for your results.",
+            extra_class = "analysis-empty-state"
+          )
+        ))
+      }
+
+      if (!has_visual_results(info)) {
+        return(list(
+          show_visual = FALSE,
+          empty_ui = empty_state(
+            "&#9888;",
+            "Run the analysis first",
+            "Run the selected analysis in the Analyze tab to activate the visualization."
           )
         ))
       }
