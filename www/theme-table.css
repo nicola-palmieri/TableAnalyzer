@@ -305,6 +305,7 @@ select.form-control,
   font-family: var(--font-body);
   font-size: 13px;
   color: var(--txt);
+  background: rgba(15,23,42,.02);
 }
 
 .btn,
