@@ -10,7 +10,28 @@ home_ui <- function(id) {
       class = "home-wrapper px-3",
       div(
         class = "hero text-center mx-auto",
-        h1("Welcome to Table Analyzer"),
+        div(
+          class = "ta-logo",
+          div(
+            class = "ta-logo-mark",
+            HTML(
+              paste0(
+                "<svg class=\"ta-logo-svg\" viewBox=\"0 0 120 120\" role=\"img\" aria-label=\"Table Analyzer logo\">",
+                "<rect class=\"ta-logo-frame\" x=\"10\" y=\"10\" width=\"100\" height=\"100\" rx=\"18\"/>",
+                "<path class=\"ta-logo-grid\" d=\"M30 40h60M30 60h60M30 80h60\"/>",
+                "<path class=\"ta-logo-grid\" d=\"M40 30v60M60 30v60M80 30v60\"/>",
+                "<path class=\"ta-logo-line\" d=\"M28 78L50 58L70 68L92 44\"/>",
+                "<circle class=\"ta-logo-dot\" cx=\"92\" cy=\"44\" r=\"4\"/>",
+                "</svg>"
+              )
+            )
+          ),
+          div(
+            class = "ta-logo-wordmark",
+            h1(class = "ta-logo-name", "Table Analyzer"),
+            span(class = "ta-logo-tagline", "Modern statistics for scientific tables")
+          )
+        ),
         p(
           class = "lead text-muted",
           "Turn your tabular data into publication-ready tables and plots."
