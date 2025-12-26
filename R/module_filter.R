@@ -26,6 +26,8 @@ filter_server <- function(id, uploaded_data) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     df <- reactive(uploaded_data())
+    filter_state <- reactiveValues()
+    active_cols <- reactiveVal(character(0))
 
     column_key <- function(prefix, col) paste0(prefix, col)
 
@@ -39,16 +41,38 @@ filter_server <- function(id, uploaded_data) {
       if (span == 0 || any(!is.finite(span))) 1 else span / 100
     }
 
+    init_filter_state <- function(col, data) {
+      x <- data[[col]]
+      if (is.numeric(x)) {
+        rng <- safe_range(x)
+        return(list(type = "numeric", min = rng[1], max = rng[2]))
+      }
+      if (is.logical(x)) {
+        return(list(type = "logical", selected = c(TRUE, FALSE)))
+      }
+      choices <- sort(unique(as.character(x)))
+      list(type = "factor", selected = choices)
+    }
+
     build_numeric_widget <- function(col, x) {
       rng <- safe_range(x)
       step_val <- numeric_step(rng)
+      state <- filter_state[[col]]
+      min_val <- state$min %||% rng[1]
+      max_val <- state$max %||% rng[2]
+      min_val <- max(min_val, rng[1])
+      max_val <- min(max_val, rng[2])
+      if (min_val > max_val) {
+        min_val <- rng[1]
+        max_val <- rng[2]
+      }
       fluidRow(
         column(
           6,
           with_help_tooltip(
             numericInput(
               ns(column_key("min_", col)), paste(col, "(min)"),
-              value = rng[1], min = rng[1], max = rng[2], step = step_val
+              value = min_val, min = rng[1], max = rng[2], step = step_val
             ),
             sprintf("Enter the smallest value to keep for %s.", col)
           )
@@ -58,7 +82,7 @@ filter_server <- function(id, uploaded_data) {
           with_help_tooltip(
             numericInput(
               ns(column_key("max_", col)), paste(col, "(max)"),
-              value = rng[2], min = rng[1], max = rng[2], step = step_val
+              value = max_val, min = rng[1], max = rng[2], step = step_val
             ),
             sprintf("Enter the largest value to keep for %s.", col)
           )
@@ -67,10 +91,14 @@ filter_server <- function(id, uploaded_data) {
     }
 
     build_logical_widget <- function(col) {
+      state <- filter_state[[col]]
+      selected <- state$selected %||% c(TRUE, FALSE)
+      selected <- intersect(selected, c(TRUE, FALSE))
+      if (!length(selected)) selected <- c(TRUE, FALSE)
       with_help_tooltip(
         checkboxGroupInput(
           ns(column_key("filter_", col)), label = col,
-          choices = c(TRUE, FALSE), selected = c(TRUE, FALSE), inline = TRUE
+          choices = c(TRUE, FALSE), selected = selected, inline = TRUE
         ),
         sprintf("Tick the logical values you want to keep for %s.", col)
       )
@@ -78,10 +106,14 @@ filter_server <- function(id, uploaded_data) {
 
     build_factor_widget <- function(col, x) {
       choices <- sort(unique(as.character(x)))
+      state <- filter_state[[col]]
+      selected <- state$selected %||% choices
+      selected <- intersect(selected, choices)
+      if (!length(selected)) selected <- choices
       with_help_tooltip(
         selectInput(
           ns(column_key("filter_", col)), label = col,
-          choices = choices, multiple = TRUE, selected = choices
+          choices = choices, multiple = TRUE, selected = selected
         ),
         sprintf("Choose which categories should remain for %s.", col)
       )
@@ -122,6 +154,97 @@ filter_server <- function(id, uploaded_data) {
         "Choose which variables you want to filter before running analyses."
       )
     })
+
+    observeEvent(df(), {
+      current <- names(reactiveValuesToList(filter_state))
+      if (length(current)) {
+        for (col in current) {
+          filter_state[[col]] <- NULL
+        }
+      }
+      active_cols(character(0))
+    }, ignoreInit = TRUE)
+
+    observeEvent(input$columns, {
+      data <- req(df())
+      prev <- active_cols()
+      current <- input$columns %||% character(0)
+
+      kept <- intersect(prev, current)
+      removed <- setdiff(prev, current)
+      added <- setdiff(current, prev)
+
+      for (col in kept) {
+        x <- data[[col]]
+        if (is.numeric(x)) {
+          min_val <- isolate(input[[column_key("min_", col)]])
+          max_val <- isolate(input[[column_key("max_", col)]])
+          if (!is.null(min_val) && !is.null(max_val)) {
+            filter_state[[col]] <- list(type = "numeric", min = min_val, max = max_val)
+          }
+        } else {
+          sel <- isolate(input[[column_key("filter_", col)]])
+          if (!is.null(sel)) {
+            filter_state[[col]] <- list(type = "categorical", selected = sel)
+          }
+        }
+      }
+
+      for (col in removed) {
+        filter_state[[col]] <- NULL
+      }
+
+      for (col in added) {
+        filter_state[[col]] <- init_filter_state(col, data)
+      }
+
+      active_cols(current)
+
+      if (length(added) > 0) {
+        added_cols <- added
+        data_snapshot <- data
+        session$onFlushed(function() {
+          for (col in added_cols) {
+            x <- data_snapshot[[col]]
+            if (is.numeric(x)) {
+              rng <- safe_range(x)
+              step_val <- numeric_step(rng)
+              updateNumericInput(
+                session,
+                column_key("min_", col),
+                value = rng[1],
+                min = rng[1],
+                max = rng[2],
+                step = step_val
+              )
+              updateNumericInput(
+                session,
+                column_key("max_", col),
+                value = rng[2],
+                min = rng[1],
+                max = rng[2],
+                step = step_val
+              )
+            } else if (is.logical(x)) {
+              updateCheckboxGroupInput(
+                session,
+                column_key("filter_", col),
+                choices = c(TRUE, FALSE),
+                selected = c(TRUE, FALSE)
+              )
+            } else {
+              choices <- sort(unique(as.character(x)))
+              updateSelectInput(
+                session,
+                column_key("filter_", col),
+                choices = choices,
+                selected = choices
+              )
+            }
+          }
+        }, once = TRUE)
+      }
+    }, ignoreInit = TRUE)
 
     # --- 1b. NA handling controls ---
     output$na_controls <- renderUI({
