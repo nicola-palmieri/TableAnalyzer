@@ -547,10 +547,44 @@ regression_server <- function(id, data, engine = c("lm", "lmm"), allow_multi_res
       }
 
       if (engine == "lmm") {
-        validate(
-          need(length(input$random) > 0,
-               "Select at least one random effect for the LMM; otherwise use the LM option.")
-        )
+        if (length(input$random) == 0) {
+          err_msg <- "Select at least one random effect for the LMM; otherwise use the LM option."
+          fits <- list()
+          errors <- list()
+
+          if (is.null(strat_details$var)) {
+            for (resp in responses) {
+              fits[[resp]] <- list(
+                stratified = FALSE,
+                strata = list(list(display = "Overall", error = err_msg))
+              )
+              errors[[resp]] <- err_msg
+            }
+          } else {
+            for (resp in responses) {
+              strata_entries <- lapply(strat_details$levels, function(level) {
+                list(label = level, display = level, error = err_msg)
+              })
+              fits[[resp]] <- list(stratified = TRUE, strata = strata_entries)
+              errors[[resp]] <- paste(paste0(strat_details$levels, ": ", err_msg), collapse = "\n")
+            }
+          }
+
+          return(list(
+            responses = responses,
+            success_responses = character(0),
+            error_responses = responses,
+            fits = fits,
+            models = list(),
+            flat_models = list(),
+            model = NULL,
+            errors = errors,
+            error = err_msg,
+            rhs = rhs,
+            allow_multi = allow_multi_response,
+            stratification = strat_details
+          ))
+        }
         for (r in input$random) {
           if (!r %in% names(df)) next
           df[[r]] <- droplevels(factor(df[[r]]))
@@ -708,7 +742,8 @@ regression_server <- function(id, data, engine = c("lm", "lmm"), allow_multi_res
         allow_multi = mod$allow_multi,
         compiled_errors = error_table(),
         flat_models = mod$flat_models,
-        engine = engine
+        engine = engine,
+        message = mod$error
       )
     })
   })

@@ -223,7 +223,8 @@ visualize_server <- function(id, filtered_data, model_fit, analysis_selection = 
           ui_cache(empty_state(
             "&#128065;",
             "Visualization coming soon",
-            "We're still crafting charts for this analysis type. In the meantime, explore the other visualizations available!"
+            "We're still crafting charts for this analysis type. In the meantime, explore the other visualizations available!",
+            extra_class = "analysis-empty-state"
           ))
         }
         current_key(key)
