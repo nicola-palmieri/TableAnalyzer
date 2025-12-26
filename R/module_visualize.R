@@ -79,6 +79,11 @@ visualize_server <- function(id, filtered_data, model_fit, analysis_selection = 
     vis_cache <- reactiveValues()
     last_selection <- reactiveVal(NULL)
 
+    filtered_has_rows <- reactive({
+      data <- filtered_data()
+      !is.null(data) && nrow(data) > 0
+    })
+
     observeEvent(selection_type(), {
       if (is.null(analysis_selection)) return()
       current <- selection_type()
@@ -158,6 +163,18 @@ visualize_server <- function(id, filtered_data, model_fit, analysis_selection = 
       selection_label <- if (is.null(analysis_selection)) NULL else analysis_selection()
       selected <- selection_type()
       info_type <- if (is.null(info)) NULL else tolower(info$type %||% "oneway_anova")
+
+      if (!filtered_has_rows()) {
+        return(list(
+          show_visual = FALSE,
+          empty_ui = empty_state(
+            "&#9888;",
+            "No data to visualize",
+            "Adjust the filters or upload data so the dataset contains rows before opening the Visualize tab.",
+            extra_class = "analysis-empty-state"
+          )
+        ))
+      }
 
       if (!is.null(selection_label) && nzchar(selection_label)) {
         if (is.null(selected) || is.null(info) || !identical(selected, info_type)) {
@@ -249,6 +266,16 @@ visualize_server <- function(id, filtered_data, model_fit, analysis_selection = 
 
     outputOptions(output, "show_visual", suspendWhenHidden = FALSE)
     outputOptions(output, "show_empty", suspendWhenHidden = FALSE)
+
+    observeEvent(filtered_has_rows(), {
+      if (!filtered_has_rows()) {
+        ui_cache(NULL)
+        current_key(NULL)
+        for (key in names(reactiveValuesToList(vis_cache))) {
+          vis_cache[[key]] <- NULL
+        }
+      }
+    }, ignoreNULL = FALSE)
 
     observeEvent(analysis_type(), {
       type <- analysis_type()

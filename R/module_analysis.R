@@ -62,6 +62,10 @@ analysis_server <- function(id, filtered_data) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     df <- reactive(filtered_data())
+    has_rows_available <- reactive({
+      data <- df()
+      !is.null(data) && nrow(data) > 0
+    })
     analysis_switch_token <- reactiveVal(0L)
 
     observeEvent(input$analysis_type, {
@@ -121,6 +125,13 @@ analysis_server <- function(id, filtered_data) {
     })
 
     output$results_panel <- renderUI({
+      if (!has_rows_available()) {
+        return(analysis_empty_state(
+          "No data to analyze",
+          "Adjust the filters or upload data so the table contains rows before running an analysis."
+        ))
+      }
+
       selection <- input$analysis_type
       if (is.null(selection) || !nzchar(selection)) {
         return(analysis_empty_state(
