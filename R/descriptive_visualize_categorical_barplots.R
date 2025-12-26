@@ -56,10 +56,7 @@ visualize_categorical_barplots_ui <- function(id) {
 
 visualize_categorical_barplots_plot_ui <- function(id) {
   ns <- NS(id)
-  div(
-    uiOutput(ns("grid_warning")),
-    plotOutput(ns("plot"), width = "100%", height = "auto")
-  )
+  uiOutput(ns("plot_container"))
 }
 
 
@@ -71,6 +68,7 @@ visualize_categorical_barplots_server <- function(id, filtered_data, summary_inf
       plot = NULL,
       warning = NULL,
       layout = NULL,
+      empty_message = NULL,
       plot_width = 400,
       plot_height = 300
     )
@@ -159,9 +157,10 @@ visualize_categorical_barplots_server <- function(id, filtered_data, summary_inf
     compute_plot <- function(allow_reset = FALSE) {
       data <- df()
       info <- summary_info()
-      
+
       stored$plot_width  <- input$plot_width %||% 400
       stored$plot_height <- input$plot_height %||% 300
+      stored$empty_message <- NULL
       
       if (is.null(info) || is.null(data) || nrow(data) == 0) {
         stored$warning <- "No data available."
@@ -172,7 +171,19 @@ visualize_categorical_barplots_server <- function(id, filtered_data, summary_inf
       s_vars <- resolve_reactive(info$selected_vars)
       g_var  <- resolve_reactive(info$group_var)
       strata_levels <- resolve_reactive(info$strata_levels)
-      
+
+      cat_columns <- names(data)[vapply(data, function(x) {
+        is.character(x) || is.factor(x) || is.logical(x)
+      }, logical(1))]
+      selected_cat_columns <- intersect(cat_columns, s_vars)
+      if (length(selected_cat_columns) == 0) {
+        stored$empty_message <- "Select at least one categorical variable in the Descriptive tab to display categorical barplots."
+        stored$warning <- NULL
+        stored$plot <- NULL
+        stored$layout <- NULL
+        return()
+      }
+
       build_plot <- function(rows, cols) {
         build_descriptive_categorical_plot(
           df = data,
@@ -237,6 +248,36 @@ visualize_categorical_barplots_server <- function(id, filtered_data, summary_inf
     output$grid_warning <- renderUI({
       if (!is.null(stored$warning))
         div(class = "alert alert-warning", stored$warning)
+    })
+
+    empty_state <- function(title, message, icon = "&#128221;") {
+      div(
+        class = "empty-state analysis-empty-state text-center my-4",
+        div(
+          class = "py-4 px-3",
+          div(class = "empty-state-icon text-primary mb-2", HTML(icon)),
+          h4(class = "mb-2", title),
+          p(class = "text-muted mb-0", message)
+        )
+      )
+    }
+
+    output$plot_container <- renderUI({
+      if (!is.null(stored$empty_message)) {
+        return(empty_state("Categorical barplots unavailable", stored$empty_message))
+      }
+
+      if (is.null(stored$plot)) {
+        if (!is.null(stored$warning)) {
+          return(div(uiOutput(ns("grid_warning"))))
+        }
+        return(NULL)
+      }
+
+      tagList(
+        uiOutput(ns("grid_warning")),
+        plotOutput(ns("plot"), width = "100%", height = "auto")
+      )
     })
     
     # -------------------------

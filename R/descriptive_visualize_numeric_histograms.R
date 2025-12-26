@@ -59,10 +59,7 @@ visualize_numeric_histograms_ui <- function(id) {
 
 visualize_numeric_histograms_plot_ui <- function(id) {
   ns <- NS(id)
-  div(
-    uiOutput(ns("grid_warning")),
-    plotOutput(ns("plot"), width = "100%", height = "auto")
-  )
+  uiOutput(ns("plot_container"))
 }
 
 
@@ -78,6 +75,7 @@ visualize_numeric_histograms_server <- function(id, filtered_data, summary_info,
       plot = NULL,
       warning = NULL,
       layout = NULL,
+      empty_message = NULL,
       plot_width  = 400,
       plot_height = 300
     )
@@ -164,6 +162,7 @@ visualize_numeric_histograms_server <- function(id, filtered_data, summary_info,
     compute_plot <- function(allow_reset = FALSE) {
       stored$plot_width  <- input$plot_width %||% 400
       stored$plot_height <- input$plot_height %||% 300
+      stored$empty_message <- NULL
       
       data <- df()
       info <- summary_info()
@@ -180,6 +179,16 @@ visualize_numeric_histograms_server <- function(id, filtered_data, summary_info,
       
       processed <- resolve_reactive(info$processed_data)
       dat <- if (!is.null(processed)) processed else data
+
+      num_cols <- names(dat)[vapply(dat, is.numeric, logical(1))]
+      selected_num_cols <- intersect(num_cols, s_vars)
+      if (length(selected_num_cols) == 0) {
+        stored$empty_message <- "Select at least one numeric variable in the Descriptive tab to display numeric histograms."
+        stored$warning <- NULL
+        stored$plot <- NULL
+        stored$layout <- NULL
+        return()
+      }
       
       build_plot <- function(rows, cols) {
         build_descriptive_numeric_histogram(
@@ -245,6 +254,36 @@ visualize_numeric_histograms_server <- function(id, filtered_data, summary_info,
     output$grid_warning <- renderUI({
       if (!is.null(stored$warning))
         div(class = "alert alert-warning", stored$warning)
+    })
+
+    empty_state <- function(title, message, icon = "&#128221;") {
+      div(
+        class = "empty-state analysis-empty-state text-center my-4",
+        div(
+          class = "py-4 px-3",
+          div(class = "empty-state-icon text-primary mb-2", HTML(icon)),
+          h4(class = "mb-2", title),
+          p(class = "text-muted mb-0", message)
+        )
+      )
+    }
+
+    output$plot_container <- renderUI({
+      if (!is.null(stored$empty_message)) {
+        return(empty_state("Numeric histograms unavailable", stored$empty_message))
+      }
+
+      if (is.null(stored$plot)) {
+        if (!is.null(stored$warning)) {
+          return(div(uiOutput(ns("grid_warning"))))
+        }
+        return(NULL)
+      }
+
+      tagList(
+        uiOutput(ns("grid_warning")),
+        plotOutput(ns("plot"), width = "100%", height = "auto")
+      )
     })
     
     # ================================================================

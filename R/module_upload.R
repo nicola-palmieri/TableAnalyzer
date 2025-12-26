@@ -56,11 +56,13 @@ upload_server <- function(id) {
                error = function(e) list(result = NULL, error = e))
     }
 
-    render_upload_error <- function(message) {
-      df(NULL)
-      editable_cols(NULL)
-      output$sheet_selector <- renderUI(NULL)
-      render_validation("")
+    render_upload_error <- function(message, clear_data = TRUE) {
+      if (clear_data) {
+        df(NULL)
+        editable_cols(NULL)
+        output$sheet_selector <- renderUI(NULL)
+        render_validation("")
+      }
       output$preview <- renderDT(
         data.frame(Error = message),
         options = list(dom = "t", scrollX = TRUE),
@@ -213,31 +215,35 @@ upload_server <- function(id) {
     # -----------------------------------------------------------
     observeEvent(input$file, {
       req(input$data_source != "example")
+
+      ext <- tolower(tools::file_ext(input$file$name))
+      if (!ext %in% c("xlsx", "xls", "xlsm")) {
+        render_upload_error("❌ Invalid file type. Please upload .xlsx/.xls/.xlsm.", clear_data = FALSE)
+        return()
+      }
+
+      sheets_result <- safe_call(readxl::excel_sheets, input$file$datapath)
+      if (!is.null(sheets_result$error)) {
+        render_upload_error(
+          format_safe_error_message("❌ No readable sheets found in workbook.", sheets_result$error),
+          clear_data = FALSE
+        )
+        return()
+      }
+
+      sheets <- sheets_result$result
+      if (length(sheets) == 0) {
+        render_upload_error("❌ No worksheets found in workbook.", clear_data = FALSE)
+        return()
+      }
+
       df(NULL)
       editable_cols(NULL)
       output$sheet_selector <- renderUI(NULL)
       output$preview <- renderDT(data.frame(), options = list(dom = "t"))
       render_validation("")
 
-      ext <- tolower(tools::file_ext(input$file$name))
-      if (!ext %in% c("xlsx", "xls", "xlsm")) {
-        render_upload_error("❌ Invalid file type. Please upload .xlsx/.xls/.xlsm.")
-        return()
-      }
-
-      sheets_result <- safe_call(readxl::excel_sheets, input$file$datapath)
-      if (!is.null(sheets_result$error)) {
-        render_upload_error(format_safe_error_message("❌ No readable sheets found in workbook.", sheets_result$error))
-        return()
-      }
-
-      sheets <- sheets_result$result
-      if (length(sheets) == 0) {
-        render_upload_error("❌ No worksheets found in workbook.")
-        return()
-      }
       initial_sheet <- sheets[[1]]
-
       output$sheet_selector <- renderUI(
         with_help_tooltip(
           selectInput(ns("sheet"), "Select sheet", choices = sheets, selected = initial_sheet),
