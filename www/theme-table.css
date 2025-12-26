@@ -11,8 +11,8 @@
   --accent-3:#10b981;
   --shadow: 0 12px 26px rgba(29,78,216,.12);
   --radius: 12px;
-  --font-body: "Trebuchet MS","Bahnschrift","Segoe UI","Verdana",sans-serif;
-  --font-display: "Bahnschrift","Trebuchet MS","Segoe UI",sans-serif;
+  --font-body: "Inter","Segoe UI","Helvetica Neue",sans-serif;
+  --font-display: "Inter","Segoe UI","Helvetica Neue",sans-serif;
 }
 
 html, body{

@@ -1,4 +1,7 @@
 .container-fluid { max-width: 100%; margin: auto; }
+body {
+  font-family: "Inter","Segoe UI","Helvetica Neue",sans-serif;
+}
 .hero {
   background: #ecf0f1;
   border: 1px solid #dce4ec;
