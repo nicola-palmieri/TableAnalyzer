@@ -35,15 +35,3 @@ reg_formula_text <- function(dep, rhs) {
     paste(dep, "~", paste(rhs, collapse = " + "))
   }
 }
-
-trim_output_section <- function(lines, start_pattern, end_pattern = NULL, end_offset = 0) {
-  start <- grep(start_pattern, lines)[1]
-  if (is.na(start)) return(lines)
-  end <- if (is.null(end_pattern)) NA_integer_ else grep(end_pattern, lines)[1]
-  if (!is.na(end)) {
-    end <- max(start, end - end_offset)
-    lines[start:end]
-  } else {
-    lines[start:length(lines)]
-  }
-}
