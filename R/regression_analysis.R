@@ -230,7 +230,7 @@ regression_server <- function(id, data, engine = c("lm", "lmm"), allow_multi_res
       }
     )
 
-    df_final <- reactive({
+    df_final <- eventReactive(input$run, {
       data()
     })
 
