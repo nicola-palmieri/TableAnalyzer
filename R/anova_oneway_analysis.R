@@ -52,7 +52,7 @@ one_way_anova_server <- function(id, filtered_data) {
       
       validate(
         need(length(cat_cols) > 0,
-             "No categorical predictors found. At least one factor or character variable is required.")
+             "No categorical predictor available. Please upload a factor or character variable.")
       )
       
       tagList(
@@ -93,7 +93,7 @@ one_way_anova_server <- function(id, filtered_data) {
     # -----------------------------------------------------
     models <- eventReactive(input$run, {
       df <- filtered_data()
-      req(df, input$group, input$order)
+      req(df, input$group)
       
       resp_vals <- responses()
       
@@ -123,13 +123,13 @@ one_way_anova_server <- function(id, filtered_data) {
       grp <- df[[input$group]]
       validate(
         need(dplyr::n_distinct(grp) > 1,
-             "The categorical predictor must contain at least two distinct levels.")
+             paste0("Categorical predictor '", input$group, "' must contain at least two levels."))
       )
       
       # Order must have >= 2 items
       validate(
         need(length(input$order) > 1,
-             "The order list must contain at least two levels.")
+             paste0("The level order for '", input$group, "' must contain at least two levels."))
       )
       
       # Order must match data
@@ -137,8 +137,9 @@ one_way_anova_server <- function(id, filtered_data) {
       missing_levels <- setdiff(input$order, actual_levels)
       validate(
         need(length(missing_levels) == 0,
-             paste("Some selected levels are not present in the filtered data:",
-                   paste(missing_levels, collapse = ", ")))
+             paste0("Invalid level order for '", input$group,
+                    "'. Some selected levels are not present in the filtered data: ",
+                    paste(missing_levels, collapse = ", ")))
       )
       
       # Stratification checks
@@ -151,8 +152,8 @@ one_way_anova_server <- function(id, filtered_data) {
           k <- dplyr::n_distinct(sub_df[[input$group]])
           validate(
             need(k > 1,
-                 paste0("Stratum '", lev,
-                        "' contains less than two levels of the grouping variable."))
+                 paste0("In stratum '", lev, "', categorical predictor '", input$group,
+                        "' contains fewer than two levels."))
           )
         }
       }

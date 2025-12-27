@@ -177,7 +177,7 @@ analysis_server <- function(id, filtered_data) {
     })
 
     is_validation_error <- function(e) {
-      inherits(e, "shiny.validation.error")
+      inherits(e, "shiny.silent.error") || inherits(e, "shiny.validation.error")
     }
 
     analysis_info_or_null <- reactive({

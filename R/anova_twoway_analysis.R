@@ -113,7 +113,7 @@ two_way_anova_server <- function(id, filtered_data) {
     # ------------------------------------------------------------
     models <- eventReactive(input$run, {
       df <- filtered_data()
-      req(df, input$factor1, input$factor2, input$order1, input$order2)
+      req(df, input$factor1, input$factor2)
       
       resp_vals <- responses()
       validate(
@@ -128,13 +128,13 @@ two_way_anova_server <- function(id, filtered_data) {
       # Factor 1 must have ≥ 2 levels
       validate(
         need(dplyr::n_distinct(df[[input$factor1]]) > 1,
-             paste0("'", input$factor1, "' must contain at least two levels."))
+             paste0("Categorical predictor '", input$factor1, "' must contain at least two levels."))
       )
       
       # Factor 2 must have ≥ 2 levels
       validate(
         need(dplyr::n_distinct(df[[input$factor2]]) > 1,
-             paste0("'", input$factor2, "' must contain at least two levels."))
+             paste0("Categorical predictor '", input$factor2, "' must contain at least two levels."))
       )
       
       # Order must contain ≥ 2 levels
@@ -142,21 +142,23 @@ two_way_anova_server <- function(id, filtered_data) {
         need(length(input$order1) > 1,
              paste0("The level order for '", input$factor1, "' must contain at least two levels."))
       )
-      
+
       validate(
         need(length(input$order2) > 1,
              paste0("The level order for '", input$factor2, "' must contain at least two levels."))
       )
-      
+
       # Orders must match existing data levels
       validate(
         need(all(input$order1 %in% unique(df[[input$factor1]])),
-             "Invalid level order for the first factor.")
+             paste0("Invalid level order for '", input$factor1,
+                    "'. Some selected levels are not present in the data."))
       )
-      
+
       validate(
         need(all(input$order2 %in% unique(df[[input$factor2]])),
-             "Invalid level order for the second factor.")
+             paste0("Invalid level order for '", input$factor2,
+                    "'. Some selected levels are not present in the data."))
       )
       
       # Numeric responses
@@ -178,12 +180,14 @@ two_way_anova_server <- function(id, filtered_data) {
           
           validate(
             need(dplyr::n_distinct(sub[[input$factor1]]) > 1,
-                 paste0("Stratum '", lev, "' contains fewer than two levels of ", input$factor1, "."))
+                 paste0("In stratum '", lev, "', categorical predictor '", input$factor1,
+                        "' contains fewer than two levels."))
           )
-          
+
           validate(
             need(dplyr::n_distinct(sub[[input$factor2]]) > 1,
-                 paste0("Stratum '", lev, "' contains fewer than two levels of ", input$factor2, "."))
+                 paste0("In stratum '", lev, "', categorical predictor '", input$factor2,
+                        "' contains fewer than two levels."))
           )
         }
       }
