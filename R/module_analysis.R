@@ -176,11 +176,18 @@ analysis_server <- function(id, filtered_data) {
       srv()
     })
 
+    is_validation_error <- function(e) {
+      inherits(e, "shiny.silent.error") || inherits(e, "shiny.validation.error")
+    }
+
     analysis_info_or_null <- reactive({
       tryCatch(
         model_out(),
         shiny.silent.stop = function(e) NULL,
-        error = function(e) NULL
+        error = function(e) {
+          if (is_validation_error(e)) stop(e)
+          NULL
+        }
       )
     })
     
