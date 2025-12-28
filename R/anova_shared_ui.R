@@ -210,7 +210,7 @@ print_anova_summary_and_posthoc <- function(model_entry, factors) {
       anova_tbl$p.label <- ifelse(
         is.na(p_vals),
         "",
-        ifelse(p_vals < 0.0001, "<.0001", sprintf("%.4f", p_vals))
+        ifelse(p_vals < 0.0001, "<0.0001", sprintf("%.4f", p_vals))
       )
     }
     if (!"Fvalue_label" %in% names(anova_tbl)) {
@@ -233,7 +233,7 @@ print_anova_summary_and_posthoc <- function(model_entry, factors) {
   }
 
   if (length(results$posthoc_details) == 0) {
-    cat("\nNo post-hoc Tukey comparisons were generated.\n")
+    cat("\nNo post-hoc Dunnett comparisons were generated.\n")
   } else {
     for (factor_nm in names(results$posthoc_details)) {
       details <- results$posthoc_details[[factor_nm]]
@@ -241,19 +241,42 @@ print_anova_summary_and_posthoc <- function(model_entry, factors) {
         cat(
           "\n",
           format_safe_error_message(
-            paste("Post-hoc Tukey comparisons for", factor_nm, "failed"),
+            paste("Post-hoc Dunnett comparisons for", factor_nm, "failed"),
             details$error
           ),
           "\n",
           sep = ""
         )
       } else if (!is.null(details$table)) {
-        cat("\nPost-hoc Tukey comparisons for", factor_nm, ":\n")
-        print(details$table)
+        cat("\nPost-hoc Dunnett comparisons for", factor_nm, ":\n")
+        print(format_posthoc_table_for_print(details$table))
       }
     }
   }
   invisible(results)
 }
 
+format_posthoc_table_for_print <- function(df) {
+  if (is.null(df) || !is.data.frame(df)) return(df)
+
+  df <- as.data.frame(df)
+  class(df) <- "data.frame"
+
+  p_cols <- intersect(c("p.value", "p.value."), names(df))
+  for (col in names(df)) {
+    if (!is.numeric(df[[col]])) next
+    if (length(p_cols) > 0 && col == p_cols[1]) {
+      p_vals <- df[[col]]
+      df[[col]] <- ifelse(
+        is.na(p_vals),
+        "",
+        ifelse(p_vals < 0.0001, "<0.0001", sprintf("%.4f", p_vals))
+      )
+    } else {
+      df[[col]] <- sprintf("%.4f", df[[col]])
+    }
+  }
+
+  df
+}
 

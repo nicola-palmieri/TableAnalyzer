@@ -20,55 +20,83 @@ reg_fit_model <- function(dep, rhs, data, engine = c("lm","lmm")) {
 reg_display_summary <- function(model, engine = c("lm", "lmm")) {
   engine <- match.arg(engine)
 
-  format_coefs <- function(coef_mat) {
-    if (is.null(coef_mat)) return(NULL)
-    df <- data.frame(
-      Term = rownames(coef_mat),
-      stringsAsFactors = FALSE
-    )
-
-    num_cols <- c("Estimate", "Std. Error", "t value", "z value", "Std. error", "Std.Error", "Std error")
-    stat_col <- intersect(colnames(coef_mat), c("t value", "z value"))
-    p_col <- intersect(colnames(coef_mat), grep("^Pr", colnames(coef_mat), value = TRUE))
-
-    if ("Estimate" %in% colnames(coef_mat)) {
-      df$Estimate <- formatC(coef_mat[, "Estimate"], format = "f", digits = 6, drop0trailing = FALSE)
-    }
-    if ("Std. Error" %in% colnames(coef_mat)) {
-      df$Std.Error <- formatC(coef_mat[, "Std. Error"], format = "f", digits = 6, drop0trailing = FALSE)
-    }
-    if ("Std error" %in% colnames(coef_mat)) {
-      df$Std.Error <- formatC(coef_mat[, "Std error"], format = "f", digits = 6, drop0trailing = FALSE)
-    }
-    if (length(stat_col) > 0) {
-      df$Statistic <- formatC(coef_mat[, stat_col[1]], format = "f", digits = 6, drop0trailing = FALSE)
-    }
-    if (length(p_col) > 0) {
-      df$p.value <- format.pval(coef_mat[, p_col[1]], digits = 3, eps = 1e-04)
-    }
-    capture.output(print(df, row.names = FALSE))
-  }
-
   if (engine == "lm") {
-    aout <- capture.output(car::Anova(model, type = 3))
-    signif_idx <- grep("^Signif\\. codes", aout)
+    anova_obj <- car::Anova(model, type = 3)
+    raw_anova_lines <- capture.output(anova_obj)
+    signif_idx <- grep("^Signif\\. codes", raw_anova_lines)
     if (length(signif_idx) > 0) {
       remove_idx <- c(signif_idx - 1, signif_idx)
-      aout <- aout[-remove_idx]
+      signif_lines <- raw_anova_lines[remove_idx]
+    } else {
+      signif_lines <- character(0)
     }
-    cat(paste(aout, collapse = "\n"), "\n\n")
+    anova_tbl <- as.data.frame(anova_obj)
+    formatted_anova <- format_anova_numeric_columns(anova_tbl)
+    formatted_anova <- format_anova_f_column(formatted_anova)
+    formatted_anova <- format_anova_p_column(formatted_anova)
+    aout <- capture.output(print(formatted_anova))
+    header_lines <- c(
+      "Anova Table (Type III tests)",
+      "",
+      paste("Response:", all.vars(formula(model))[1]),
+      ""
+    )
+    table_lines <- c(header_lines, aout)
+    if (length(signif_lines) > 0) {
+      table_lines <- c(table_lines, "", signif_lines)
+    }
+    cat(paste(table_lines, collapse = "\n"), "\n\n")
 
-    coef_lines <- format_coefs(summary(model)$coefficients)
+    coef_lines <- format_coef_matrix_lines(summary(model)$coefficients)
     cat("Coefficients:\n")
     cat(paste(coef_lines, collapse = "\n"), "\n")
   } else {
-    aout <- capture.output(anova(model, type = 3))
-    cat(paste(aout, collapse = "\n"), "\n\n")
+    anova_obj <- anova(model, type = 3)
+    raw_anova_lines <- capture.output(anova_obj)
+    signif_idx <- grep("^Signif\\. codes", raw_anova_lines)
+    if (length(signif_idx) > 0) {
+      remove_idx <- c(signif_idx - 1, signif_idx)
+      signif_lines <- raw_anova_lines[remove_idx]
+    } else {
+      signif_lines <- character(0)
+    }
+    anova_tbl <- as.data.frame(anova_obj)
+    formatted_anova <- format_anova_numeric_columns(anova_tbl)
+    formatted_anova <- format_anova_f_column(formatted_anova)
+    formatted_anova <- format_anova_p_column(formatted_anova)
+    aout <- capture.output(print(formatted_anova))
+    heading_lines <- attr(anova_obj, "heading")
+    header_lines <- if (!is.null(heading_lines) && length(heading_lines) > 0) {
+      c(heading_lines, "")
+    } else {
+      character(0)
+    }
+    table_lines <- c(header_lines, aout)
+    if (length(signif_lines) > 0) {
+      table_lines <- c(table_lines, "", signif_lines)
+    }
+    cat(paste(table_lines, collapse = "\n"), "\n\n")
 
     rand_var <- tryCatch(lme4::VarCorr(model), error = function(e) NULL)
     cat("Random effects:\n")
     if (!is.null(rand_var)) {
-      print(rand_var, comp = c("Variance", "Std.Dev."))
+      rand_df <- tryCatch(as.data.frame(rand_var), error = function(e) NULL)
+      if (!is.null(rand_df) && nrow(rand_df) > 0) {
+        rand_df[is.na(rand_df)] <- ""
+        rand_df$vcov <- ifelse(
+          is.na(rand_df$vcov),
+          "",
+          sprintf("%.4f", rand_df$vcov)
+        )
+        rand_df$sdcor <- ifelse(
+          is.na(rand_df$sdcor),
+          "",
+          sprintf("%.4f", rand_df$sdcor)
+        )
+        print(rand_df, row.names = FALSE)
+      } else {
+        print(rand_var, comp = c("Variance", "Std.Dev."))
+      }
     } else {
       cat("  None\n")
     }
@@ -77,15 +105,103 @@ reg_display_summary <- function(model, engine = c("lm", "lmm")) {
     icc_df <- if (exists("compute_icc") && is.function(compute_icc)) compute_icc(model) else NULL
     if (!is.null(icc_df) && nrow(icc_df) > 0) {
       cat("Intraclass Correlation (ICC):\n")
-      icc_df$ICC <- formatC(icc_df$ICC, format = "f", digits = 6, drop0trailing = FALSE)
+      icc_df$ICC <- formatC(icc_df$ICC, format = "f", digits = 4, drop0trailing = FALSE)
       print(icc_df, row.names = FALSE)
       cat("\n")
     }
 
-    coef_lines <- format_coefs(summary(model)$coefficients)
+    coef_lines <- format_coef_matrix_lines(summary(model)$coefficients)
     cat("Coefficients:\n")
     cat(paste(coef_lines, collapse = "\n"), "\n")
   }
+}
+
+format_coef_matrix_lines <- function(coef_mat) {
+  if (is.null(coef_mat)) return(NULL)
+  df <- data.frame(
+    Term = rownames(coef_mat),
+    stringsAsFactors = FALSE
+  )
+
+  num_cols <- c("Estimate", "Std. Error", "t value", "z value", "Std. error", "Std.Error", "Std error")
+  stat_col <- intersect(colnames(coef_mat), c("t value", "z value"))
+  p_col <- intersect(colnames(coef_mat), grep("^Pr", colnames(coef_mat), value = TRUE))
+
+  if ("Estimate" %in% colnames(coef_mat)) {
+    df$Estimate <- formatC(coef_mat[, "Estimate"], format = "f", digits = 4, drop0trailing = FALSE)
+  }
+  if ("Std. Error" %in% colnames(coef_mat)) {
+    df$Std.Error <- formatC(coef_mat[, "Std. Error"], format = "f", digits = 4, drop0trailing = FALSE)
+  }
+  if ("Std error" %in% colnames(coef_mat)) {
+    df$Std.Error <- formatC(coef_mat[, "Std error"], format = "f", digits = 4, drop0trailing = FALSE)
+  }
+  if (length(stat_col) > 0) {
+    df$Statistic <- formatC(coef_mat[, stat_col[1]], format = "f", digits = 4, drop0trailing = FALSE)
+  }
+  if (length(p_col) > 0) {
+    p_vals <- suppressWarnings(as.numeric(coef_mat[, p_col[1]]))
+    df$p.value <- ifelse(
+      is.na(p_vals),
+      "",
+      ifelse(p_vals < 0.0001, "<0.0001", sprintf("%.4f", p_vals))
+    )
+  }
+  capture.output(print(df, row.names = FALSE))
+}
+
+format_anova_numeric_columns <- function(anova_tbl) {
+  if (is.null(anova_tbl)) return(anova_tbl)
+
+  p_col <- intersect(c("Pr(>F)", "p.value"), names(anova_tbl))
+  f_col <- intersect(c("F value", "F.Value", "F"), names(anova_tbl))
+
+  for (col in names(anova_tbl)) {
+    if (!is.numeric(anova_tbl[[col]])) next
+    if (length(p_col) > 0 && col == p_col[1]) next
+    if (length(f_col) > 0 && col == f_col[1]) next
+    anova_tbl[[col]] <- sprintf("%.4f", anova_tbl[[col]])
+  }
+
+  anova_tbl
+}
+
+format_anova_f_column <- function(anova_tbl) {
+  if (is.null(anova_tbl)) return(anova_tbl)
+
+  effect_col <- intersect("Effect", names(anova_tbl))
+  f_col <- intersect(c("F value", "F.Value", "F"), names(anova_tbl))
+
+  if (length(f_col) > 0) {
+    col <- f_col[1]
+    f_vals <- suppressWarnings(as.numeric(anova_tbl[[col]]))
+    f_chr <- ifelse(is.na(f_vals), "", sprintf("%.4f", f_vals))
+    if (length(effect_col) > 0) {
+      is_resid <- anova_tbl[[effect_col]] == "Residuals"
+      f_chr[is_resid] <- ""
+    }
+    anova_tbl[[col]] <- f_chr
+  }
+
+  anova_tbl
+}
+
+format_anova_p_column <- function(anova_tbl) {
+  if (is.null(anova_tbl)) return(anova_tbl)
+
+  p_col <- intersect(c("Pr(>F)", "p.value"), names(anova_tbl))
+
+  if (length(p_col) > 0) {
+    col <- p_col[1]
+    vals <- suppressWarnings(as.numeric(anova_tbl[[col]]))
+    anova_tbl[[col]] <- ifelse(
+      is.na(vals),
+      "",
+      ifelse(vals < 0.0001, "<0.0001", sprintf("%.4f", vals))
+    )
+  }
+
+  anova_tbl
 }
 
 reg_display_lm_summary <- function(m) reg_display_summary(m, "lm")
@@ -226,5 +342,3 @@ compile_regression_results <- function(model_info, engine) {
 
   list(summary = summary_list, effects = effects_list, errors = errors_list)
 }
-
-# ===============================================================

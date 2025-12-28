@@ -161,7 +161,7 @@ insert_blank_line <- function(doc, text = "", style = "Normal") {
 format_p_values <- function(df, p_col) {
   if (is.null(p_col) || !p_col %in% names(df)) return(df)
   p_vals <- as.numeric(df[[p_col]])
-  df[[p_col]] <- ifelse(p_vals < 0.0001, "<.0001", sprintf("%.4f", p_vals))
+  df[[p_col]] <- ifelse(p_vals < 0.0001, "<0.0001", sprintf("%.4f", p_vals))
   df
 }
 
