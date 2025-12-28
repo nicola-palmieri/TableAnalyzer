@@ -127,7 +127,9 @@ filter_server <- function(id, uploaded_data) {
     }
 
     filter_column <- function(data, col) {
+      if (is.null(col) || !col %in% names(data)) return(data)
       x <- data[[col]]
+      if (is.null(x) || length(x) == 0) return(data)
       if (is.numeric(x)) {
         if (all(is.na(x))) return(data)
         min_val <- input[[column_key("min_", col)]] %||% -Inf
@@ -163,16 +165,22 @@ filter_server <- function(id, uploaded_data) {
         }
       }
       active_cols(character(0))
+      updateSelectInput(session, "columns", choices = names(df()), selected = character(0))
     }, ignoreInit = TRUE)
 
     observeEvent(input$columns, {
       data <- req(df())
       prev <- active_cols()
-      current <- input$columns %||% character(0)
+      requested <- input$columns %||% character(0)
+      current <- intersect(requested, names(data))
 
       kept <- intersect(prev, current)
       removed <- setdiff(prev, current)
       added <- setdiff(current, prev)
+
+      if (length(setdiff(requested, current)) > 0) {
+        updateSelectInput(session, "columns", choices = names(data), selected = current)
+      }
 
       for (col in kept) {
         x <- data[[col]]
@@ -275,14 +283,15 @@ filter_server <- function(id, uploaded_data) {
 
     # --- 2. Dynamic filter widgets ---
     output$filter_widgets <- renderUI({
-      cols <- req(input$columns)
+      data <- req(df())
+      cols <- intersect(req(input$columns), names(data))
       tagList(lapply(cols, build_widget))
     })
 
     # --- 3. Reactive filtering ---
     filtered_df <- reactive({
       data <- req(df())
-      cols <- input$columns
+      cols <- intersect(input$columns %||% character(0), names(data))
       filtered <- data
       if (length(cols)) {
         filtered <- Reduce(filter_column, cols, init = data, right = FALSE)
