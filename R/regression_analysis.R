@@ -146,6 +146,10 @@ regression_server <- function(id, data, engine = c("lm", "lmm"), allow_multi_res
       reg_interactions_ui(ns, input$fixed, types$fac)
     })
 
+    observeEvent(data(), {
+      updateCheckboxGroupInput(session, "interactions", selected = character(0))
+    }, ignoreInit = TRUE)
+
     output$formula_preview <- renderUI({
       responses <- selected_responses()
       req(length(responses) > 0)
