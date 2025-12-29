@@ -123,7 +123,7 @@ Regression (LM/LMM) stress
 76) LMM: select random effect with 2+ levels; run; confirm random effects output.
 77) LMM: select multiple random effects; run; confirm nested vs non-nested behavior.
 78) LMM: select random effect with single level; confirm validation error.
-79) LMM: run with no random effect selected; verify error appears in results pane.
+79) LMM: run with no random effect selected; verify error appears in results panel.
 80) LMM: include covariate with zero variance; confirm validation error.
 81) LMM: change random effect selection; rerun; outputs update.
 82) LMM: stratify; ensure each stratum has >=2 random levels or error shows.

@@ -46,6 +46,16 @@ validate_regression_inputs <- function(df, input, engine, strat_details) {
       need(length(input$random) > 0,
            "Select at least one random effect for the LMM; otherwise use the LM option.")
     )
+    if (length(input$random) > 0) {
+      for (r in input$random) {
+        if (!r %in% names(df)) next
+        values <- droplevels(factor(df[[r]]))
+        validate(
+          need(dplyr::n_distinct(values) > 1,
+               paste0("Random effect '", r, "' must contain at least two levels."))
+        )
+      }
+    }
   }
 
   # ---- 5) Validate stratification (each stratum must allow model fitting) ----
