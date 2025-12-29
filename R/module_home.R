@@ -38,20 +38,20 @@ home_ui <- function(id) {
             ),
             p(
               class = "lead text-muted",
-              "Turn tabular datasets into publication-ready summaries, models, and visuals in minutes."
+              "Turn your tabular data into publication-ready tables and plots."
             ),
             div(
               class = "home-chip-row",
-              span(class = "home-chip", "Type III ANOVA"),
-              span(class = "home-chip", "LM/LMM"),
-              span(class = "home-chip", "Export-ready DOCX"),
-              span(class = "home-chip", "Diagnostics")
+              span(class = "home-chip", "Auto means & SD"),
+              span(class = "home-chip", "Multi-response ready"),
+              span(class = "home-chip", "Stratified outputs"),
+              span(class = "home-chip", "Consistent formatting")
             ),
             tags$ul(
               class = "home-checklist",
-              tags$li("Curate filters and strata without leaving the interface."),
-              tags$li("Keep formulas and outputs aligned with validation guardrails."),
-              tags$li("Export tables and plots with consistent formatting.")
+              tags$li("Automatic group means, standard deviations, and summaries — no manual spreadsheet formulas."),
+              tags$li("One workflow from filtered data to model output, without copy-paste."),
+              tags$li("Exports that keep tables and plots consistent across analyses.")
             )
           ),
           div(
@@ -67,7 +67,7 @@ home_ui <- function(id) {
                     class = "home-step-card",
                     icon("upload", class = "fa-lg text-primary mb-2"),
                     h6("Upload"),
-                    p("Bring in spreadsheets and auto-detect types.")
+                    p("Bring in datasets and auto-detect variable types.")
                   )
                 ),
                 div(
@@ -76,7 +76,7 @@ home_ui <- function(id) {
                     class = "home-step-card",
                     icon("filter", class = "fa-lg text-primary mb-2"),
                     h6("Filter"),
-                    p("Focus on the rows and columns that matter.")
+                    p("Narrow down the rows you analyze with flexible filtering.")
                   )
                 ),
                 div(
@@ -85,7 +85,7 @@ home_ui <- function(id) {
                     class = "home-step-card",
                     icon("square-poll-horizontal", class = "fa-lg text-primary mb-2"),
                     h6("Analyze"),
-                    p("Run ANOVA, LM, or LMM in a guided flow.")
+                    p("Run your models with guided validation and diagnostics.")
                   )
                 ),
                 div(
@@ -94,7 +94,7 @@ home_ui <- function(id) {
                     class = "home-step-card",
                     icon("chart-area", class = "fa-lg text-primary mb-2"),
                     h6("Visualize"),
-                    p("Generate polished plots ready for reports.")
+                    p("Generate polished plots ready for reporting.")
                   )
                 )
               )
@@ -108,24 +108,24 @@ home_ui <- function(id) {
             class = "col-md-4",
             div(
               class = "home-feature-card",
-              h6("Validation-first workflow"),
-              p("Surface issues early with consistent checks across analyses.")
+              h6("Built-in quality checks"),
+              p("Catch invalid inputs early so outputs are dependable.")
             )
           ),
           div(
             class = "col-md-4",
             div(
               class = "home-feature-card",
-              h6("Consistent formatting"),
-              p("Aligned decimals and p-value styling across verbatim and DOCX outputs.")
+              h6("Simultaneous multivariate reporting"),
+              p("Handle multiple responses and stratified reporting in one run.")
             )
           ),
           div(
             class = "col-md-4",
             div(
               class = "home-feature-card",
-              h6("Built for scientific tables"),
-              p("Designed for structured experimental data and stratified reporting.")
+              h6("Ready-to-share outputs"),
+              p("Publication-ready plots and tables, exportable with one click.")
             )
           )
         ),
