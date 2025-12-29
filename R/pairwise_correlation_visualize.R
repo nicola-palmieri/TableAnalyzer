@@ -36,8 +36,7 @@ visualize_ggpairs_ui <- function(id) {
     mainPanel(
       width = 8,
       h4("Plots"),
-      uiOutput(ns("plot_warning")),
-      plotOutput(ns("plot"), height = "auto")
+      uiOutput(ns("plot_container"))
     )
   )
 }
@@ -139,6 +138,23 @@ visualize_ggpairs_server <- function(id, filtered_data, model_fit, reset_trigger
       if (!is.null(warning_text)) {
         div(class = "alert alert-warning", HTML(warning_text))
       }
+    })
+
+    output$plot_container <- renderUI({
+      plot_obj <- ggpairs_state$plot()
+      warning_text <- ggpairs_state$warning()
+
+      if (is.null(plot_obj)) {
+        if (!is.null(warning_text)) {
+          return(div(uiOutput(ns("plot_warning"))))
+        }
+        return(NULL)
+      }
+
+      tagList(
+        uiOutput(ns("plot_warning")),
+        plotOutput(ns("plot"), height = "auto")
+      )
     })
 
     output$plot <- renderPlot({

@@ -203,8 +203,7 @@ visualize_pca_ui <- function(id, filtered_data = NULL) {
     mainPanel(
       width = 8,
       h4("Plots"),
-      uiOutput(ns("plot_warning")),
-      plotOutput(ns("plot"))
+      uiOutput(ns("plot_container"))
     )
   )
 }
@@ -747,6 +746,21 @@ visualize_pca_server <- function(id, filtered_data, model_fit, reset_trigger = r
       } else {
         NULL
       }
+    })
+
+    output$plot_container <- renderUI({
+      info <- plot_info()
+      if (is.null(info) || is.null(info$plot)) {
+        if (!is.null(info) && !is.null(info$warning)) {
+          return(div(uiOutput(ns("plot_warning"))))
+        }
+        return(NULL)
+      }
+
+      tagList(
+        uiOutput(ns("plot_warning")),
+        plotOutput(ns("plot"))
+      )
     })
 
     output$plot <- renderPlot({

@@ -56,8 +56,7 @@ visualize_oneway_ui <- function(id) {
     mainPanel(
       width = 8,
       h4("Plots"),
-      uiOutput(ns("plot_warning")),
-      plotOutput(ns("plot"), height = "auto")
+      uiOutput(ns("plot_container"))
     )
   )
 }
@@ -192,8 +191,9 @@ visualize_oneway_server <- function(id, filtered_data, model_info) {
       }
       
       stored$warning <- chosen_result$warning
-      stored$plot    <- chosen_result$plot
-      stored$layout  <- chosen_result$layout
+      grid_bad <- is_grid_warning(stored$warning)
+      stored$plot   <- if (grid_bad) NULL else chosen_result$plot
+      stored$layout <- if (grid_bad) NULL else chosen_result$layout
 
       apply_grid_defaults_if_empty(
         input,
@@ -232,6 +232,20 @@ visualize_oneway_server <- function(id, filtered_data, model_info) {
       if (!is.null(stored$warning)) {
         div(class = "alert alert-warning", HTML(stored$warning))
       }
+    })
+
+    output$plot_container <- renderUI({
+      if (is.null(stored$plot)) {
+        if (!is.null(stored$warning)) {
+          return(div(uiOutput(ns("plot_warning"))))
+        }
+        return(NULL)
+      }
+
+      tagList(
+        uiOutput(ns("plot_warning")),
+        plotOutput(ns("plot"), height = "auto")
+      )
     })
     
     output$plot <- renderPlot(

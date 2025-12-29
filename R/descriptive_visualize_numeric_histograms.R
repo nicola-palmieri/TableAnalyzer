@@ -215,9 +215,10 @@ visualize_numeric_histograms_server <- function(id, filtered_data, summary_info,
         res <- build_plot(res$defaults$rows, res$defaults$cols)
       }
 
-      stored$plot    <- res$plot
-      stored$layout  <- res$layout
       stored$warning <- res$warning
+      grid_bad <- is_grid_warning(stored$warning)
+      stored$plot   <- if (grid_bad) NULL else res$plot
+      stored$layout <- if (grid_bad) NULL else res$layout
 
       apply_grid_defaults_if_empty(
         input,

@@ -209,9 +209,10 @@ visualize_categorical_barplots_server <- function(id, filtered_data, summary_inf
         res <- build_plot(res$defaults$rows, res$defaults$cols)
       }
 
-      stored$plot    <- res$plot
       stored$warning <- res$warning
-      stored$layout  <- res$layout
+      grid_bad <- is_grid_warning(stored$warning)
+      stored$plot   <- if (grid_bad) NULL else res$plot
+      stored$layout <- if (grid_bad) NULL else res$layout
 
       apply_grid_defaults_if_empty(
         input,
