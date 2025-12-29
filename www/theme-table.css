@@ -273,6 +273,9 @@ a.nav-link.disabled{
 .well hr{
   margin: 8px 0;
 }
+.ta-formula-preview{
+  box-shadow: none;
+}
 
 .panel-heading,
 .modal-header{

@@ -32,9 +32,12 @@ reg_interactions_ui <- function(ns, fixed, fac_vars) {
 reg_formula_preview_ui <- function(ns, dep, rhs) {
   if (is.null(dep) || !nzchar(dep)) return(NULL)
   form_txt <- reg_formula_text(dep, rhs)
-  wellPanel(
-    strong("Model formula: "),
-    code(form_txt)
+  tagList(
+    tags$label(`for` = ns("formula_preview"), class = "control-label", "Model formula"),
+    wellPanel(
+      class = "ta-formula-preview",
+      code(form_txt, id = ns("formula_preview"))
+    )
   )
 }
 
