@@ -185,11 +185,12 @@ ggpairs_server <- function(id, data_reactive, reset_trigger = reactive(NULL)) {
       }
       
       # -- 5) Optional: warn if variable is constant (no variance)
+      warning_messages <- character()
       for (v in selected_vars) {
         if (stats::var(processed_data[[v]], na.rm = TRUE) == 0) {
-          showNotification(
-            paste0("Variable '", v, "' is constant after filtering; correlations will be NA."),
-            type = "warning"
+          warning_messages <- c(
+            warning_messages,
+            paste0("Variable '", v, "' is constant after filtering; correlations will be NA.")
           )
         }
       }
@@ -224,7 +225,8 @@ ggpairs_server <- function(id, data_reactive, reset_trigger = reactive(NULL)) {
         group_var = group_var,
         selected_vars = selected_vars,
         data_used = processed_data,
-        strata_levels = if (!is.null(group_var)) strata_levels else NULL
+        strata_levels = if (!is.null(group_var)) strata_levels else NULL,
+        warnings = warning_messages
       ))
     })
 
@@ -237,6 +239,13 @@ ggpairs_server <- function(id, data_reactive, reset_trigger = reactive(NULL)) {
       if (!is.null(results$message)) {
         cat(results$message)
         return(invisible(NULL))
+      }
+
+      if (!is.null(results$warnings) && length(results$warnings) > 0) {
+        for (warning in unique(results$warnings)) {
+          cat(paste0("Warning: ", warning, "\n"))
+        }
+        cat("\n")
       }
 
       matrices <- results$matrices
