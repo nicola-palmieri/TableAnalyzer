@@ -67,10 +67,8 @@ analysis_server <- function(id, filtered_data) {
       !is.null(data) && nrow(data) > 0
     })
     analysis_switch_token <- reactiveVal(0L)
-
-    observeEvent(input$analysis_type, {
-      analysis_switch_token(analysis_switch_token() + 1L)
-    }, ignoreInit = TRUE)
+    has_run <- reactiveVal(FALSE)
+    run_baseline <- reactiveVal(0L)
     
     # ---- Mapping of available modules ----
     modules <- list(
@@ -103,6 +101,40 @@ analysis_server <- function(id, filtered_data) {
       ensure_analysis_server(mod, df, server_cache, reset_trigger = analysis_switch_token)
     }
 
+    run_suffix_map <- list(
+      desc = "run",
+      anova1 = "run",
+      anova2 = "run",
+      lm = "run",
+      lmm = "run",
+      pairs = "run",
+      pca = "run_pca"
+    )
+
+    current_run_signal <- reactive({
+      selection <- input$analysis_type
+      if (is.null(selection) || !nzchar(selection)) return(NULL)
+      mod <- modules[[selection]]
+      if (is.null(mod)) return(NULL)
+      suffix <- run_suffix_map[[mod$id]] %||% "run"
+      input[[paste0(mod$id, "-", suffix)]]
+    })
+
+    observeEvent(input$analysis_type, {
+      analysis_switch_token(analysis_switch_token() + 1L)
+      has_run(FALSE)
+      run_baseline(current_run_signal() %||% 0L)
+    }, ignoreInit = TRUE)
+
+    observeEvent(current_run_signal(), {
+      current_value <- current_run_signal()
+      baseline_value <- run_baseline() %||% 0L
+      if (is.null(current_value)) return()
+      if (current_value > baseline_value) {
+        has_run(TRUE)
+      }
+    }, ignoreInit = TRUE)
+
 
     analysis_empty_state <- function(title, message, icon = "&#128221;") {
       div(
@@ -119,6 +151,7 @@ analysis_server <- function(id, filtered_data) {
     # ---- Render active submodule UI ----
     output$config_panel <- renderUI({
       mod <- current_mod()
+      ensure_module_server(mod)
       ui <- mod$ui(ns(mod$id))
       req(ui)
       ui$config
@@ -140,17 +173,16 @@ analysis_server <- function(id, filtered_data) {
         ))
       }
 
-      mod <- current_mod()
-      ui <- mod$ui(ns(mod$id))
-      req(ui)
-
-      if (!analysis_result_ready(analysis_info_or_null())) {
+      if (!isTRUE(has_run())) {
         return(analysis_empty_state(
           "Run the selected analysis",
           "Run the analysis to view results."
         ))
       }
 
+      mod <- current_mod()
+      ui <- mod$ui(ns(mod$id))
+      req(ui)
       ui$results
     })
 
@@ -174,21 +206,6 @@ analysis_server <- function(id, filtered_data) {
       srv <- ensure_module_server(mod)
       req(srv)
       srv()
-    })
-
-    is_validation_error <- function(e) {
-      inherits(e, "shiny.silent.error") || inherits(e, "shiny.validation.error")
-    }
-
-    analysis_info_or_null <- reactive({
-      tryCatch(
-        model_out(),
-        shiny.silent.stop = function(e) NULL,
-        error = function(e) {
-          if (is_validation_error(e)) stop(e)
-          NULL
-        }
-      )
     })
     
     list(
@@ -265,13 +282,3 @@ ensure_analysis_server <- function(mod, df, server_cache, reset_trigger = NULL) 
   standardized
 }
 
-analysis_result_ready <- function(result) {
-  if (is.null(result) || !is.list(result)) {
-    return(FALSE)
-  }
-
-  core_fields <- c("summary", "model", "effects", "posthoc")
-  has_core <- any(!vapply(result[core_fields], is.null, logical(1)))
-  has_messages <- !is.null(result$message) || !is.null(result$messages)
-  has_core || has_messages
-}
