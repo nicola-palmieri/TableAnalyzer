@@ -23,10 +23,12 @@ upload_ui <- function(id) {
         ),
         "Decide whether to explore the built-in example data or load your own table."
       ),
-      uiOutput(ns("layout_example")),
       uiOutput(ns("file_input")),
       uiOutput(ns("sheet_selector")),
+      uiOutput(ns("layout_example")),
+      br(),
       uiOutput(ns("replicate_col_input")),
+      br(),
       actionButton(ns("open_type_editor"), "Edit column types"),
       uiOutput(ns("type_editor_modal"))
       
@@ -179,11 +181,14 @@ upload_server <- function(id) {
                     "❌ Example layout files not found in /data folder."))
       
       loader <- if (input$data_source == "long") {
-        list(path = long_path, caption = "Long format — one row per measurement.")
+        list(
+          path = long_path,
+          caption = "Example layout (long format) – one row per measurement."
+        )
       } else {
         list(
           path = wide_path,
-          caption = "Wide format — two header rows (top: response, bottom: replicate).",
+          caption = "Example layout (wide format) – two header rows (top: response, bottom: replicate).",
           fix_names = TRUE
         )
       }
@@ -201,12 +206,21 @@ upload_server <- function(id) {
       }
       caption <- loader$caption
       
+      tagList(
+        div(
+          class = "ta-layout-caption text-muted small mb-2",
+          htmltools::tags$b(caption)
+        ),
       DT::datatable(
         toy,
-        caption = htmltools::tags$caption(htmltools::tags$b(caption)),
-        options = list(dom = "t", scrollX = TRUE),
+        options = list(
+          dom = "t",
+          scrollX = TRUE,
+          ordering = FALSE
+        ),
         rownames = FALSE,
         class = "compact stripe"
+      )
       )
     })
     

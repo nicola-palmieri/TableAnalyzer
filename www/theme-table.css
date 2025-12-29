@@ -250,6 +250,12 @@ a.nav-link.disabled{
   color: var(--muted);
   font-size: 12px;
 }
+.ta-layout-caption{
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 6px;
+  font-weight: 600;
+}
 
 .ta-logo{
   display:flex;
