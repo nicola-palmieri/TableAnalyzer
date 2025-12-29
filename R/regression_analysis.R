@@ -170,6 +170,12 @@ regression_server <- function(id, data, engine = c("lm", "lmm"), allow_multi_res
       responses <- selected_responses()
       req(length(responses) > 0)
       validate_numeric_columns(df, responses, "response variable(s)")
+      for (r in responses) {
+        validate(
+          need(stats::var(df[[r]], na.rm = TRUE) > 0,
+               paste("Response", r, "has zero variance and cannot be analyzed."))
+        )
+      }
 
       rhs <- reg_compose_rhs(
         input$fixed,

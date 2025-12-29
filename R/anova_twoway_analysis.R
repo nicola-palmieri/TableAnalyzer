@@ -124,6 +124,15 @@ two_way_anova_server <- function(id, filtered_data) {
         need(!identical(input$factor1, input$factor2),
              "The two categorical predictors must be different variables.")
       )
+
+      validate_numeric_columns(df, resp_vals, "response variables")
+
+      for (r in resp_vals) {
+        validate(
+          need(stats::var(df[[r]], na.rm = TRUE) > 0,
+               paste("Response", r, "has zero variance and cannot be analyzed."))
+        )
+      }
       
       # Factor 1 must have ≥ 2 levels
       validate(
@@ -160,17 +169,6 @@ two_way_anova_server <- function(id, filtered_data) {
              paste0("Invalid level order for '", input$factor2,
                     "'. Some selected levels are not present in the data."))
       )
-      
-      # Numeric responses
-      validate_numeric_columns(df, resp_vals, "response variables")
-      
-      # Response variance > 0
-      for (r in resp_vals) {
-        validate(
-          need(stats::var(df[[r]], na.rm = TRUE) > 0,
-               paste("Response", r, "has zero variance and cannot be analyzed."))
-        )
-      }
       
       # Stratification: each stratum must contain ≥ 2 levels for each factor
       if (!is.null(strat_info()$active) && strat_info()$active) {
