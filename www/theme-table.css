@@ -67,19 +67,19 @@ h1, h2, h3, h4, .navbar-brand{
 
 .navbar,
 .navbar-default{
-  background: var(--panel);
-  border-color: var(--stroke);
-  box-shadow: var(--shadow-sm);
+  background: #0b1d3a;
+  border-color: #12284d;
+  box-shadow: 0 6px 16px rgba(11,29,58,.35);
   min-height: 48px;
 }
 .navbar-default .navbar-brand,
 .navbar-default .navbar-nav > li > a{
-  color: var(--txt);
+  color: #ffffff;
   padding-top: 0;
   padding-bottom: 0;
 }
 .navbar .nav-link{
-  color: var(--txt);
+  color: #ffffff;
   padding-top: 8px;
   padding-bottom: 8px;
 }
@@ -87,17 +87,17 @@ h1, h2, h3, h4, .navbar-brand{
 .navbar-default .navbar-nav > li > a:focus,
 .navbar .nav-link:hover,
 .navbar .nav-link:focus{
-  color: var(--accent);
+  color: #d4e2ff;
 }
 .navbar-default .navbar-nav > .active > a,
 .navbar-default .navbar-nav > .active > a:hover,
 .navbar-default .navbar-nav > .active > a:focus{
-  color: var(--txt);
-  background: rgba(36,99,235,.08);
+  color: #ffffff;
+  background: rgba(255,255,255,.12);
   border-radius: var(--radius-sm);
 }
 .navbar-default .navbar-toggle .icon-bar{
-  background: var(--txt);
+  background: #ffffff;
 }
 
 .navbar-default .navbar-nav > li.disabled > a,
