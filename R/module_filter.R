@@ -6,6 +6,7 @@ filter_ui <- function(id) {
   ns <- NS(id)
   sidebarLayout(
     sidebarPanel(
+      class = "ta-sidebar",
       width = 4,
       h4(class = "ta-sidebar-title", "Step 2 - Filter records"),
       p(class = "ta-sidebar-subtitle", "Select the columns to focus on and adjust the filters to refine the dataset for analysis."),

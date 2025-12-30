@@ -6,6 +6,7 @@ analysis_ui <- function(id) {
   ns <- NS(id)
   sidebarLayout(
     sidebarPanel(
+      class = "ta-sidebar",
       width = 4,
       h4(class = "ta-sidebar-title", "Step 3 - Analyze results"),
       p(class = "ta-sidebar-subtitle", "Select an analysis type to explore your data, then inspect the summaries on the right."),

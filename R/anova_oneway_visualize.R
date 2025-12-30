@@ -7,6 +7,7 @@ visualize_oneway_ui <- function(id) {
   
   sidebarLayout(
     sidebarPanel(
+      class = "ta-sidebar",
       width = 4,
       h4(class = "ta-sidebar-title", "Step 4 - Visualize one-way ANOVA"),
       p(class = "ta-sidebar-subtitle", "Select visualization type and adjust subplot layout, axis scaling, and figure size."),

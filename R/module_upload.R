@@ -6,6 +6,7 @@ upload_ui <- function(id) {
   ns <- NS(id)
   sidebarLayout(
     sidebarPanel(
+      class = "ta-sidebar",
       width = 4,
       h4(class = "ta-sidebar-title", "Step 1 - Upload data"),
       p(class = "ta-sidebar-subtitle", "Choose whether to load the example dataset or upload your own Excel file."),

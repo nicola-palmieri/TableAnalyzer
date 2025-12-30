@@ -18,6 +18,11 @@
   --radius-lg: 16px;
   --font-body: "Inter","Segoe UI","Helvetica Neue",sans-serif;
   --font-display: "Inter","Segoe UI","Helvetica Neue",sans-serif;
+  --sidebar-bg: #2d72b4;
+  --sidebar-strong: #1d5183;
+  --sidebar-border: rgba(255,255,255,.35);
+  --sidebar-text: #fbfdff;
+  --sidebar-muted: rgba(251,253,255,.85);
 }
 
 html, body{
@@ -55,6 +60,33 @@ h1, h2, h3, h4, .navbar-brand{
   font-weight: 500;
   color: var(--muted);
   margin: 0 0 10px;
+}
+
+.ta-sidebar{
+  background: var(--sidebar-bg);
+  border: 1px solid var(--sidebar-border);
+  box-shadow: 0 14px 32px rgba(4,6,20,.6);
+  color: var(--sidebar-text);
+}
+
+.ta-sidebar .ta-sidebar-title,
+.ta-sidebar label,
+.ta-sidebar .control-label,
+.ta-sidebar .help-block,
+.ta-sidebar .ta-help-tooltip{
+  color: var(--sidebar-text);
+}
+
+.ta-sidebar .ta-sidebar-subtitle{
+  color: var(--sidebar-muted);
+}
+
+.ta-sidebar hr{
+  border-color: rgba(255,255,255,.2);
+}
+
+.ta-sidebar .text-muted{
+  color: var(--sidebar-muted) !important;
 }
 
 .container-fluid{
@@ -204,6 +236,15 @@ a.nav-link.disabled{
   padding: 18px;
   box-shadow: var(--shadow-sm);
 }
+.home-panel.home-panel-steps{
+  background: var(--sidebar-bg);
+  border: 1px solid var(--sidebar-border);
+  box-shadow: 0 14px 32px rgba(4,6,20,.6);
+  color: var(--sidebar-text);
+}
+.home-panel.home-panel-steps h5{
+  color: var(--sidebar-text);
+}
 .home-panel h5{
   margin-top: 0;
   margin-bottom: 12px;
@@ -218,6 +259,7 @@ a.nav-link.disabled{
 .home-step-card h6{
   margin: 6px 0 4px;
   font-weight: 700;
+  color: #111827;
 }
 .home-step-card p{
   margin: 0;
@@ -367,6 +409,18 @@ a.nav-link.disabled{
 .well{
   padding: 10px 12px;
 }
+.well.ta-sidebar{
+  background: linear-gradient(180deg, var(--sidebar-strong), var(--sidebar-bg));
+  border-color: var(--sidebar-border);
+  box-shadow: 0 14px 32px rgba(4,6,20,.6);
+}
+.well.ta-sidebar .form-control,
+.well.ta-sidebar .selectize-input,
+.well.ta-sidebar .selectize-control.single .selectize-input{
+  background-color: rgba(255,255,255,.05);
+  border-color: rgba(255,255,255,.25);
+  color: var(--sidebar-text);
+}
 .well h4{
   margin-top: 0;
   margin-bottom: 8px;
@@ -450,8 +504,8 @@ select.form-control,
 
 .btn,
 .btn-default{
-  background: rgba(31,94,234,.06);
-  border: 1px solid rgba(31,94,234,.2);
+  background: var(--bg1);
+  border: 1px solid rgba(15,23,42,.12);
   color: var(--txt);
   border-radius: var(--radius-sm);
   padding: 5px 10px;
@@ -460,8 +514,9 @@ select.form-control,
 }
 .btn:hover,
 .btn:focus{
-  background: rgba(31,94,234,.12);
+  background: var(--bg1);
   color: var(--txt);
+  box-shadow: 0 0 0 2px rgba(15,23,42,.08);
 }
 .btn-primary{
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
