@@ -105,10 +105,14 @@ h1, h2, h3, h4, .navbar-brand{
 }
 
 .ta-sidebar .input-group .form-control[readonly]{
-  background-color: #ffffff;
+  background-color: var(--sidebar-bg);
   border-color: rgba(15,23,42,.18);
-  color: var(--txt);
+  color: var(--sidebar-text) !important;
   font-weight: 600;
+}
+.ta-sidebar .input-group .form-control[readonly]::placeholder{
+  color: var(--sidebar-text);
+  opacity: 1;
 }
 
 .container-fluid{
@@ -513,6 +517,24 @@ select.form-control,
 .ta-sidebar .selectize-control.single .item{
   color: var(--sidebar-text) !important;
 }
+.ta-sidebar input[type="file"]{
+  color: var(--txt) !important;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.3);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+}
+.tab-pane#upload_tab,
+.tab-pane#upload_tab .container-fluid{
+  background: var(--sidebar-bg);
+  color: var(--sidebar-text);
+}
+.tab-pane#upload_tab .well,
+.tab-pane#upload_tab .panel{
+  background: var(--sidebar-bg);
+  border-color: var(--sidebar-border);
+  color: var(--sidebar-text);
+}
 .selectize-dropdown,
 .selectize-dropdown-content{
   font-family: var(--font-body);
@@ -630,7 +652,7 @@ pre.shiny-text-output{
 }
 .dataTables_wrapper .dataTables_info,
 .dataTables_wrapper .dataTables_paginate{
-  color: var(--muted) !important;
+  color: var(--txt) !important;
   font-size: 12px;
 }
 table.dataTable{
