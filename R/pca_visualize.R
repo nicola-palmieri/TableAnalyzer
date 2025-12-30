@@ -153,35 +153,14 @@ visualize_pca_ui <- function(id, filtered_data = NULL) {
           )
         )
       ),
-      fluidRow(
-        column(
-          width = 6,
-          with_help_tooltip(
-            numericInput(
-              ns("plot_width"),
-              label = "Plot width (px)",
-              value = 800,
-              min = 200,
-              max = 2000,
-              step = 50
-            ),
-            "Set the width of the PCA plot in pixels."
-          )
-        ),
-        column(
-          width = 6,
-          with_help_tooltip(
-            numericInput(
-              ns("plot_height"),
-              label = "Plot height (px)",
-              value = 600,
-              min = 200,
-              max = 2000,
-              step = 50
-            ),
-            "Set the height of the PCA plot in pixels."
-          )
-        )
+      subplot_size_ui(
+        ns,
+        width_value = 800,
+        height_value = 600,
+        width_label = "Plot width (px)",
+        height_label = "Plot height (px)",
+        width_help = "Set the width of the PCA plot in pixels.",
+        height_help = "Set the height of the PCA plot in pixels."
       ),
       fluidRow(
         column(6, add_color_customization_ui(ns, multi_group = TRUE)),
@@ -297,6 +276,23 @@ visualize_pca_server <- function(id, filtered_data, model_fit, reset_trigger = r
       input = input,
       default = 14
     )
+
+    subplot_limits <- subplot_size_defaults()
+    plot_width_default <- 800
+    plot_height_default <- 600
+
+    clamp_plot_dimension <- function(value, min_value, max_value, default_value) {
+      if (length(value) == 0 || is.na(value) || value <= 0) {
+        return(default_value)
+      }
+      if (!is.null(min_value) && value < min_value) {
+        return(min_value)
+      }
+      if (!is.null(max_value) && value > max_value) {
+        return(max_value)
+      }
+      value
+    }
     
     apply_id <- reactiveVal(0L)
     apply_counter <- 0L
@@ -530,9 +526,19 @@ visualize_pca_server <- function(id, filtered_data, model_fit, reset_trigger = r
 
       entry <- pca_entry()
       plot_w <- suppressWarnings(as.numeric(input$plot_width))
-      if (length(plot_w) == 0 || is.na(plot_w) || plot_w <= 0) plot_w <- 800
+      plot_w <- clamp_plot_dimension(
+        plot_w,
+        subplot_limits$width$min,
+        subplot_limits$width$max,
+        plot_width_default
+      )
       plot_h <- suppressWarnings(as.numeric(input$plot_height))
-      if (length(plot_h) == 0 || is.na(plot_h) || plot_h <= 0) plot_h <- 600
+      plot_h <- clamp_plot_dimension(
+        plot_h,
+        subplot_limits$height$min,
+        subplot_limits$height$max,
+        plot_height_default
+      )
 
       empty_result <- function(message) {
         defaults <- compute_default_grid(1L)
