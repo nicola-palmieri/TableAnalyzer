@@ -143,12 +143,17 @@ one_way_anova_server <- function(id, filtered_data) {
       )
       
       # Stratification checks
-      if (!is.null(strat_info()$active) && strat_info()$active) {
-        s_info <- strat_info()
-        
+      s_info <- strat_info()
+      if (!is.null(s_info$var)) {
+        validate(
+          need(!identical(s_info$var, input$group),
+               paste0("Stratification variable '", s_info$var,
+                      "' cannot be the same as the categorical predictor."))
+        )
+
         for (lev in s_info$levels) {
           sub_df <- df[df[[s_info$var]] == lev, ]
-          
+
           k <- dplyr::n_distinct(sub_df[[input$group]])
           validate(
             need(k > 1,

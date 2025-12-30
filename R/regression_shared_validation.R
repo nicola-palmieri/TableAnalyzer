@@ -3,6 +3,19 @@
 # ===============================================================
 
 validate_regression_inputs <- function(df, input, engine, strat_details) {
+  # ---- 0) Stratification variable cannot be a predictor ----
+  if (!is.null(strat_details$var)) {
+    predictors <- c(input$fixed, input$covar, input$random)
+    predictors <- predictors[!is.na(predictors)]
+    if (length(predictors) > 0) {
+      validate(
+        need(!strat_details$var %in% predictors,
+             paste0("Stratification variable '", strat_details$var,
+                    "' cannot be the same as a predictor."))
+      )
+    }
+  }
+
   # ---- 1) Validate fixed effect factors ----
   if (length(input$fixed) > 0) {
     for (f in input$fixed) {

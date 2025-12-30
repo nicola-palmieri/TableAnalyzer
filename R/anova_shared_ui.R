@@ -16,32 +16,36 @@ build_anova_layout_controls <- function(ns, input, info, grid_cache = NULL) {
     value <- input[[paste0(grid_id, "-", axis)]]
     if (is.null(value)) value <- input[[paste0(ns(grid_id), "-", axis)]]
     if (length(value) == 0) return(NULL)
-    suppressWarnings(as.integer(value[1]))
+    parsed <- suppressWarnings(as.integer(value[1]))
+    if (is.na(parsed)) return(NULL)
+    parsed
   }
 
   strata_inputs <- if (has_strata) {
+    strata_defaults <- compute_default_grid(max(1L, length(strata_levels)))
     plot_grid_ui(
       id = ns("strata_grid"),
       rows_label = sprintf("Rows for strata (%s, n=%d)", info$strata$var, length(strata_levels)),
       cols_label = sprintf("Cols for strata (%s, n=%d)", info$strata$var, length(strata_levels)),
       rows_help = "Rows of plots when displaying each stratum.",
       cols_help = "Columns of plots when displaying each stratum.",
-      rows_value = grid_state("strata_grid", "rows"),
-      cols_value = grid_state("strata_grid", "cols")
+      rows_value = grid_state("strata_grid", "rows") %||% strata_defaults$rows,
+      cols_value = grid_state("strata_grid", "cols") %||% strata_defaults$cols
     )
   } else {
     NULL
   }
 
   response_inputs <- if (!is.null(n_responses) && n_responses > 1) {
+    response_defaults <- compute_default_grid(n_responses)
     plot_grid_ui(
       id = ns("response_grid"),
       rows_label = sprintf("Rows for responses (n=%d)", n_responses),
       cols_label = sprintf("Cols for responses (n=%d)", n_responses),
       rows_help = "Rows of plots when multiple responses are shown together.",
       cols_help = "Columns of plots when multiple responses are shown together.",
-      rows_value = grid_state("response_grid", "rows"),
-      cols_value = grid_state("response_grid", "cols")
+      rows_value = grid_state("response_grid", "rows") %||% response_defaults$rows,
+      cols_value = grid_state("response_grid", "cols") %||% response_defaults$cols
     )
   } else {
     NULL

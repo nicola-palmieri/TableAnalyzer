@@ -171,8 +171,13 @@ two_way_anova_server <- function(id, filtered_data) {
       )
       
       # Stratification: each stratum must contain ≥ 2 levels for each factor
-      if (!is.null(strat_info()$active) && strat_info()$active) {
-        s <- strat_info()
+      s <- strat_info()
+      if (!is.null(s$var)) {
+        validate(
+          need(!identical(s$var, input$factor1) && !identical(s$var, input$factor2),
+               paste0("Stratification variable '", s$var,
+                      "' cannot be the same as a predictor."))
+        )
         for (lev in s$levels) {
           sub <- df[df[[s$var]] == lev, ]
           
