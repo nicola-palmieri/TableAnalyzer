@@ -26,7 +26,6 @@ upload_ui <- function(id) {
       uiOutput(ns("file_input")),
       uiOutput(ns("sheet_selector")),
       uiOutput(ns("layout_example")),
-      br(),
       uiOutput(ns("replicate_col_input")),
       br(),
       actionButton(ns("open_type_editor"), "Edit column types"),
@@ -157,16 +156,17 @@ upload_server <- function(id) {
         return(NULL)
       }
 
-      with_help_tooltip(
-        tagList(
+      tagList(
+        br(),
+        with_help_tooltip(
           textInput(
             ns("replicate_col"),
             label = "Replicate column name",
             value = "Replicate",
             placeholder = "Replicate"
-          )
-        ),
-        "Choose the column name that will store the second header row when wide data is reshaped."
+          ),
+          "Choose the column name that will store the second header row when wide data is reshaped."
+        )
       )
     })
     
