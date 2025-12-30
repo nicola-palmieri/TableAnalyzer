@@ -182,8 +182,8 @@ visualize_server <- function(id, filtered_data, model_fit, analysis_selection = 
             show_visual = FALSE,
             empty_ui = empty_state(
               "&#128221;",
-              "Run the selected analysis",
-              "Run the analysis in the Analyze tab to see visualizations for those results.",
+              "Run an analysis first",
+              "Run an analysis in the Analyze tab to see visualizations for those results.",
               extra_class = "analysis-empty-state"
             )
           ))

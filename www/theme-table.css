@@ -492,6 +492,12 @@ hr{
   color: var(--accent-2);
 }
 
+.ta-grid-warning{
+  background: #ff0000;
+  border: 1px solid #b11212;
+  color: #ffffff;
+}
+
 pre.shiny-text-output{
   white-space: pre;
   overflow-x: auto;

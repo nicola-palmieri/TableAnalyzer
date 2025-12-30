@@ -254,7 +254,7 @@ visualize_numeric_histograms_server <- function(id, filtered_data, summary_info,
     # ================================================================
     output$grid_warning <- renderUI({
       if (!is.null(stored$warning))
-        div(class = "alert alert-warning", stored$warning)
+        div(class = "alert alert-warning ta-grid-warning", stored$warning)
     })
 
     empty_state <- function(title, message, icon = "&#128221;") {

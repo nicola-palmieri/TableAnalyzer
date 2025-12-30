@@ -287,7 +287,7 @@ visualize_numeric_boxplots_server <- function(id, filtered_data, summary_info, i
     #======================================================
     output$grid_warning <- renderUI({
       if (!is.null(stored$warning))
-        div(class = "alert alert-warning", stored$warning)
+        div(class = "alert alert-warning ta-grid-warning", stored$warning)
     })
 
     empty_state <- function(title, message, icon = "&#128221;") {

@@ -388,7 +388,7 @@ visualize_twoway_server <- function(id, filtered_data, model_info) {
     # ------------------------------------------------------------------
     output$plot_warning <- renderUI({
       if (!is.null(stored$warning))
-        div(class = "alert alert-warning", stored$warning)
+        div(class = "alert alert-warning ta-grid-warning", stored$warning)
     })
 
     output$plot_container <- renderUI({

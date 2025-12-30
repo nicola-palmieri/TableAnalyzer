@@ -230,7 +230,7 @@ visualize_oneway_server <- function(id, filtered_data, model_info) {
     
     output$plot_warning <- renderUI({
       if (!is.null(stored$warning)) {
-        div(class = "alert alert-warning", HTML(stored$warning))
+        div(class = "alert alert-warning ta-grid-warning", HTML(stored$warning))
       }
     })
 

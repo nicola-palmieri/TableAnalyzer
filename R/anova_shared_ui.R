@@ -3,13 +3,14 @@
 
 build_anova_layout_controls <- function(ns, input, info) {
   has_strata <- !is.null(info$strata) && !is.null(info$strata$var)
+  strata_levels <- if (has_strata) info$strata$levels %||% character(0) else character(0)
   n_responses <- if (!is.null(info$responses)) length(info$responses) else 0
 
   strata_inputs <- if (has_strata) {
     plot_grid_ui(
       id = ns("strata_grid"),
-      rows_label = sprintf("Rows for strata (%s)", info$strata$var),
-      cols_label = sprintf("Cols for strata (%s)", info$strata$var),
+      rows_label = sprintf("Rows for strata (%s, n=%d)", info$strata$var, length(strata_levels)),
+      cols_label = sprintf("Cols for strata (%s, n=%d)", info$strata$var, length(strata_levels)),
       rows_help = "Rows of plots when displaying each stratum.",
       cols_help = "Columns of plots when displaying each stratum."
     )
