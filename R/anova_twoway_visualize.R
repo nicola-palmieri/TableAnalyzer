@@ -144,6 +144,35 @@ visualize_twoway_server <- function(id, filtered_data, model_info) {
     # ------------------------------------------------------------------
     strata_grid   <- plot_grid_server("strata_grid")
     response_grid <- plot_grid_server("response_grid")
+
+    grid_cache <- reactiveValues(
+      strata_rows = NULL,
+      strata_cols = NULL,
+      response_rows = NULL,
+      response_cols = NULL
+    )
+
+    update_cache <- function(key, value) {
+      if (!is.null(value) && !is.na(value)) {
+        grid_cache[[key]] <- value
+      }
+    }
+
+    observeEvent(strata_grid$rows(), {
+      update_cache("strata_rows", strata_grid$rows())
+    }, ignoreInit = TRUE)
+
+    observeEvent(strata_grid$cols(), {
+      update_cache("strata_cols", strata_grid$cols())
+    }, ignoreInit = TRUE)
+
+    observeEvent(response_grid$rows(), {
+      update_cache("response_rows", response_grid$rows())
+    }, ignoreInit = TRUE)
+
+    observeEvent(response_grid$cols(), {
+      update_cache("response_cols", response_grid$cols())
+    }, ignoreInit = TRUE)
     
     # ------------------------------------------------------------------
     # Dynamic UI
@@ -151,7 +180,7 @@ visualize_twoway_server <- function(id, filtered_data, model_info) {
     output$layout_controls <- renderUI({
       info <- model_info()
       req(info)
-      build_anova_layout_controls(ns, input, info)
+      build_anova_layout_controls(ns, input, info, grid_cache = grid_cache)
     })
     
     output$axis_and_jitter <- renderUI({

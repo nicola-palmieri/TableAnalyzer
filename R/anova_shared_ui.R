@@ -1,10 +1,23 @@
 #### Table Analyzer — Shared ANOVA Module  ####
 #### Section: UI & Output Binding ####
 
-build_anova_layout_controls <- function(ns, input, info) {
+build_anova_layout_controls <- function(ns, input, info, grid_cache = NULL) {
   has_strata <- !is.null(info$strata) && !is.null(info$strata$var)
   strata_levels <- if (has_strata) info$strata$levels %||% character(0) else character(0)
   n_responses <- if (!is.null(info$responses)) length(info$responses) else 0
+
+  grid_state <- function(grid_id, axis) {
+    cache_key <- paste0(sub("_grid$", "", grid_id), "_", axis)
+    if (!is.null(grid_cache)) {
+      cached <- grid_cache[[cache_key]]
+      if (!is.null(cached) && !is.na(cached)) return(cached)
+    }
+
+    value <- input[[paste0(grid_id, "-", axis)]]
+    if (is.null(value)) value <- input[[paste0(ns(grid_id), "-", axis)]]
+    if (length(value) == 0) return(NULL)
+    suppressWarnings(as.integer(value[1]))
+  }
 
   strata_inputs <- if (has_strata) {
     plot_grid_ui(
@@ -12,7 +25,9 @@ build_anova_layout_controls <- function(ns, input, info) {
       rows_label = sprintf("Rows for strata (%s, n=%d)", info$strata$var, length(strata_levels)),
       cols_label = sprintf("Cols for strata (%s, n=%d)", info$strata$var, length(strata_levels)),
       rows_help = "Rows of plots when displaying each stratum.",
-      cols_help = "Columns of plots when displaying each stratum."
+      cols_help = "Columns of plots when displaying each stratum.",
+      rows_value = grid_state("strata_grid", "rows"),
+      cols_value = grid_state("strata_grid", "cols")
     )
   } else {
     NULL
@@ -24,7 +39,9 @@ build_anova_layout_controls <- function(ns, input, info) {
       rows_label = sprintf("Rows for responses (n=%d)", n_responses),
       cols_label = sprintf("Cols for responses (n=%d)", n_responses),
       rows_help = "Rows of plots when multiple responses are shown together.",
-      cols_help = "Columns of plots when multiple responses are shown together."
+      cols_help = "Columns of plots when multiple responses are shown together.",
+      rows_value = grid_state("response_grid", "rows"),
+      cols_value = grid_state("response_grid", "cols")
     )
   } else {
     NULL
