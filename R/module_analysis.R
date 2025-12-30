@@ -52,7 +52,10 @@ analysis_ui <- function(id) {
         h4("Analysis results"),
         uiOutput(ns("summary_help_icon"))
       ),
-      uiOutput(ns("results_panel"))
+      div(
+        class = "ta-analysis-results",
+        uiOutput(ns("results_panel"))
+      )
     )
   )
 }
