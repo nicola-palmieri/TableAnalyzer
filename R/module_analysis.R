@@ -25,7 +25,7 @@ analysis_ui <- function(id) {
           ns("analysis_type"),
           "Select analysis type",
           choices = list(
-            " " = "",
+            "None" = "none",
             "Descriptive" = c("Descriptive Statistics" = "Descriptive Statistics"),
             "Univariate" = c(
               "One-way ANOVA" = "One-way ANOVA",
@@ -38,7 +38,7 @@ analysis_ui <- function(id) {
               "Principal Component Analysis (PCA)" = "PCA"
             )
           ),
-          selected = ""
+          selected = "none"
         ),
         "Choose the statistical method you want to run on the filtered data."
       ),
@@ -92,12 +92,12 @@ analysis_server <- function(id, filtered_data) {
     # ---- Current module getter ----
     current_mod <- reactive({
       type <- input$analysis_type
-      req(type)
-      mod <- modules[[type]]
-      req(mod)
+      if (is.null(type) || !nzchar(type) || identical(type, "none")) return(NULL)
+      modules[[type]]
     })
     
     ensure_module_server <- function(mod) {
+      if (is.null(mod)) return(NULL)
       ensure_analysis_server(mod, df, server_cache, reset_trigger = analysis_switch_token)
     }
 
@@ -113,7 +113,7 @@ analysis_server <- function(id, filtered_data) {
 
     current_run_signal <- reactive({
       selection <- input$analysis_type
-      if (is.null(selection) || !nzchar(selection)) return(NULL)
+      if (is.null(selection) || !nzchar(selection) || identical(selection, "none")) return(NULL)
       mod <- modules[[selection]]
       if (is.null(mod)) return(NULL)
       suffix <- run_suffix_map[[mod$id]] %||% "run"
@@ -151,6 +151,7 @@ analysis_server <- function(id, filtered_data) {
     # ---- Render active submodule UI ----
     output$config_panel <- renderUI({
       mod <- current_mod()
+      if (is.null(mod)) return(NULL)
       ensure_module_server(mod)
       ui <- mod$ui(ns(mod$id))
       req(ui)
@@ -166,7 +167,7 @@ analysis_server <- function(id, filtered_data) {
       }
 
       selection <- input$analysis_type
-      if (is.null(selection) || !nzchar(selection)) {
+      if (is.null(selection) || !nzchar(selection) || identical(selection, "none")) {
         return(analysis_empty_state(
           "No analysis selected yet",
           "Select an analysis type to view results."
@@ -203,6 +204,7 @@ analysis_server <- function(id, filtered_data) {
     # ---- Unified model output ----
     model_out <- reactive({
       mod <- current_mod()
+      if (is.null(mod)) return(NULL)
       srv <- ensure_module_server(mod)
       req(srv)
       srv()
@@ -210,7 +212,13 @@ analysis_server <- function(id, filtered_data) {
     
     list(
       results = model_out,
-      selection = reactive(input$analysis_type)
+      selection = reactive({
+        selection <- input$analysis_type
+        if (is.null(selection) || !nzchar(selection) || identical(selection, "none")) {
+          return(NULL)
+        }
+        selection
+      })
     )
   })
 }
