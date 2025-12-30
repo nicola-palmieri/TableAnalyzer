@@ -89,6 +89,27 @@ h1, h2, h3, h4, .navbar-brand{
   color: var(--sidebar-muted) !important;
 }
 
+.ta-sidebar select option:checked,
+.ta-sidebar .selectize-input .item,
+.ta-sidebar .selectize-dropdown .option.selected,
+.ta-sidebar .selectize-dropdown-content .active{
+  background: rgba(15,23,42,.02);
+  color: var(--txt);
+}
+.ta-sidebar select option:hover,
+.ta-sidebar .selectize-dropdown .option:hover,
+.ta-sidebar .selectize-dropdown-content .active:hover{
+  background: var(--sidebar-bg);
+  color: var(--sidebar-text);
+}
+
+.ta-sidebar .input-group .form-control[readonly]{
+  background-color: #ffffff;
+  border-color: rgba(15,23,42,.18);
+  color: var(--txt);
+  font-weight: 600;
+}
+
 .container-fluid{
   max-width: none;
   width: 100%;
@@ -235,15 +256,6 @@ a.nav-link.disabled{
   border-radius: var(--radius-lg);
   padding: 18px;
   box-shadow: var(--shadow-sm);
-}
-.home-panel.home-panel-steps{
-  background: var(--sidebar-bg);
-  border: 1px solid var(--sidebar-border);
-  box-shadow: 0 14px 32px rgba(4,6,20,.6);
-  color: var(--sidebar-text);
-}
-.home-panel.home-panel-steps h5{
-  color: var(--sidebar-text);
 }
 .home-panel h5{
   margin-top: 0;
@@ -410,7 +422,7 @@ a.nav-link.disabled{
   padding: 10px 12px;
 }
 .well.ta-sidebar{
-  background: linear-gradient(180deg, var(--sidebar-strong), var(--sidebar-bg));
+  background: var(--sidebar-bg);
   border-color: var(--sidebar-border);
   box-shadow: 0 14px 32px rgba(4,6,20,.6);
 }
@@ -485,6 +497,20 @@ select.form-control,
   color: var(--txt);
   font-family: var(--font-body);
   font-size: 13px;
+}
+.ta-sidebar .form-control,
+.ta-sidebar select.form-control,
+.ta-sidebar .selectize-input,
+.ta-sidebar .selectize-control.single .selectize-input{
+  color: var(--sidebar-text) !important;
+  background: rgba(255,255,255,.05);
+  border-color: rgba(255,255,255,.25);
+}
+.ta-sidebar .selectize-input input{
+  color: var(--sidebar-text) !important;
+}
+.ta-sidebar .selectize-control.single .item{
+  color: var(--sidebar-text) !important;
 }
 .selectize-dropdown,
 .selectize-dropdown-content{
