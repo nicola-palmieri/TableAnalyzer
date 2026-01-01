@@ -14,7 +14,7 @@ ggpairs_ui <- function(id) {
       br(),
       fluidRow(
         column(6, with_help_tooltip(
-          actionButton(ns("run"), "Show correlation matrix", width = "100%"),
+          actionButton(ns("run"), "Run analysis", width = "100%"),
           "Calculate the correlation coefficients for the selected variables."
         )),
         column(6, with_help_tooltip(
@@ -30,7 +30,7 @@ ggpairs_ui <- function(id) {
   )
 }
 
-ggpairs_server <- function(id, data_reactive) {
+ggpairs_server <- function(id, data_reactive, reset_trigger = reactive(NULL)) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     df <- reactive(data_reactive())
@@ -73,6 +73,15 @@ ggpairs_server <- function(id, data_reactive) {
     }
 
     correlation_store <- reactiveVal(NULL)
+
+    last_reset_token <- reactiveVal(NULL)
+
+    observeEvent(reset_trigger(), {
+      token <- reset_trigger()
+      if (is.null(token) || identical(token, last_reset_token())) return()
+      correlation_store(NULL)
+      last_reset_token(token)
+    }, ignoreInit = FALSE)
 
     # ---- Compute correlation matrix ----
     observeEvent(input$run, {
@@ -176,11 +185,12 @@ ggpairs_server <- function(id, data_reactive) {
       }
       
       # -- 5) Optional: warn if variable is constant (no variance)
+      warning_messages <- character()
       for (v in selected_vars) {
         if (stats::var(processed_data[[v]], na.rm = TRUE) == 0) {
-          showNotification(
-            paste0("Variable '", v, "' is constant after filtering; correlations will be NA."),
-            type = "warning"
+          warning_messages <- c(
+            warning_messages,
+            paste0("Variable '", v, "' is constant after filtering; correlations will be NA.")
           )
         }
       }
@@ -215,7 +225,8 @@ ggpairs_server <- function(id, data_reactive) {
         group_var = group_var,
         selected_vars = selected_vars,
         data_used = processed_data,
-        strata_levels = if (!is.null(group_var)) strata_levels else NULL
+        strata_levels = if (!is.null(group_var)) strata_levels else NULL,
+        warnings = warning_messages
       ))
     })
 
@@ -228,6 +239,13 @@ ggpairs_server <- function(id, data_reactive) {
       if (!is.null(results$message)) {
         cat(results$message)
         return(invisible(NULL))
+      }
+
+      if (!is.null(results$warnings) && length(results$warnings) > 0) {
+        for (warning in unique(results$warnings)) {
+          cat(paste0("Warning: ", warning, "\n"))
+        }
+        cat("\n")
       }
 
       matrices <- results$matrices

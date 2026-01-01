@@ -1,0 +1,213 @@
+UI Stress Test Checklist (Big Release)
+======================================
+
+Purpose
+-------
+This checklist covers high-stress, edge-case, and regression tests for the Table Analyzer UI.
+Focus on consistency between inputs, results, and visualizations, clear validation messages,
+and stability under repeated changes.
+
+Test data matrix
+----------------
+Use 4 datasets (or one dataset you can edit to match these cases):
+- Small: 50-200 rows, 6-10 columns, mixed numeric/categorical.
+- Medium: 5k-20k rows, 15-30 columns, missing values, 1-2 high-cardinality factors.
+- Large: 100k+ rows, 40+ columns, 5+ numeric, 5+ categorical, some zero-variance columns.
+- Edge: all-NA column, single-level factor, text-only column, date/time column.
+
+How to use
+----------
+- Start a fresh session for each dataset.
+- Repeat each test 2-3 times and in different orders.
+- Note any mismatch between widgets, plots, warnings, and results panels.
+
+Core navigation and session state
+---------------------------------
+1) Cold start: open app, verify only Upload enabled.
+2) Upload data, confirm Filter, Analyze, Visualize tabs enable.
+3) Switch tabs rapidly (Home -> Upload -> Filter -> Analyze -> Visualize) 20+ times.
+4) Refresh browser; confirm app state resets cleanly.
+5) Open Visualize before running any analysis and confirm empty state messaging.
+6) Open Analyze, select a method, do not run; switch tabs and return; selection persists.
+7) Open two browser tabs with the app; ensure actions in one do not corrupt the other.
+8) Simultaneous inputs: change a control while a plot is rendering; no UI freeze.
+9) Leave app idle for 5+ minutes; resume interaction; no stale state errors.
+10) Resize browser window repeatedly; UI stays usable and does not overlap.
+
+Upload tab stress
+-----------------
+11) Upload supported file, re-upload same file; ensure UI resets properly.
+12) Upload a different file; verify controls update to new variables.
+13) Upload a file with non-ASCII header names; UI still renders safely.
+14) Upload a file with duplicate column names; verify collision handling or warning.
+15) Upload a file with mixed column types; verify type detection.
+16) Upload file with empty rows; ensure they are handled safely.
+17) Upload invalid file format; confirm warning message and no crash.
+18) Large file upload; verify progress and UI remains responsive.
+19) Upload file, then remove it (if supported); ensure tabs disable again.
+20) Upload dataset with only one numeric column; ensure analysis options warn gracefully.
+
+Filter tab stress
+-----------------
+21) Apply simple filter on numeric column; verify row count updates.
+22) Apply multiple filters across numeric and categorical columns.
+23) Remove all filters; data returns to original.
+24) Filter to zero rows; downstream tabs should show no-data warnings.
+25) Filter to one row; analyses should warn about insufficient data.
+26) Rapidly toggle filters on and off; no crash or stale values.
+27) Filter out a column used in analysis; analysis results should warn.
+28) Use filters that create single-level factors; downstream LMM/ANOVA should warn.
+29) Filter to a subset with missing values in response; analysis still handles.
+30) Apply filter then change dataset; filter UI should reset for new data.
+
+Analysis selection vs results gating
+------------------------------------
+31) Run Descriptive, see results; switch selection to One-way ANOVA without running.
+    Go to Visualize and confirm it shows run-required empty state (not previous plots).
+32) Run One-way ANOVA, then switch selection to PCA without running, then Visualize.
+33) Run Pairwise Correlation, then switch to Two-way ANOVA without running.
+34) Run Two-way ANOVA, then switch to Descriptive without running.
+35) Switch to blank analysis selection (if possible) and confirm Visualize empty state.
+36) Run analysis, then change selection and click Run quickly; no UI lockup.
+37) Run analysis twice with same inputs; results should be identical.
+38) Run analysis, change data filter, rerun; results should change accordingly.
+39) Run analysis, clear selection, return to previous; no stale results shown.
+40) Run analysis, then open Visualize; ensure visuals match analysis type.
+
+Descriptive analysis stress
+---------------------------
+41) Select 1 numeric variable; run; check summary and plot outputs.
+42) Select multiple numeric variables; run; confirm multi-panel outputs.
+43) Select categorical-only variables; confirm warning or no analysis path.
+44) Include a numeric variable with all NA; confirm warning.
+45) Include a numeric variable with zero variance; confirm warning.
+46) Use stratification with multiple levels; check per-stratum summaries.
+47) Change stratification levels and rerun; ensure panel count updates.
+48) Toggle plot type (hist/box/violin if available) repeatedly.
+49) Switch variable selection rapidly; no stale plots.
+50) Run after large dataset; ensure no freeze or memory spike.
+
+One-way ANOVA stress
+--------------------
+51) Use 1 response + 1 factor with 2 levels; run; confirm model output.
+52) Use 1 response + factor with many levels; run; check posthoc behavior.
+53) Use multiple responses; run; confirm multi-tab results.
+54) Use factor with single level; confirm validation error.
+55) Use response with zero variance; confirm validation error.
+56) Change factor order; rerun; verify reference level changes in output.
+57) Apply stratification; verify results per stratum.
+58) Stratification creates single-level factor; confirm per-stratum warning.
+59) Switch to different factor after running; rerun; outputs update.
+60) Run with large dataset; verify performance and UI responsiveness.
+
+Two-way ANOVA stress
+--------------------
+61) Two factors with 2 levels each; run; check interaction output.
+62) Two factors, one with 1 level; confirm validation error.
+63) Multi-response with two-way; verify tabs and summaries.
+64) Change factor order for each factor; rerun; output updates.
+65) Stratify by third factor; verify per-stratum results.
+66) Stratify and remove a factor level; check warnings.
+67) Run with missing values in response; check warnings.
+68) Run with missing values in factors; check warnings.
+69) Switch to another analysis type without running; Visualize gating correct.
+70) Large dataset performance check.
+
+Regression (LM/LMM) stress
+---------------------------
+71) LM: select numeric response, fixed factor, and covariate; run; confirm summary.
+72) LM: include interaction; run; confirm interaction term present.
+73) LM: set factor level order; rerun; confirm reference change.
+74) LM: choose response with zero variance; confirm validation error.
+75) LM: stratify; verify per-stratum tabs and outputs.
+76) LMM: select random effect with 2+ levels; run; confirm random effects output.
+77) LMM: select multiple random effects; run; confirm nested vs non-nested behavior.
+78) LMM: select random effect with single level; confirm validation error.
+79) LMM: run with no random effect selected; verify error appears in results panel.
+80) LMM: include covariate with zero variance; confirm validation error.
+81) LMM: change random effect selection; rerun; outputs update.
+82) LMM: stratify; ensure each stratum has >=2 random levels or error shows.
+83) LMM: large dataset; check performance and UI lag.
+84) Switch LM -> LMM and back; results reset correctly.
+
+Pairwise correlation stress
+---------------------------
+85) Select 2 numeric variables; run; confirm plot renders.
+86) Select many numeric variables; run; check render time and layout.
+87) Use variable with all NA; confirm warning.
+88) Use variable with zero variance; check behavior.
+89) Apply stratification; confirm per-stratum results and plots.
+90) Run repeatedly with different variable subsets; no stale plot caching.
+
+PCA stress
+----------
+91) Run PCA with 2 numeric variables; confirm plot renders.
+92) Run PCA with many numeric variables; check biplot and variance output.
+93) PCA with missing values; check handling or warning.
+94) PCA with zero-variance variable; confirm warning.
+95) PCA with stratification; verify per-stratum output.
+96) Toggle PCA labels and groupings; verify plot updates.
+97) Rerun PCA after changing filters; ensure results update.
+98) Large dataset PCA; performance check.
+
+Visualize tab stress
+--------------------
+99) Open Visualize before running; confirm empty state message.
+100) Run analysis and open Visualize; ensure correct UI panel loads.
+101) Switch analysis type without running; Visualize should show run-required state.
+102) Rerun analysis; Visualize should update to new results.
+103) Toggle plot type; confirm immediate update where expected.
+104) Apply settings; rerun analysis; settings persist if still valid.
+105) Use plots with many facets; ensure scroll and layout ok.
+106) Multi-response + stratification; check grid configuration behavior.
+107) Open Visualize, switch tabs, return; UI state persists.
+108) Rapidly switch between multiple visualizations; no stale outputs.
+
+Grid layout stress
+------------------
+109) Set grid to 1x1 for multi-response; verify warning or auto-adjust.
+110) Set grid to 10x10; check rendering and scroll.
+111) Set grid too small; verify validation/warning and stability.
+112) Change grid, apply, rerun analysis; ensure it persists or resets if invalid.
+113) Switch from multi-response to single-response; grid controls update.
+114) Switch stratification on/off; grid controls update.
+
+Plot size and theme stress
+--------------------------
+115) Set plot size to minimum; verify readability.
+116) Set plot size to maximum; verify no overflow.
+117) Toggle theme options if present; plots update.
+118) Set custom colors for many levels; verify mapping.
+119) Change factor order; verify color mapping follows levels.
+120) Reset plot settings to defaults; ensure no stale state.
+
+Performance and repetition
+--------------------------
+121) Run the same analysis 10 times with small changes; no memory bloat.
+122) Rapidly change inputs and click Run repeatedly; app remains responsive.
+123) Large dataset: run analyses in sequence; no cumulative lag.
+124) Visualize with large plots; no crash or blank output.
+125) Leave Visualize open while rerunning analyses; no stale output.
+
+Download and export
+-------------------
+126) Download results after each analysis type; confirm file contents.
+127) Rerun analysis; download again; confirm filename and content update.
+128) Download after failed validation; ensure no file produced.
+129) Download after stratified results; confirm per-stratum content.
+130) Download after multi-response; confirm all responses included.
+
+Error handling and messaging
+----------------------------
+131) Trigger each validation error and verify message is visible in results pane.
+132) Confirm warnings do not crash the app.
+133) Ensure errors do not leak raw stack traces to UI.
+134) When error occurs, previous successful outputs should not remain visible.
+135) Confirm errors are cleared after fixing inputs and rerunning.
+
+Notes to capture for each failure
+---------------------------------
+- Steps to reproduce (exact order, tabs visited, inputs changed).
+- Expected vs actual behavior.
+- Any console errors.
+- Screenshot of UI state and warnings.

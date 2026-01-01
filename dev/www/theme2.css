@@ -1,0 +1,273 @@
+/* ===========================
+   TABLE ANALYZER — PRO THEME
+   Dark corporate + glass
+   =========================== */
+
+/* 1) VARIABLES — cambia qui e hai tutto lo stile */
+:root{
+  --bg0:#070B14;
+  --bg1:#0B1220;
+
+  --text:#E5E7EB;
+  --muted:#9CA3AF;
+
+  --primary:#3B82F6;      /* blu */
+  --primary2:#6366F1;     /* indigo */
+
+  --glass: rgba(255,255,255,.06);
+  --glass2: rgba(255,255,255,.10);
+  --stroke: rgba(255,255,255,.10);
+
+  --shadow: 0 18px 60px rgba(0,0,0,.35);
+  --radius: 18px;
+}
+
+/* 2) PAGE BACKGROUND */
+html, body{
+  height:100%;
+}
+body{
+  color: var(--text);
+  background:
+    radial-gradient(900px 600px at 15% 10%, rgba(59,130,246,.18), transparent 60%),
+    radial-gradient(700px 500px at 85% 20%, rgba(99,102,241,.14), transparent 60%),
+    linear-gradient(180deg, var(--bg0), var(--bg1));
+}
+
+/* 3) GLOBAL TYPO + LINKS */
+a{ color: var(--primary); }
+a:hover{ color: #60A5FA; }
+
+h1,h2,h3,h4{ letter-spacing: -0.02em; }
+p{ color: var(--muted); }
+
+hr{
+  border-color: rgba(255,255,255,.10);
+}
+
+/* 4) CONTAINER WIDTH (effetto “sito aziendale”) */
+.container, .container-fluid{
+  max-width: 1200px;
+}
+
+/* 5) NAVBAR (se usi page_navbar / navbarPage) */
+.navbar{
+  box-shadow: 0 10px 30px rgba(0,0,0,.25);
+}
+.navbar .navbar-brand{
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.navbar .nav-link{
+  opacity: .9;
+}
+.navbar .nav-link.active{
+  opacity: 1;
+  font-weight: 600;
+}
+
+/* 6) GLASS CARD (usa class="ta-glass") */
+.ta-glass{
+  background: linear-gradient(180deg, var(--glass2), var(--glass));
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
+}
+
+/* 7) HERO + CARDS (Home) */
+.ta-hero{
+  padding: 26px 12px 40px;
+  margin: 0 auto;
+}
+.ta-hero h1{
+  margin: 10px 0 8px;
+  font-size: 42px;
+  line-height: 1.05;
+}
+.ta-hero p{
+  margin: 0 0 14px;
+  max-width: 680px;
+}
+.ta-cards{
+  display:grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+.ta-card{
+  background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.ta-card h3{
+  margin: 10px 0 6px;
+  font-size: 16px;
+}
+.ta-card p{
+  margin:0;
+  font-size: 13px;
+}
+
+/* Responsive cards */
+@media (max-width: 1100px){
+  .ta-cards{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+@media (max-width: 640px){
+  .ta-cards{ grid-template-columns: 1fr; }
+  .ta-hero h1{ font-size: 34px; }
+}
+
+/* 8) STEPPER (Upload → Filter → Analyze → Visualize) */
+.ta-stepper{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  margin: 0 0 14px;
+}
+.ta-step{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.10);
+  padding: 8px 12px;
+  border-radius: 999px;
+  color: var(--muted);
+}
+.ta-step .ta-dot{
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.12);
+  font-size: 12px;
+}
+.ta-step.ta-active{
+  color: var(--text);
+  border-color: rgba(59,130,246,.35);
+  background: rgba(59,130,246,.10);
+}
+.ta-step.ta-active .ta-dot{
+  border-color: rgba(59,130,246,.55);
+  background: rgba(59,130,246,.18);
+}
+
+/* 9) BADGES (Rows/Cols/Missing ecc) */
+.ta-header-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.ta-badges{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.ta-badge{
+  background: rgba(59,130,246,.10);
+  border: 1px solid rgba(59,130,246,.25);
+  color: var(--text);
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+/* 10) EMPTY STATE (mai pagina vuota) */
+.ta-empty{
+  color: var(--muted);
+  padding: 18px;
+  border: 1px dashed rgba(255,255,255,.18);
+  border-radius: 14px;
+}
+
+/* 11) BUTTONS (bootstrap) */
+.btn{
+  border-radius: 14px !important;
+  padding: 10px 14px;
+  font-weight: 600;
+}
+.btn-primary{
+  background: var(--primary) !important;
+  border-color: rgba(59,130,246,.45) !important;
+}
+.btn-primary:hover{
+  filter: brightness(1.05);
+}
+.btn-outline-primary{
+  color: var(--text) !important;
+  border-color: rgba(59,130,246,.45) !important;
+}
+.btn-outline-primary:hover{
+  background: rgba(59,130,246,.12) !important;
+}
+
+/* 12) INPUTS (select, input, ecc) */
+.form-control, .form-select, select, input{
+  background: rgba(255,255,255,.06) !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  color: var(--text) !important;
+  border-radius: 14px !important;
+}
+.form-control:focus, .form-select:focus, select:focus, input:focus{
+  outline: none !important;
+  box-shadow: 0 0 0 .2rem rgba(59,130,246,.20) !important;
+  border-color: rgba(59,130,246,.55) !important;
+}
+
+/* 13) DATATABLES DARK */
+.dataTables_wrapper{
+  color: var(--text) !important;
+}
+.dataTables_wrapper .dataTables_filter input,
+.dataTables_wrapper .dataTables_length select{
+  background: rgba(255,255,255,.06) !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  color: var(--text) !important;
+  border-radius: 14px !important;
+}
+table.dataTable{
+  background: transparent !important;
+  color: var(--text) !important;
+}
+table.dataTable thead th{
+  background: rgba(255,255,255,.06) !important;
+  border-bottom: 1px solid rgba(255,255,255,.12) !important;
+}
+table.dataTable tbody td{
+  border-top: 1px solid rgba(255,255,255,.06) !important;
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button{
+  color: var(--text) !important;
+  border-radius: 12px !important;
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button.current{
+  background: rgba(59,130,246,.18) !important;
+  border: 1px solid rgba(59,130,246,.35) !important;
+}
+
+/* 14) PLOTS / IMG CONTAINER (se metti plotOutput dentro card) */
+.ta-plot-wrap{
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+
+/* 15) OPTIONAL: scrollbars (solo estetica) */
+*::-webkit-scrollbar{ width: 10px; height: 10px; }
+*::-webkit-scrollbar-track{ background: rgba(255,255,255,.04); }
+*::-webkit-scrollbar-thumb{
+  background: rgba(255,255,255,.14);
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb:hover{
+  background: rgba(255,255,255,.20);
+}

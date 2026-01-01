@@ -6,9 +6,10 @@ visualize_descriptive_ui <- function(id) {
   ns <- NS(id)
   sidebarLayout(
     sidebarPanel(
+      class = "ta-sidebar",
       width = 4,
-      h4("Step 5 — Visualize descriptive statistics"),
-      p("Explore distributions, variability, and normality across variables."),
+      h4(class = "ta-sidebar-title", "Step 5 - Visualize descriptive statistics"),
+      p(class = "ta-sidebar-subtitle", "Explore distributions, variability, and normality across variables."),
       hr(),
       with_help_tooltip(
         selectInput(
@@ -41,15 +42,28 @@ visualize_descriptive_server <- function(id, filtered_data, descriptive_summary)
     
     # Active plot type name (UI only)
     active_type <- reactive({
-      req(input$plot_type)
-      input$plot_type
+      input$plot_type %||% "categorical"
     })
     
     # Mount submodules ONCE
-    # They no longer depend on "is_active"
-    visualize_categorical_barplots_server("categorical", filtered_data, descriptive_summary)
-    visualize_numeric_boxplots_server("boxplots", filtered_data, descriptive_summary)
-    visualize_numeric_histograms_server("histograms", filtered_data, descriptive_summary)
+    visualize_categorical_barplots_server(
+      "categorical",
+      filtered_data,
+      descriptive_summary,
+      is_active = reactive(active_type() == "categorical")
+    )
+    visualize_numeric_boxplots_server(
+      "boxplots",
+      filtered_data,
+      descriptive_summary,
+      is_active = reactive(active_type() == "boxplots")
+    )
+    visualize_numeric_histograms_server(
+      "histograms",
+      filtered_data,
+      descriptive_summary,
+      is_active = reactive(active_type() == "histograms")
+    )
     
     # ---- SUB-CONTROLS UI ----
     output$sub_controls <- renderUI({

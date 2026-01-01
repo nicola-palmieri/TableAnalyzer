@@ -45,9 +45,10 @@ visualize_pca_ui <- function(id, filtered_data = NULL) {
 
   sidebarLayout(
     sidebarPanel(
+      class = "ta-sidebar",
       width = 4,
-      h4("Step 4 — Visualize principal component analysis (PCA)"),
-      p("Visualize multivariate structure using a PCA biplot."),
+      h4(class = "ta-sidebar-title", "Step 4 - Visualize principal component analysis (PCA)"),
+      p(class = "ta-sidebar-subtitle", "Visualize multivariate structure using a PCA biplot."),
       hr(),
       with_help_tooltip(
         selectInput(
@@ -153,35 +154,14 @@ visualize_pca_ui <- function(id, filtered_data = NULL) {
           )
         )
       ),
-      fluidRow(
-        column(
-          width = 6,
-          with_help_tooltip(
-            numericInput(
-              ns("plot_width"),
-              label = "Plot width (px)",
-              value = 800,
-              min = 200,
-              max = 2000,
-              step = 50
-            ),
-            "Set the width of the PCA plot in pixels."
-          )
-        ),
-        column(
-          width = 6,
-          with_help_tooltip(
-            numericInput(
-              ns("plot_height"),
-              label = "Plot height (px)",
-              value = 600,
-              min = 200,
-              max = 2000,
-              step = 50
-            ),
-            "Set the height of the PCA plot in pixels."
-          )
-        )
+      subplot_size_ui(
+        ns,
+        width_value = 800,
+        height_value = 600,
+        width_label = "Plot width (px)",
+        height_label = "Plot height (px)",
+        width_help = "Set the width of the PCA plot in pixels.",
+        height_help = "Set the height of the PCA plot in pixels."
       ),
       fluidRow(
         column(6, add_color_customization_ui(ns, multi_group = TRUE)),
@@ -195,7 +175,7 @@ visualize_pca_ui <- function(id, filtered_data = NULL) {
       fluidRow(
         column(6, actionButton(ns("apply_plot"), "Apply changes", width = "100%")),
         column(6, with_help_tooltip(
-          downloadButton(ns("download_plot"), "Download plot", style = "width: 100%;"),
+          downloadButton(ns("download_plot"), "Download results", style = "width: 100%;"),
           "Save the PCA figure as an image file."
         ))
       )
@@ -203,13 +183,12 @@ visualize_pca_ui <- function(id, filtered_data = NULL) {
     mainPanel(
       width = 8,
       h4("Plots"),
-      uiOutput(ns("plot_warning")),
-      plotOutput(ns("plot"))
+      uiOutput(ns("plot_container"))
     )
   )
 }
 
-visualize_pca_server <- function(id, filtered_data, model_fit) {
+visualize_pca_server <- function(id, filtered_data, model_fit, reset_trigger = reactive(NULL)) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     # -- Reactives ------------------------------------------------------------
@@ -290,13 +269,115 @@ visualize_pca_server <- function(id, filtered_data, model_fit) {
       data = color_data,
       color_var_reactive = color_var_reactive,
       multi_group = TRUE,
-      level_order_reactive = color_level_order
+      level_order_reactive = color_level_order,
+      reset_token = reset_trigger
     )
 
     base_size <- base_size_server(
       input = input,
       default = 14
     )
+
+    subplot_limits <- subplot_size_defaults()
+    plot_width_default <- 800
+    plot_height_default <- 600
+
+    clamp_plot_dimension <- function(value, min_value, max_value, default_value) {
+      if (length(value) == 0 || is.na(value) || value <= 0) {
+        return(default_value)
+      }
+      if (!is.null(min_value) && value < min_value) {
+        return(min_value)
+      }
+      if (!is.null(max_value) && value > max_value) {
+        return(max_value)
+      }
+      value
+    }
+    
+    apply_id <- reactiveVal(0L)
+    apply_counter <- 0L
+    bump_apply <- function() {
+      apply_counter <<- apply_counter + 1L
+      apply_id(apply_counter)
+    }
+    
+    pending_auto <- reactiveVal(FALSE)
+
+    last_reset_token <- reactiveVal(NULL)
+    pending_reset_token <- reactiveVal(NULL)
+
+    reset_pca_inputs <- function() {
+      updateSelectInput(session, "plot_type", selected = "biplot")
+      updateSelectInput(session, "pca_color", selected = "None")
+      updateSelectInput(session, "pca_shape", selected = "None")
+      updateSelectInput(session, "pca_label", selected = "None")
+      updateSelectInput(session, "facet_var", selected = "None")
+      updateNumericInput(session, "pca_label_size", value = 2)
+      updateCheckboxInput(session, "show_ellipses", value = FALSE)
+      updateCheckboxInput(session, "show_loadings", value = FALSE)
+      updateNumericInput(session, "loading_scale", value = 1.2)
+      updateNumericInput(session, "plot_width", value = 800)
+      updateNumericInput(session, "plot_height", value = 600)
+      updateNumericInput(session, "plot_base_size", value = 13)
+      updateNumericInput(session, "facet_grid-rows", value = NA)
+      updateNumericInput(session, "facet_grid-cols", value = NA)
+    }
+
+    schedule_apply <- function(plot_type_value) {
+      if (!is.null(plot_type_value)) {
+        pending_auto(FALSE)
+        bump_apply()
+      } else {
+        pending_auto(TRUE)
+      }
+    }
+
+    observeEvent(reset_trigger(), {
+      token <- reset_trigger()
+      if (is.null(token) || identical(token, last_reset_token())) return()
+      info <- tryCatch(model_fit(), shiny.silent.stop = function(e) NULL)
+      if (is.null(info) || !identical(info$type, "pca")) {
+        pending_reset_token(token)
+        return()
+      }
+      plot_type_value <- isolate(input$plot_type)
+      session$onFlushed(function() {
+        reset_pca_inputs()
+        last_reset_token(token)
+        pending_reset_token(NULL)
+        schedule_apply(plot_type_value)
+      }, once = TRUE)
+    }, ignoreInit = TRUE)
+    
+    observeEvent(input$apply_plot, {
+      bump_apply()
+    })
+    
+    observeEvent(model_fit(), {
+      info <- tryCatch(model_fit(), shiny.silent.stop = function(e) NULL)
+      if (is.null(info) || !identical(info$type, "pca")) return()
+      plot_type_value <- isolate(input$plot_type)
+      token <- pending_reset_token()
+      if (!is.null(token) && !identical(token, last_reset_token())) {
+        session$onFlushed(function() {
+          reset_pca_inputs()
+          last_reset_token(token)
+          pending_reset_token(NULL)
+          schedule_apply(plot_type_value)
+        }, once = TRUE)
+        return()
+      }
+      schedule_apply(plot_type_value)
+    }, ignoreInit = FALSE)
+    
+    observeEvent(input$plot_type, {
+      if (!isTRUE(pending_auto())) return()
+      info <- tryCatch(model_fit(), shiny.silent.stop = function(e) NULL)
+      if (is.null(info) || !identical(info$type, "pca")) return()
+      pending_auto(FALSE)
+      bump_apply()
+    }, ignoreInit = TRUE)
 
     max_levels <- if (exists("MAX_STRATIFICATION_LEVELS")) MAX_STRATIFICATION_LEVELS else 10L
 
@@ -439,14 +520,26 @@ visualize_pca_server <- function(id, filtered_data, model_fit) {
       }
     }
 
-    plot_info <- eventReactive(input$apply_plot, {
-      req(isTRUE(input$apply_plot > 0))
+    plot_info <- eventReactive(apply_id(), {
+      req(isTRUE(apply_id() > 0))
       req(input$plot_type)
       validate(need(input$plot_type == "biplot", "Unsupported plot type."))
 
       entry <- pca_entry()
-      plot_w <- ifelse(is.na(input$plot_width) || input$plot_width <= 0, 800, input$plot_width)
-      plot_h <- ifelse(is.na(input$plot_height) || input$plot_height <= 0, 600, input$plot_height)
+      plot_w <- suppressWarnings(as.numeric(input$plot_width))
+      plot_w <- clamp_plot_dimension(
+        plot_w,
+        subplot_limits$width$min,
+        subplot_limits$width$max,
+        plot_width_default
+      )
+      plot_h <- suppressWarnings(as.numeric(input$plot_height))
+      plot_h <- clamp_plot_dimension(
+        plot_h,
+        subplot_limits$height$min,
+        subplot_limits$height$max,
+        plot_height_default
+      )
 
       empty_result <- function(message) {
         defaults <- compute_default_grid(1L)
@@ -660,6 +753,21 @@ visualize_pca_server <- function(id, filtered_data, model_fit) {
       } else {
         NULL
       }
+    })
+
+    output$plot_container <- renderUI({
+      info <- plot_info()
+      if (is.null(info) || is.null(info$plot)) {
+        if (!is.null(info) && !is.null(info$warning)) {
+          return(div(uiOutput(ns("plot_warning"))))
+        }
+        return(NULL)
+      }
+
+      tagList(
+        uiOutput(ns("plot_warning")),
+        plotOutput(ns("plot"))
+      )
     })
 
     output$plot <- renderPlot({
@@ -890,4 +998,3 @@ build_pca_biplot <- function(
 
   g
 }
-

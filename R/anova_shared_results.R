@@ -53,7 +53,7 @@ prepare_anova_outputs <- function(model_obj, factor_names) {
   anova_df$p.label <- ifelse(
     is.na(p_safe),
     "",
-    ifelse(p_safe < 0.0001, "<.0001", sprintf("%.4f", p_safe))
+    ifelse(p_safe < 0.0001, "<0.0001", sprintf("%.4f", p_safe))
   )
   f_col <- grep("^F", names(anova_df), value = TRUE)
   f_vals <- if (length(f_col) > 0) suppressWarnings(as.numeric(anova_df[[f_col[1]]])) else rep(NA_real_, nrow(anova_df))
@@ -64,7 +64,7 @@ prepare_anova_outputs <- function(model_obj, factor_names) {
     sprintf("%.4f", f_vals)
   )
   
-  # --- Post-hoc Tukey for each factor ---
+  # --- Post-hoc Dunnett for each factor ---
   factor_names <- unique(factor_names[!is.na(factor_names) & nzchar(factor_names)])
   posthoc_details <- list()
   posthoc_combined <- NULL
@@ -312,7 +312,7 @@ write_anova_docx <- function(content, file, response_name = NULL, stratum_label 
     if (is.null(p_col) || !p_col %in% names(df)) return(df)
     p_vals <- suppressWarnings(as.numeric(df[[p_col]]))
     df[[p_col]] <- p_vals
-    df[[paste0(p_col, "_label")]] <- ifelse(p_vals < 0.0001, "<.0001", sprintf("%.4f", p_vals))
+    df[[paste0(p_col, "_label")]] <- ifelse(p_vals < 0.0001, "<0.0001", sprintf("%.4f", p_vals))
     df$sig <- p_vals < 0.05
     df
   }
@@ -404,6 +404,11 @@ write_anova_docx <- function(content, file, response_name = NULL, stratum_label 
   if (is.null(anova_entries) || length(anova_entries) == 0) stop("No ANOVA results available to export.")
 
   combined_anova <- bind_rows(anova_entries)
+  if ("Stratum" %in% names(combined_anova)) {
+    combined_anova <- dplyr::arrange(combined_anova, Response, Stratum)
+  } else {
+    combined_anova <- dplyr::arrange(combined_anova, Response)
+  }
 
   required_cols <- c("Response", "Stratum", "Term", "SumSq", "Df", "Fvalue", "PrF")
   if (!all(required_cols %in% names(combined_anova))) stop("Missing required columns in ANOVA results.")
@@ -414,8 +419,7 @@ write_anova_docx <- function(content, file, response_name = NULL, stratum_label 
       Fvalue = round(Fvalue, 4),
       Fvalue_label = ifelse(is.na(Fvalue), "", sprintf("%.4f", Fvalue))
     ) %>%
-    format_p("PrF") %>%
-    arrange(Response, Stratum, Term)
+    format_p("PrF")
 
   show_strata <- !(length(unique(combined_anova$Stratum)) == 1 && unique(combined_anova$Stratum) == "None")
 
@@ -493,7 +497,7 @@ write_anova_docx <- function(content, file, response_name = NULL, stratum_label 
     if (!is.null(p_display_col)) header_labels[[p_display_col]] <- "p-value"
 
     doc <- add_blank_line(doc)
-    doc <- body_add_fpar(doc, fpar(ftext("Post-hoc Contrasts", prop = fp_text(bold = TRUE))))
+    doc <- body_add_fpar(doc, fpar(ftext("Post-hoc Dunnett Contrasts", prop = fp_text(bold = TRUE))))
     doc <- add_blank_line(doc)
     doc <- body_add_flextable(
       doc,

@@ -56,14 +56,11 @@ visualize_categorical_barplots_ui <- function(id) {
 
 visualize_categorical_barplots_plot_ui <- function(id) {
   ns <- NS(id)
-  div(
-    uiOutput(ns("grid_warning")),
-    plotOutput(ns("plot"), width = "100%", height = "auto")
-  )
+  uiOutput(ns("plot_container"))
 }
 
 
-visualize_categorical_barplots_server <- function(id, filtered_data, summary_info) {
+visualize_categorical_barplots_server <- function(id, filtered_data, summary_info, is_active = NULL) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
@@ -71,6 +68,7 @@ visualize_categorical_barplots_server <- function(id, filtered_data, summary_inf
       plot = NULL,
       warning = NULL,
       layout = NULL,
+      empty_message = NULL,
       plot_width = 400,
       plot_height = 300
     )
@@ -139,14 +137,30 @@ visualize_categorical_barplots_server <- function(id, filtered_data, summary_inf
     })
     
     # ==========================================================
-    # APPLY LOGIC — the only place where the plot is computed
+    # APPLY LOGIC - the only place where the plot is computed
     # ==========================================================
-    observeEvent(input$apply_plot, {
+    pending_auto <- reactiveVal(FALSE)
+
+    auto_render_if_ready <- function() {
+      info <- summary_info()
+      if (is.null(info$type) || !identical(info$type, "descriptive")) return(FALSE)
+      if (!is.null(is_active) && !isTRUE(is_active())) return(FALSE)
+      if (is.null(input$plot_width) || is.null(input$plot_height)) {
+        pending_auto(TRUE)
+        return(FALSE)
+      }
+      pending_auto(FALSE)
+      compute_plot(allow_reset = TRUE)
+      TRUE
+    }
+
+    compute_plot <- function(allow_reset = FALSE) {
       data <- df()
       info <- summary_info()
-      
-      stored$plot_width  <- input$plot_width
-      stored$plot_height <- input$plot_height
+
+      stored$plot_width  <- input$plot_width %||% 400
+      stored$plot_height <- input$plot_height %||% 300
+      stored$empty_message <- NULL
       
       if (is.null(info) || is.null(data) || nrow(data) == 0) {
         stored$warning <- "No data available."
@@ -157,24 +171,48 @@ visualize_categorical_barplots_server <- function(id, filtered_data, summary_inf
       s_vars <- resolve_reactive(info$selected_vars)
       g_var  <- resolve_reactive(info$group_var)
       strata_levels <- resolve_reactive(info$strata_levels)
-      
-      res <- build_descriptive_categorical_plot(
-        df = data,
-        selected_vars = s_vars,
-        group_var = g_var,
-        strata_levels = strata_levels,
-        show_proportions = input$show_proportions,
-        nrow_input = grid$rows(),
-        ncol_input = grid$cols(),
-        fill_colors = custom_colors(),
-        base_size = base_size(),
-        common_legend = legend_state$enabled,
-        legend_position = if (legend_state$enabled) legend_state$position else NULL
-      )
 
-      stored$plot    <- res$plot
+      cat_columns <- names(data)[vapply(data, function(x) {
+        is.character(x) || is.factor(x) || is.logical(x)
+      }, logical(1))]
+      selected_cat_columns <- intersect(cat_columns, s_vars)
+      if (length(selected_cat_columns) == 0) {
+        stored$empty_message <- "Select at least one categorical variable in the Descriptive tab to display categorical barplots."
+        stored$warning <- NULL
+        stored$plot <- NULL
+        stored$layout <- NULL
+        return()
+      }
+
+      build_plot <- function(rows, cols) {
+        build_descriptive_categorical_plot(
+          df = data,
+          selected_vars = s_vars,
+          group_var = g_var,
+          strata_levels = strata_levels,
+          show_proportions = input$show_proportions,
+          nrow_input = rows,
+          ncol_input = cols,
+          fill_colors = custom_colors(),
+          base_size = base_size(),
+          common_legend = legend_state$enabled,
+          legend_position = if (legend_state$enabled) legend_state$position else NULL
+        )
+      }
+
+      is_grid_warning <- function(msg) {
+        !is.null(msg) && grepl("Grid", msg, fixed = TRUE)
+      }
+
+      res <- build_plot(grid$rows(), grid$cols())
+      if (isTRUE(allow_reset) && !is.null(res) && is_grid_warning(res$warning)) {
+        res <- build_plot(res$defaults$rows, res$defaults$cols)
+      }
+
       stored$warning <- res$warning
-      stored$layout  <- res$layout
+      grid_bad <- is_grid_warning(stored$warning)
+      stored$plot   <- if (grid_bad) NULL else res$plot
+      stored$layout <- if (grid_bad) NULL else res$layout
 
       apply_grid_defaults_if_empty(
         input,
@@ -183,14 +221,64 @@ visualize_categorical_barplots_server <- function(id, filtered_data, summary_inf
         res$defaults,
         n_items = res$panels
       )
+    }
+
+    observeEvent(input$apply_plot, {
+      compute_plot(allow_reset = FALSE)
     })
+
+    observeEvent(summary_info(), {
+      auto_render_if_ready()
+    }, ignoreInit = FALSE)
+    
+    if (!is.null(is_active)) {
+      observeEvent(is_active(), {
+        auto_render_if_ready()
+      }, ignoreInit = FALSE)
+    }
+
+    observeEvent(list(input$plot_width, input$plot_height), {
+      if (isTRUE(pending_auto())) {
+        auto_render_if_ready()
+      }
+    }, ignoreInit = TRUE)
     
     # -------------------------
     # UI: warnings
     # -------------------------
     output$grid_warning <- renderUI({
       if (!is.null(stored$warning))
-        div(class = "alert alert-warning", stored$warning)
+        div(class = "alert alert-warning ta-grid-warning", stored$warning)
+    })
+
+    empty_state <- function(title, message, icon = "&#128221;") {
+      div(
+        class = "empty-state analysis-empty-state text-center my-4",
+        div(
+          class = "py-4 px-3",
+          div(class = "empty-state-icon text-primary mb-2", HTML(icon)),
+          h4(class = "mb-2", title),
+          p(class = "text-muted mb-0", message)
+        )
+      )
+    }
+
+    output$plot_container <- renderUI({
+      if (!is.null(stored$empty_message)) {
+        return(empty_state("Categorical barplots unavailable", stored$empty_message))
+      }
+
+      if (is.null(stored$plot)) {
+        if (!is.null(stored$warning)) {
+          return(div(uiOutput(ns("grid_warning"))))
+        }
+        return(NULL)
+      }
+
+      tagList(
+        uiOutput(ns("grid_warning")),
+        plotOutput(ns("plot"), width = "100%", height = "auto")
+      )
     })
     
     # -------------------------

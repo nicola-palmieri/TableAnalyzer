@@ -7,9 +7,10 @@ visualize_oneway_ui <- function(id) {
   
   sidebarLayout(
     sidebarPanel(
+      class = "ta-sidebar",
       width = 4,
-      h4("Step 4 — Visualize one-way ANOVA"),
-      p("Select visualization type and adjust subplot layout, axis scaling, and figure size."),
+      h4(class = "ta-sidebar-title", "Step 4 - Visualize one-way ANOVA"),
+      p(class = "ta-sidebar-subtitle", "Select visualization type and adjust subplot layout, axis scaling, and figure size."),
       hr(),
       
       selectInput(
@@ -49,15 +50,14 @@ visualize_oneway_ui <- function(id) {
       
       fluidRow(
         column(6, actionButton(ns("apply_plot"), "Apply changes", width = "100%")),
-        column(6, downloadButton(ns("download_plot"), "Download plot", style = "width: 100%;"))
+        column(6, downloadButton(ns("download_plot"), "Download results", style = "width: 100%;"))
       )
     ),
     
     mainPanel(
       width = 8,
       h4("Plots"),
-      uiOutput(ns("plot_warning")),
-      plotOutput(ns("plot"), height = "auto")
+      uiOutput(ns("plot_container"))
     )
   )
 }
@@ -87,22 +87,63 @@ visualize_oneway_server <- function(id, filtered_data, model_info) {
     )
     
     base_size <- base_size_server(input = input, default = 14)
+    subplot_defaults <- subplot_size_defaults()
+    plot_width_default <- subplot_defaults$width$value
+    plot_height_default <- subplot_defaults$height$value
     
     strata_grid <- plot_grid_server("strata_grid")
     response_grid <- plot_grid_server("response_grid")
+
+    grid_cache <- reactiveValues(
+      strata_rows = NULL,
+      strata_cols = NULL,
+      response_rows = NULL,
+      response_cols = NULL
+    )
+
+    update_cache <- function(key, value) {
+      if (!is.null(value) && !is.na(value)) {
+        grid_cache[[key]] <- value
+      }
+    }
+
+    observeEvent(strata_grid$rows(), {
+      update_cache("strata_rows", strata_grid$rows())
+    }, ignoreInit = TRUE)
+
+    observeEvent(strata_grid$cols(), {
+      update_cache("strata_cols", strata_grid$cols())
+    }, ignoreInit = TRUE)
+
+    observeEvent(response_grid$rows(), {
+      update_cache("response_rows", response_grid$rows())
+    }, ignoreInit = TRUE)
+
+    observeEvent(response_grid$cols(), {
+      update_cache("response_cols", response_grid$cols())
+    }, ignoreInit = TRUE)
     
     output$layout_controls <- renderUI({
       info <- model_info()
       req(info)
-      build_anova_layout_controls(ns, input, info)
+      build_anova_layout_controls(ns, input, info, grid_cache = grid_cache)
     })
     
-    observeEvent(input$apply_plot, {
+    compute_plot <- function(allow_reset = FALSE) {
       data <- df()
       info <- model_info()
       
-      stored$plot_width  <- input$plot_width  %||% 600
-      stored$plot_height <- input$plot_height %||% 600
+      plot_width <- suppressWarnings(as.numeric(input$plot_width))
+      if (length(plot_width) == 0 || is.na(plot_width) || plot_width <= 0) {
+        plot_width <- plot_width_default
+      }
+      plot_height <- suppressWarnings(as.numeric(input$plot_height))
+      if (length(plot_height) == 0 || is.na(plot_height) || plot_height <= 0) {
+        plot_height <- plot_height_default
+      }
+
+      stored$plot_width <- plot_width
+      stored$plot_height <- plot_height
       
       if (is.null(info) || is.null(data) || nrow(data) == 0) {
         stored$warning <- "No data or ANOVA results available."
@@ -117,49 +158,72 @@ visualize_oneway_server <- function(id, filtered_data, model_info) {
       responses <- info$responses
       n_responses <- if (!is.null(responses) && length(responses) > 0L) length(responses) else 1L
       
+      build_results <- function(layout_inputs) {
+        list(
+          lineplot_mean_se = plot_anova_lineplot_meanse(
+            data,
+            info,
+            layout_values = layout_inputs,
+            line_colors   = custom_colors(),
+            base_size     = base_size(),
+            show_lines    = isTRUE(input$lineplot_show_lines %||% TRUE),
+            show_jitter   = isTRUE(input$lineplot_show_jitter),
+            share_y_axis  = isTRUE(input$share_y_axis)
+          ),
+          barplot_mean_se = plot_anova_barplot_meanse(
+            data,
+            info,
+            layout_values = layout_inputs,
+            line_colors   = custom_colors(),
+            base_size     = base_size(),
+            posthoc_all   = info$posthoc,
+            share_y_axis  = isTRUE(input$share_y_axis)
+          ),
+          boxplot = plot_anova_boxplot(
+            data,
+            info,
+            layout_values = layout_inputs,
+            line_colors   = custom_colors(),
+            base_size     = base_size(),
+            share_y_axis  = isTRUE(input$share_y_axis)
+          )
+        )
+      }
+
       layout_inputs <- list(
         strata_rows = strata_grid$rows(),
         strata_cols = strata_grid$cols(),
         resp_rows   = response_grid$rows(),
         resp_cols   = response_grid$cols()
       )
-      
-      results <- list(
-        lineplot_mean_se = plot_anova_lineplot_meanse(
-          data,
-          info,
-          layout_values = layout_inputs,
-          line_colors   = custom_colors(),
-          base_size     = base_size(),
-          show_lines    = input$lineplot_show_lines,
-          show_jitter   = input$lineplot_show_jitter,
-          share_y_axis  = input$share_y_axis
-        ),
-        barplot_mean_se = plot_anova_barplot_meanse(
-          data,
-          info,
-          layout_values = layout_inputs,
-          line_colors   = custom_colors(),
-          base_size     = base_size(),
-          posthoc_all   = info$posthoc,
-          share_y_axis  = input$share_y_axis
-        ),
-        boxplot = plot_anova_boxplot(
-          data,
-          info,
-          layout_values = layout_inputs,
-          line_colors   = custom_colors(),
-          base_size     = base_size(),
-          share_y_axis  = input$share_y_axis
-        )
-      )
+
+      results <- build_results(layout_inputs)
       
       chosen <- input$plot_type
+      if (is.null(chosen) || !chosen %in% names(results)) {
+        chosen <- "lineplot_mean_se"
+      }
       chosen_result <- results[[chosen]]
+
+      is_grid_warning <- function(msg) {
+        !is.null(msg) && grepl("Grid", msg, fixed = TRUE)
+      }
+
+      if (isTRUE(allow_reset) && !is.null(chosen_result) && is_grid_warning(chosen_result$warning)) {
+        default_inputs <- list(
+          strata_rows = chosen_result$defaults$strata$rows,
+          strata_cols = chosen_result$defaults$strata$cols,
+          resp_rows   = chosen_result$defaults$responses$rows,
+          resp_cols   = chosen_result$defaults$responses$cols
+        )
+        results <- build_results(default_inputs)
+        chosen_result <- results[[chosen]]
+      }
       
       stored$warning <- chosen_result$warning
-      stored$plot    <- chosen_result$plot
-      stored$layout  <- chosen_result$layout
+      grid_bad <- is_grid_warning(stored$warning)
+      stored$plot   <- if (grid_bad) NULL else chosen_result$plot
+      stored$layout <- if (grid_bad) NULL else chosen_result$layout
 
       apply_grid_defaults_if_empty(
         input,
@@ -176,12 +240,42 @@ visualize_oneway_server <- function(id, filtered_data, model_info) {
         defaults = chosen_result$defaults$responses,
         n_items = chosen_result$panel_counts$responses
       )
+    }
+
+    observeEvent(input$apply_plot, {
+      compute_plot(allow_reset = FALSE)
     })
+
+    observeEvent(model_info(), {
+      info <- model_info()
+      if (is.null(info$type) || !identical(info$type, "oneway_anova")) return()
+      compute_plot(allow_reset = TRUE)
+    }, ignoreInit = FALSE)
+
+    observeEvent(input$plot_type, {
+      info <- model_info()
+      if (is.null(info$type) || !identical(info$type, "oneway_anova")) return()
+      compute_plot(allow_reset = TRUE)
+    }, ignoreInit = TRUE)
     
     output$plot_warning <- renderUI({
       if (!is.null(stored$warning)) {
-        div(class = "alert alert-warning", HTML(stored$warning))
+        div(class = "alert alert-warning ta-grid-warning", HTML(stored$warning))
       }
+    })
+
+    output$plot_container <- renderUI({
+      if (is.null(stored$plot)) {
+        if (!is.null(stored$warning)) {
+          return(div(uiOutput(ns("plot_warning"))))
+        }
+        return(NULL)
+      }
+
+      tagList(
+        uiOutput(ns("plot_warning")),
+        plotOutput(ns("plot"), height = "auto")
+      )
     })
     
     output$plot <- renderPlot(
@@ -197,7 +291,7 @@ visualize_oneway_server <- function(id, filtered_data, model_info) {
         cols_strata    <- lay$strata$cols %||% 1
         cols_responses <- lay$responses$cols %||% 1
         
-        (stored$plot_width %||% 600) * cols_strata * cols_responses
+        (stored$plot_width %||% plot_width_default) * cols_strata * cols_responses
       },
       height = function() {
         lay <- stored$layout
@@ -206,7 +300,7 @@ visualize_oneway_server <- function(id, filtered_data, model_info) {
         rows_strata    <- lay$strata$rows %||% 1
         rows_responses <- lay$responses$rows %||% 1
         
-        (stored$plot_height %||% 600) * rows_strata * rows_responses
+        (stored$plot_height %||% plot_height_default) * rows_strata * rows_responses
       },
       res = 96
     )
@@ -230,8 +324,8 @@ visualize_oneway_server <- function(id, filtered_data, model_info) {
         total_cols <- cols_strata * cols_responses
         total_rows <- rows_strata * rows_responses
         
-        w_in <- ((stored$plot_width  %||% 600) * total_cols) / 96
-        h_in <- ((stored$plot_height %||% 600) * total_rows) / 96
+        w_in <- ((stored$plot_width  %||% plot_width_default) * total_cols) / 96
+        h_in <- ((stored$plot_height %||% plot_height_default) * total_rows) / 96
         
         ggsave(
           filename = file,

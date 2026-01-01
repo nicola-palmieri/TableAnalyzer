@@ -17,7 +17,7 @@ one_way_anova_ui <- function(id) {
         column(
           6,
           with_help_tooltip(
-            actionButton(ns("run"), "Show results", width = "100%"),
+            actionButton(ns("run"), "Run analysis", width = "100%"),
             "Run the ANOVA using the selected response and group variable."
           )
         ),
@@ -52,7 +52,7 @@ one_way_anova_server <- function(id, filtered_data) {
       
       validate(
         need(length(cat_cols) > 0,
-             "No categorical predictors found. At least one factor or character variable is required.")
+             "No categorical predictor available. Please upload a factor or character variable.")
       )
       
       tagList(
@@ -93,7 +93,7 @@ one_way_anova_server <- function(id, filtered_data) {
     # -----------------------------------------------------
     models <- eventReactive(input$run, {
       df <- filtered_data()
-      req(df, input$group, input$order)
+      req(df, input$group)
       
       resp_vals <- responses()
       
@@ -123,13 +123,13 @@ one_way_anova_server <- function(id, filtered_data) {
       grp <- df[[input$group]]
       validate(
         need(dplyr::n_distinct(grp) > 1,
-             "The categorical predictor must contain at least two distinct levels.")
+             paste0("Categorical predictor '", input$group, "' must contain at least two levels."))
       )
       
       # Order must have >= 2 items
       validate(
         need(length(input$order) > 1,
-             "The order list must contain at least two levels.")
+             paste0("The level order for '", input$group, "' must contain at least two levels."))
       )
       
       # Order must match data
@@ -137,22 +137,28 @@ one_way_anova_server <- function(id, filtered_data) {
       missing_levels <- setdiff(input$order, actual_levels)
       validate(
         need(length(missing_levels) == 0,
-             paste("Some selected levels are not present in the filtered data:",
-                   paste(missing_levels, collapse = ", ")))
+             paste0("Invalid level order for '", input$group,
+                    "'. Some selected levels are not present in the filtered data: ",
+                    paste(missing_levels, collapse = ", ")))
       )
       
       # Stratification checks
-      if (!is.null(strat_info()$active) && strat_info()$active) {
-        s_info <- strat_info()
-        
+      s_info <- strat_info()
+      if (!is.null(s_info$var)) {
+        validate(
+          need(!identical(s_info$var, input$group),
+               paste0("Stratification variable '", s_info$var,
+                      "' cannot be the same as the categorical predictor."))
+        )
+
         for (lev in s_info$levels) {
           sub_df <- df[df[[s_info$var]] == lev, ]
-          
+
           k <- dplyr::n_distinct(sub_df[[input$group]])
           validate(
             need(k > 1,
-                 paste0("Stratum '", lev,
-                        "' contains less than two levels of the grouping variable."))
+                 paste0("In stratum '", lev, "', categorical predictor '", input$group,
+                        "' contains fewer than two levels."))
           )
         }
       }
@@ -177,10 +183,21 @@ one_way_anova_server <- function(id, filtered_data) {
       filename = function() {
         info <- models()
         n_resp <- length(info$responses)
-        n_strata <- length(info$strata$levels %||% NULL)
-        label <- ifelse(n_strata == 0, "nostratum", paste0(n_strata, "strata"))
-        paste0("anova_results_", n_resp, "resp_", label, "_",
-               format(Sys.time(), "%Y%m%d-%H%M"), ".docx")
+        label <- if (!is.null(info$strata$var)) {
+          paste0("stratified_by_", janitor::make_clean_names(info$strata$var))
+        } else {
+          NULL
+        }
+        response_tag <- if (n_resp == 1) {
+          janitor::make_clean_names(info$responses[1])
+        } else {
+          paste0(n_resp, "resp")
+        }
+        build_export_filename(
+          analysis = "anova",
+          scope = "all",
+          extra = c(response_tag, label)
+        )
       },
       content = function(file) download_all_anova_results(models(), file)
     )

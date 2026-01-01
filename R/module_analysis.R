@@ -6,9 +6,10 @@ analysis_ui <- function(id) {
   ns <- NS(id)
   sidebarLayout(
     sidebarPanel(
+      class = "ta-sidebar",
       width = 4,
-      h4("Step 3 — Analyze results"),
-      p("Select an analysis type to explore your data, then inspect the summaries on the right."),
+      h4(class = "ta-sidebar-title", "Step 3 - Analyze results"),
+      p(class = "ta-sidebar-subtitle", "Select an analysis type to explore your data, then inspect the summaries on the right."),
       hr(),
       
       # --- CSS: expand dropdown height for better visibility ---
@@ -25,7 +26,7 @@ analysis_ui <- function(id) {
           ns("analysis_type"),
           "Select analysis type",
           choices = list(
-            " " = "",
+            "None" = "none",
             "Descriptive" = c("Descriptive Statistics" = "Descriptive Statistics"),
             "Univariate" = c(
               "One-way ANOVA" = "One-way ANOVA",
@@ -38,7 +39,7 @@ analysis_ui <- function(id) {
               "Principal Component Analysis (PCA)" = "PCA"
             )
           ),
-          selected = ""
+          selected = "none"
         ),
         "Choose the statistical method you want to run on the filtered data."
       ),
@@ -47,8 +48,15 @@ analysis_ui <- function(id) {
     
     mainPanel(
       width = 8,
-      h4("Analysis results"),
-      uiOutput(ns("results_panel"))
+      div(
+        class = "ta-results-header",
+        h4("Analysis results"),
+        uiOutput(ns("summary_help_icon"))
+      ),
+      div(
+        class = "ta-analysis-results",
+        uiOutput(ns("results_panel"))
+      )
     )
   )
 }
@@ -58,6 +66,13 @@ analysis_server <- function(id, filtered_data) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     df <- reactive(filtered_data())
+    has_rows_available <- reactive({
+      data <- df()
+      !is.null(data) && nrow(data) > 0
+    })
+    analysis_switch_token <- reactiveVal(0L)
+    has_run <- reactiveVal(FALSE)
+    run_baseline <- reactiveVal(0L)
     
     # ---- Mapping of available modules ----
     modules <- list(
@@ -66,7 +81,12 @@ analysis_server <- function(id, filtered_data) {
       "Two-way ANOVA"          = list(id = "anova2", ui = two_way_anova_ui, server = two_way_anova_server, type = "anova2"),
       "Linear Model (LM)"      = list(id = "lm",     ui = lm_ui, server = lm_server, type = "lm"),
       "Linear Mixed Model (LMM)" = list(id = "lmm",  ui = lmm_ui, server = lmm_server, type = "lmm"),
-      "Pairwise Correlation"   = list(id = "pairs",  ui = ggpairs_ui, server = ggpairs_server, type = "pairs"),
+      "Pairwise Correlation"   = list(
+        id = "pairs",
+        ui = ggpairs_ui,
+        server = ggpairs_server,
+        type = "pairs"
+      ),
       "PCA"                    = list(id = "pca",    ui = pca_ui, server = pca_server, type = "pca")
     )
     
@@ -76,89 +96,201 @@ analysis_server <- function(id, filtered_data) {
     # ---- Current module getter ----
     current_mod <- reactive({
       type <- input$analysis_type
-      req(type)
-      mod <- modules[[type]]
-      req(mod)
+      if (is.null(type) || !nzchar(type) || identical(type, "none")) return(NULL)
+      modules[[type]]
     })
     
-    # ---- Lazy server initialization ----
-    normalize_analysis_type <- function(mod_type) {
-      lookup <- c(
-        desc = "DESCRIPTIVE",
-        anova1 = "ANOVA",
-        anova2 = "ANOVA",
-        lm = "LM",
-        lmm = "LMM",
-        pairs = "CORR",
-        pca = "PCA"
-      )
-      lookup[[mod_type]] %||% toupper(mod_type)
-    }
-
-
     ensure_module_server <- function(mod) {
-      key <- mod$id
-      if (!is.null(server_cache[[key]])) return(server_cache[[key]])
-
-      result <- tryCatch(mod$server(mod$id, df), error = function(e) {
-        warning(sprintf("Module '%s' failed to initialize: %s", key, conditionMessage(e)))
-        NULL
-      })
-
-      defaults <- list(
-        analysis_type = normalize_analysis_type(mod$type),
-        type = mod$type,
-        data_used = NULL,
-        model = NULL,
-        summary = NULL,
-        posthoc = NULL,
-        effects = NULL,
-        stats = NULL
-      )
-
-      fill_defaults <- function(val) {
-        for (name in names(defaults)) {
-          if (is.null(val[[name]])) val[[name]] <- defaults[[name]]
-        }
-        val
-      }
-
-      # --- Standardize all outputs to a reactive returning a list ---
-      standardized <- reactive({
-        val <- resolve_reactive(result)
-        req(val)
-        fill_defaults(val)
-      })
-
-      server_cache[[key]] <- standardized
-      standardized
+      if (is.null(mod)) return(NULL)
+      ensure_analysis_server(mod, df, server_cache, reset_trigger = analysis_switch_token)
     }
 
+    run_suffix_map <- list(
+      desc = "run",
+      anova1 = "run",
+      anova2 = "run",
+      lm = "run",
+      lmm = "run",
+      pairs = "run",
+      pca = "run_pca"
+    )
+
+    current_run_signal <- reactive({
+      selection <- input$analysis_type
+      if (is.null(selection) || !nzchar(selection) || identical(selection, "none")) return(NULL)
+      mod <- modules[[selection]]
+      if (is.null(mod)) return(NULL)
+      suffix <- run_suffix_map[[mod$id]] %||% "run"
+      input[[paste0(mod$id, "-", suffix)]]
+    })
+
+    observeEvent(input$analysis_type, {
+      analysis_switch_token(analysis_switch_token() + 1L)
+      has_run(FALSE)
+      run_baseline(current_run_signal() %||% 0L)
+    }, ignoreInit = TRUE)
+
+    observeEvent(current_run_signal(), {
+      current_value <- current_run_signal()
+      baseline_value <- run_baseline() %||% 0L
+      if (is.null(current_value)) return()
+      if (current_value > baseline_value) {
+        has_run(TRUE)
+      }
+    }, ignoreInit = TRUE)
+
+
+    analysis_empty_state <- function(title, message, icon = "&#128221;") {
+      div(
+        class = "empty-state analysis-empty-state text-center my-4",
+        div(
+          class = "py-4 px-3",
+          div(class = "empty-state-icon text-primary mb-2", HTML(icon)),
+          h4(class = "mb-2", title),
+          p(class = "text-muted mb-0", message)
+        )
+      )
+    }
 
     # ---- Render active submodule UI ----
     output$config_panel <- renderUI({
       mod <- current_mod()
+      if (is.null(mod)) return(NULL)
+      ensure_module_server(mod)
       ui <- mod$ui(ns(mod$id))
       req(ui)
       ui$config
     })
 
     output$results_panel <- renderUI({
+      if (!has_rows_available()) {
+        return(analysis_empty_state(
+          "No data to analyze",
+          "Adjust the filters or upload data so the table contains rows before running an analysis."
+        ))
+      }
+
+      selection <- input$analysis_type
+      if (is.null(selection) || !nzchar(selection) || identical(selection, "none")) {
+        return(analysis_empty_state(
+          "No analysis selected yet",
+          "Select an analysis type to view results."
+        ))
+      }
+
+      if (!isTRUE(has_run())) {
+        return(analysis_empty_state(
+          "Run the selected analysis",
+          "Run the analysis to view results."
+        ))
+      }
+
       mod <- current_mod()
       ui <- mod$ui(ns(mod$id))
       req(ui)
       ui$results
     })
 
+    output$summary_help_icon <- renderUI({
+      if (!identical(input$analysis_type, "Descriptive Statistics")) {
+        return(NULL)
+      }
+
+      actionButton(
+        ns("desc-summary_help"),
+        label = NULL,
+        icon = icon("circle-question"),
+        class = "ta-help-icon",
+        title = "How to read the summary"
+      )
+    })
+
     # ---- Unified model output ----
     model_out <- reactive({
       mod <- current_mod()
+      if (is.null(mod)) return(NULL)
       srv <- ensure_module_server(mod)
       req(srv)
       srv()
     })
     
-    # Return the active model output as a reactive
-    model_out
+    list(
+      results = model_out,
+      selection = reactive({
+        selection <- input$analysis_type
+        if (is.null(selection) || !nzchar(selection) || identical(selection, "none")) {
+          return(NULL)
+        }
+        selection
+      })
+    )
   })
 }
+
+normalize_analysis_type <- function(mod_type) {
+  lookup <- c(
+    desc = "DESCRIPTIVE",
+    anova1 = "ANOVA",
+    anova2 = "ANOVA",
+    lm = "LM",
+    lmm = "LMM",
+    pairs = "CORR",
+    pca = "PCA"
+  )
+  lookup[[mod_type]] %||% toupper(mod_type)
+}
+
+analysis_defaults <- function(mod_type) {
+  list(
+    analysis_type = normalize_analysis_type(mod_type),
+    type = mod_type,
+    data_used = NULL,
+    model = NULL,
+    summary = NULL,
+    posthoc = NULL,
+    effects = NULL,
+    stats = NULL
+  )
+}
+
+fill_analysis_defaults <- function(val, defaults) {
+  for (name in names(defaults)) {
+    if (is.null(val[[name]])) {
+      val[[name]] <- defaults[[name]]
+    }
+  }
+  val
+}
+
+ensure_analysis_server <- function(mod, df, server_cache, reset_trigger = NULL) {
+  key <- mod$id
+  cached <- server_cache[[key]]
+  if (!is.null(cached)) {
+    return(cached)
+  }
+
+  call_args <- list(mod$id, df)
+  if (!is.null(reset_trigger)) {
+    param_names <- names(formals(mod$server))
+    if (!is.null(param_names) && "reset_trigger" %in% param_names) {
+      call_args$reset_trigger <- reset_trigger
+    }
+  }
+
+  result <- tryCatch(do.call(mod$server, call_args), error = function(e) {
+    warning(sprintf("Module '%s' failed to initialize: %s", key, conditionMessage(e)))
+    NULL
+  })
+
+  defaults <- analysis_defaults(mod$type)
+
+  standardized <- reactive({
+    val <- resolve_reactive(result)
+    req(val)
+    fill_analysis_defaults(val, defaults)
+  })
+
+  server_cache[[key]] <- standardized
+  standardized
+}
+

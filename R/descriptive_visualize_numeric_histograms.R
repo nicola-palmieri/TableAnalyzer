@@ -59,10 +59,7 @@ visualize_numeric_histograms_ui <- function(id) {
 
 visualize_numeric_histograms_plot_ui <- function(id) {
   ns <- NS(id)
-  div(
-    uiOutput(ns("grid_warning")),
-    plotOutput(ns("plot"), width = "100%", height = "auto")
-  )
+  uiOutput(ns("plot_container"))
 }
 
 
@@ -78,6 +75,7 @@ visualize_numeric_histograms_server <- function(id, filtered_data, summary_info,
       plot = NULL,
       warning = NULL,
       layout = NULL,
+      empty_message = NULL,
       plot_width  = 400,
       plot_height = 300
     )
@@ -144,12 +142,27 @@ visualize_numeric_histograms_server <- function(id, filtered_data, summary_info,
     })
     
     # ================================================================
-    # APPLY — compute histogram only when user clicks
+    # APPLY - compute histogram only when user clicks
     # ================================================================
-    observeEvent(input$apply_plot, {
-      
-      stored$plot_width  <- input$plot_width
-      stored$plot_height <- input$plot_height
+    pending_auto <- reactiveVal(FALSE)
+
+    auto_render_if_ready <- function() {
+      info <- summary_info()
+      if (is.null(info$type) || !identical(info$type, "descriptive")) return(FALSE)
+      if (!is.null(is_active) && !isTRUE(is_active())) return(FALSE)
+      if (is.null(input$plot_width) || is.null(input$plot_height)) {
+        pending_auto(TRUE)
+        return(FALSE)
+      }
+      pending_auto(FALSE)
+      compute_plot(allow_reset = TRUE)
+      TRUE
+    }
+
+    compute_plot <- function(allow_reset = FALSE) {
+      stored$plot_width  <- input$plot_width %||% 400
+      stored$plot_height <- input$plot_height %||% 300
+      stored$empty_message <- NULL
       
       data <- df()
       info <- summary_info()
@@ -166,24 +179,46 @@ visualize_numeric_histograms_server <- function(id, filtered_data, summary_info,
       
       processed <- resolve_reactive(info$processed_data)
       dat <- if (!is.null(processed)) processed else data
-      
-      res <- build_descriptive_numeric_histogram(
-        df = dat,
-        selected_vars = s_vars,
-        group_var = g_var,
-        strata_levels = strata_levels,
-        use_density = input$use_density,
-        nrow_input = grid$rows(),
-        ncol_input = grid$cols(),
-        custom_colors = custom_colors(),
-        base_size = base_size(),
-        common_legend = legend_state$enabled,
-        legend_position = if (legend_state$enabled) legend_state$position else NULL
-      )
 
-      stored$plot    <- res$plot
-      stored$layout  <- res$layout
+      num_cols <- names(dat)[vapply(dat, is.numeric, logical(1))]
+      selected_num_cols <- intersect(num_cols, s_vars)
+      if (length(selected_num_cols) == 0) {
+        stored$empty_message <- "Select at least one numeric variable in the Descriptive tab to display numeric histograms."
+        stored$warning <- NULL
+        stored$plot <- NULL
+        stored$layout <- NULL
+        return()
+      }
+      
+      build_plot <- function(rows, cols) {
+        build_descriptive_numeric_histogram(
+          df = dat,
+          selected_vars = s_vars,
+          group_var = g_var,
+          strata_levels = strata_levels,
+          use_density = input$use_density,
+          nrow_input = rows,
+          ncol_input = cols,
+          custom_colors = custom_colors(),
+          base_size = base_size(),
+          common_legend = legend_state$enabled,
+          legend_position = if (legend_state$enabled) legend_state$position else NULL
+        )
+      }
+
+      is_grid_warning <- function(msg) {
+        !is.null(msg) && grepl("Grid", msg, fixed = TRUE)
+      }
+
+      res <- build_plot(grid$rows(), grid$cols())
+      if (isTRUE(allow_reset) && !is.null(res) && is_grid_warning(res$warning)) {
+        res <- build_plot(res$defaults$rows, res$defaults$cols)
+      }
+
       stored$warning <- res$warning
+      grid_bad <- is_grid_warning(stored$warning)
+      stored$plot   <- if (grid_bad) NULL else res$plot
+      stored$layout <- if (grid_bad) NULL else res$layout
 
       apply_grid_defaults_if_empty(
         input,
@@ -192,14 +227,64 @@ visualize_numeric_histograms_server <- function(id, filtered_data, summary_info,
         res$defaults,
         n_items = res$panels
       )
+    }
+
+    observeEvent(input$apply_plot, {
+      compute_plot(allow_reset = FALSE)
     })
+
+    observeEvent(summary_info(), {
+      auto_render_if_ready()
+    }, ignoreInit = FALSE)
+    
+    if (!is.null(is_active)) {
+      observeEvent(is_active(), {
+        auto_render_if_ready()
+      }, ignoreInit = FALSE)
+    }
+
+    observeEvent(list(input$plot_width, input$plot_height), {
+      if (isTRUE(pending_auto())) {
+        auto_render_if_ready()
+      }
+    }, ignoreInit = TRUE)
     
     # ================================================================
     # Warning box
     # ================================================================
     output$grid_warning <- renderUI({
       if (!is.null(stored$warning))
-        div(class = "alert alert-warning", stored$warning)
+        div(class = "alert alert-warning ta-grid-warning", stored$warning)
+    })
+
+    empty_state <- function(title, message, icon = "&#128221;") {
+      div(
+        class = "empty-state analysis-empty-state text-center my-4",
+        div(
+          class = "py-4 px-3",
+          div(class = "empty-state-icon text-primary mb-2", HTML(icon)),
+          h4(class = "mb-2", title),
+          p(class = "text-muted mb-0", message)
+        )
+      )
+    }
+
+    output$plot_container <- renderUI({
+      if (!is.null(stored$empty_message)) {
+        return(empty_state("Numeric histograms unavailable", stored$empty_message))
+      }
+
+      if (is.null(stored$plot)) {
+        if (!is.null(stored$warning)) {
+          return(div(uiOutput(ns("grid_warning"))))
+        }
+        return(NULL)
+      }
+
+      tagList(
+        uiOutput(ns("grid_warning")),
+        plotOutput(ns("plot"), width = "100%", height = "auto")
+      )
     })
     
     # ================================================================

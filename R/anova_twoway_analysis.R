@@ -16,7 +16,7 @@ two_way_anova_ui <- function(id) {
       br(),
       fluidRow(
         column(6, with_help_tooltip(
-          actionButton(ns("run"), "Show results", width = "100%"),
+          actionButton(ns("run"), "Run analysis", width = "100%"),
           "Fit the two-way ANOVA with the selected factors and responses."
         )),
         column(6, with_help_tooltip(
@@ -113,7 +113,7 @@ two_way_anova_server <- function(id, filtered_data) {
     # ------------------------------------------------------------
     models <- eventReactive(input$run, {
       df <- filtered_data()
-      req(df, input$factor1, input$factor2, input$order1, input$order2)
+      req(df, input$factor1, input$factor2)
       
       resp_vals <- responses()
       validate(
@@ -124,45 +124,9 @@ two_way_anova_server <- function(id, filtered_data) {
         need(!identical(input$factor1, input$factor2),
              "The two categorical predictors must be different variables.")
       )
-      
-      # Factor 1 must have ≥ 2 levels
-      validate(
-        need(dplyr::n_distinct(df[[input$factor1]]) > 1,
-             paste0("'", input$factor1, "' must contain at least two levels."))
-      )
-      
-      # Factor 2 must have ≥ 2 levels
-      validate(
-        need(dplyr::n_distinct(df[[input$factor2]]) > 1,
-             paste0("'", input$factor2, "' must contain at least two levels."))
-      )
-      
-      # Order must contain ≥ 2 levels
-      validate(
-        need(length(input$order1) > 1,
-             paste0("The level order for '", input$factor1, "' must contain at least two levels."))
-      )
-      
-      validate(
-        need(length(input$order2) > 1,
-             paste0("The level order for '", input$factor2, "' must contain at least two levels."))
-      )
-      
-      # Orders must match existing data levels
-      validate(
-        need(all(input$order1 %in% unique(df[[input$factor1]])),
-             "Invalid level order for the first factor.")
-      )
-      
-      validate(
-        need(all(input$order2 %in% unique(df[[input$factor2]])),
-             "Invalid level order for the second factor.")
-      )
-      
-      # Numeric responses
+
       validate_numeric_columns(df, resp_vals, "response variables")
-      
-      # Response variance > 0
+
       for (r in resp_vals) {
         validate(
           need(stats::var(df[[r]], na.rm = TRUE) > 0,
@@ -170,20 +134,63 @@ two_way_anova_server <- function(id, filtered_data) {
         )
       }
       
+      # Factor 1 must have ≥ 2 levels
+      validate(
+        need(dplyr::n_distinct(df[[input$factor1]]) > 1,
+             paste0("Categorical predictor '", input$factor1, "' must contain at least two levels."))
+      )
+      
+      # Factor 2 must have ≥ 2 levels
+      validate(
+        need(dplyr::n_distinct(df[[input$factor2]]) > 1,
+             paste0("Categorical predictor '", input$factor2, "' must contain at least two levels."))
+      )
+      
+      # Order must contain ≥ 2 levels
+      validate(
+        need(length(input$order1) > 1,
+             paste0("The level order for '", input$factor1, "' must contain at least two levels."))
+      )
+
+      validate(
+        need(length(input$order2) > 1,
+             paste0("The level order for '", input$factor2, "' must contain at least two levels."))
+      )
+
+      # Orders must match existing data levels
+      validate(
+        need(all(input$order1 %in% unique(df[[input$factor1]])),
+             paste0("Invalid level order for '", input$factor1,
+                    "'. Some selected levels are not present in the data."))
+      )
+
+      validate(
+        need(all(input$order2 %in% unique(df[[input$factor2]])),
+             paste0("Invalid level order for '", input$factor2,
+                    "'. Some selected levels are not present in the data."))
+      )
+      
       # Stratification: each stratum must contain ≥ 2 levels for each factor
-      if (!is.null(strat_info()$active) && strat_info()$active) {
-        s <- strat_info()
+      s <- strat_info()
+      if (!is.null(s$var)) {
+        validate(
+          need(!identical(s$var, input$factor1) && !identical(s$var, input$factor2),
+               paste0("Stratification variable '", s$var,
+                      "' cannot be the same as a predictor."))
+        )
         for (lev in s$levels) {
           sub <- df[df[[s$var]] == lev, ]
           
           validate(
             need(dplyr::n_distinct(sub[[input$factor1]]) > 1,
-                 paste0("Stratum '", lev, "' contains fewer than two levels of ", input$factor1, "."))
+                 paste0("In stratum '", lev, "', categorical predictor '", input$factor1,
+                        "' contains fewer than two levels."))
           )
-          
+
           validate(
             need(dplyr::n_distinct(sub[[input$factor2]]) > 1,
-                 paste0("Stratum '", lev, "' contains fewer than two levels of ", input$factor2, "."))
+                 paste0("In stratum '", lev, "', categorical predictor '", input$factor2,
+                        "' contains fewer than two levels."))
           )
         }
       }
@@ -212,10 +219,21 @@ two_way_anova_server <- function(id, filtered_data) {
         req(info)
         
         n_resp <- length(info$responses)
-        n_strata <- length(info$strata$levels %||% NULL)
-        label <- ifelse(n_strata == 0, "nostratum", paste0(n_strata, "strata"))
-        paste0("anova_results_", n_resp, "resp_", label, "_",
-               format(Sys.time(), "%Y%m%d-%H%M"), ".docx")
+        label <- if (!is.null(info$strata$var)) {
+          paste0("stratified_by_", janitor::make_clean_names(info$strata$var))
+        } else {
+          NULL
+        }
+        response_tag <- if (n_resp == 1) {
+          janitor::make_clean_names(info$responses[1])
+        } else {
+          paste0(n_resp, "resp")
+        }
+        build_export_filename(
+          analysis = "anova",
+          scope = "all",
+          extra = c(response_tag, label)
+        )
       },
       content = function(file) download_all_anova_results(models(), file)
     )

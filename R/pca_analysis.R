@@ -16,10 +16,10 @@ pca_ui <- function(id) {
       ),
       br(),
       fluidRow(
-        column(6, with_help_tooltip(
-          actionButton(ns("run_pca"), "Show PCA summary", width = "100%"),
-          "Compute the principal components for the selected variables."
-        )),
+      column(6, with_help_tooltip(
+        actionButton(ns("run_pca"), "Run analysis", width = "100%"),
+        "Compute the principal components for the selected variables."
+      )),
         column(6, with_help_tooltip(
           downloadButton(ns("download_all"), "Download results", style = "width: 100%;"),
           "Export the PCA summaries, loadings, and diagnostics to a text file."
@@ -28,8 +28,7 @@ pca_ui <- function(id) {
     ),
     results = tagList(
       h5("PCA summary and loadings"),
-      verbatimTextOutput(ns("summary")),
-      uiOutput(ns("excluded_rows_section"))
+      uiOutput(ns("results_ui"))
     )
   )
 }
@@ -137,27 +136,65 @@ pca_server <- function(id, filtered_data) {
 
     # Run PCA
     pca_result <- eventReactive(input$run_pca, {
-      req(df())
-
       data <- df()
-      validate(need(nrow(data) > 0, "No data available for PCA."))
-
       selected_vars <- selected_numeric_vars()
-      validate(need(has_enough_numeric_vars(), "Select at least two numeric variables for PCA."))
+
+      if (is.null(data) || nrow(data) == 0) {
+        return(list(
+          selected_vars = selected_vars,
+          result = NULL,
+          data_used = NULL,
+          validation_error = "No data available for PCA."
+        ))
+      }
+
+      if (!has_enough_numeric_vars()) {
+        return(list(
+          selected_vars = selected_vars,
+          result = NULL,
+          data_used = NULL,
+          validation_error = "Please select at least two numeric variables."
+        ))
+      }
 
       result <- run_pca_on_subset(data, selected_vars)
 
       list(
         selected_vars = selected_vars,
         result = result,
-        data_used = result$data
+        data_used = result$data,
+        validation_error = NULL
       )
     })
 
     # Verbatim output: summary + loadings
+    output$results_ui <- renderUI({
+      results <- pca_result()
+      req(results)
+      if (!is.null(results$validation_error)) {
+        validate(need(FALSE, results$validation_error))
+      }
+
+      entry <- results$result
+      excluded_section <- if (is.null(entry) || is.null(entry$excluded_n) || entry$excluded_n == 0) {
+        tags$p("No rows were excluded when computing the PCA.")
+      } else {
+        tagList(
+          h5(sprintf("Excluded rows (%d)", entry$excluded_n)),
+          DT::DTOutput(ns("excluded_table"))
+        )
+      }
+
+      tagList(
+        verbatimTextOutput(ns("summary")),
+        excluded_section
+      )
+    })
+
     output$summary <- renderPrint({
       results <- pca_result()
-      validate(need(!is.null(results), "Run the PCA analysis to view results."))
+      if (is.null(results)) return(invisible(NULL))
+      if (!is.null(results$validation_error)) return(invisible(NULL))
 
       entry <- results$result
       if (is.null(entry) || is.null(entry$model)) {
@@ -293,30 +330,13 @@ pca_server <- function(id, filtered_data) {
       )
     })
 
-    output$excluded_rows_section <- renderUI({
-      req(has_enough_numeric_vars())
-      results <- pca_result()
-      req(results)
-
-      entry <- results$result
-      if (is.null(entry) || is.null(entry$excluded_n) || entry$excluded_n == 0) {
-        return(tags$p("No rows were excluded when computing the PCA."))
-      }
-
-      tagList(
-        h5(sprintf("Excluded rows (%d)", entry$excluded_n)),
-        DT::DTOutput(ns("excluded_table"))
-      )
-    })
-
     output$excluded_table <- DT::renderDT({
-      req(has_enough_numeric_vars())
       results <- pca_result()
-      req(results)
-      
+      if (is.null(results) || !is.null(results$validation_error)) return(NULL)
+
       entry <- results$result
-      req(entry$excluded_rows)
-      
+      if (is.null(entry) || is.null(entry$excluded_rows)) return(NULL)
+
       DT::datatable(
         entry$excluded_rows,
         options = list(

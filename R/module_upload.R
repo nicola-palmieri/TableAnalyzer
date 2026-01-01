@@ -6,9 +6,10 @@ upload_ui <- function(id) {
   ns <- NS(id)
   sidebarLayout(
     sidebarPanel(
+      class = "ta-sidebar",
       width = 4,
-      h4("Step 1 — Upload data"),
-      p("Choose whether to load the example dataset or upload your own Excel file."),
+      h4(class = "ta-sidebar-title", "Step 1 - Upload data"),
+      p(class = "ta-sidebar-subtitle", "Choose whether to load the example dataset or upload your own Excel file."),
       hr(),
       with_help_tooltip(
         radioButtons(
@@ -23,10 +24,11 @@ upload_ui <- function(id) {
         ),
         "Decide whether to explore the built-in example data or load your own table."
       ),
-      uiOutput(ns("layout_example")),
       uiOutput(ns("file_input")),
       uiOutput(ns("sheet_selector")),
+      uiOutput(ns("layout_example")),
       uiOutput(ns("replicate_col_input")),
+      br(),
       actionButton(ns("open_type_editor"), "Edit column types"),
       uiOutput(ns("type_editor_modal"))
       
@@ -54,6 +56,21 @@ upload_server <- function(id) {
     safe_call <- function(fun, ...) {
       tryCatch(list(result = fun(...), error = NULL),
                error = function(e) list(result = NULL, error = e))
+    }
+
+    render_upload_error <- function(message, clear_data = TRUE) {
+      if (clear_data) {
+        df(NULL)
+        editable_cols(NULL)
+        output$sheet_selector <- renderUI(NULL)
+        render_validation("")
+      }
+      output$preview <- renderDT(
+        data.frame(Error = message),
+        options = list(dom = "t", scrollX = TRUE),
+        rownames = FALSE,
+        class = "compact stripe"
+      )
     }
 
     process_loaded_data <- function(data, success_message = NULL,
@@ -140,16 +157,17 @@ upload_server <- function(id) {
         return(NULL)
       }
 
-      with_help_tooltip(
-        tagList(
+      tagList(
+        br(),
+        with_help_tooltip(
           textInput(
             ns("replicate_col"),
             label = "Replicate column name",
             value = "Replicate",
             placeholder = "Replicate"
-          )
-        ),
-        "Choose the column name that will store the second header row when wide data is reshaped."
+          ),
+          "Choose the column name that will store the second header row when wide data is reshaped."
+        )
       )
     })
     
@@ -164,11 +182,14 @@ upload_server <- function(id) {
                     "❌ Example layout files not found in /data folder."))
       
       loader <- if (input$data_source == "long") {
-        list(path = long_path, caption = "Long format — one row per measurement.")
+        list(
+          path = long_path,
+          caption = "Example layout (long format) – one row per measurement."
+        )
       } else {
         list(
           path = wide_path,
-          caption = "Wide format — two header rows (top: response, bottom: replicate).",
+          caption = "Example layout (wide format) – two header rows (top: response, bottom: replicate).",
           fix_names = TRUE
         )
       }
@@ -186,12 +207,21 @@ upload_server <- function(id) {
       }
       caption <- loader$caption
       
+      tagList(
+        div(
+          class = "ta-layout-caption text-muted small mb-2",
+          htmltools::tags$b(caption)
+        ),
       DT::datatable(
         toy,
-        caption = htmltools::tags$caption(htmltools::tags$b(caption)),
-        options = list(dom = "t", scrollX = TRUE),
+        options = list(
+          dom = "t",
+          scrollX = TRUE,
+          ordering = FALSE
+        ),
         rownames = FALSE,
         class = "compact stripe"
+      )
       )
     })
     
@@ -200,72 +230,97 @@ upload_server <- function(id) {
     # -----------------------------------------------------------
     observeEvent(input$file, {
       req(input$data_source != "example")
+
       ext <- tolower(tools::file_ext(input$file$name))
-      validate(need(ext %in% c("xlsx", "xls", "xlsm"),
-                    "❌ Invalid file type. Please upload .xlsx/.xls/.xlsm."))
-      
+      if (!ext %in% c("xlsx", "xls", "xlsm")) {
+        render_upload_error("❌ Invalid file type. Please upload .xlsx/.xls/.xlsm.", clear_data = FALSE)
+        return()
+      }
+
       sheets_result <- safe_call(readxl::excel_sheets, input$file$datapath)
-      validate(need(is.null(sheets_result$error), "❌ No readable sheets found in workbook."))
+      if (!is.null(sheets_result$error)) {
+        render_upload_error(
+          format_safe_error_message("❌ No readable sheets found in workbook.", sheets_result$error),
+          clear_data = FALSE
+        )
+        return()
+      }
 
       sheets <- sheets_result$result
+      if (length(sheets) == 0) {
+        render_upload_error("❌ No worksheets found in workbook.", clear_data = FALSE)
+        return()
+      }
 
-      render_validation(paste("✅ File loaded:", input$file$name))
+      df(NULL)
+      editable_cols(NULL)
+      output$sheet_selector <- renderUI(NULL)
+      output$preview <- renderDT(data.frame(), options = list(dom = "t"))
+      render_validation("")
+
+      initial_sheet <- sheets[[1]]
       output$sheet_selector <- renderUI(
         with_help_tooltip(
-          selectInput(ns("sheet"), "Select sheet", choices = sheets),
+          selectInput(ns("sheet"), "Select sheet", choices = sheets, selected = initial_sheet),
           "Pick the worksheet inside your Excel file that contains the data."
         )
       )
+
+      if (load_selected_sheet(initial_sheet, render_success = FALSE)) {
+        render_validation(paste0("✅ File loaded: ", input$file$name))
+      }
     }, ignoreInit = TRUE)
     
     # -----------------------------------------------------------
     # 4️⃣ Load selected sheet (handles both long & wide)
     # -----------------------------------------------------------
-    reprocess_wide_upload <- function() {
-      req(input$file, input$sheet)
+    load_selected_sheet <- function(sheet_name, render_success = TRUE) {
+      req(input$file, input$data_source != "example")
+      path <- input$file$datapath
 
-      replicate_col <- input$replicate_col
-      if (is.null(replicate_col) || !nzchar(trimws(replicate_col))) {
-        replicate_col <- "Replicate"
-      } else {
-        replicate_col <- trimws(replicate_col)
+      if (input$data_source == "wide") {
+        replicate_col <- input$replicate_col
+        if (is.null(replicate_col) || !nzchar(trimws(replicate_col))) {
+          replicate_col <- "Replicate"
+        } else {
+          replicate_col <- trimws(replicate_col)
+        }
+
+        safe_result <- safe_convert_wide_to_long(
+          path,
+          sheet = sheet_name,
+          replicate_col = replicate_col
+        )
+
+        success_msg <- if (render_success) "✅ Wide format reshaped successfully." else NULL
+        return(
+          handle_safe_result(
+            safe_result,
+            "❌ Error converting wide format",
+            success_msg
+          )
+        )
       }
 
-      safe_result <- safe_convert_wide_to_long(
-        input$file$datapath,
-        sheet = input$sheet,
-        replicate_col = replicate_col
-      )
-
-      handle_safe_result(
-        safe_result,
-        "Error converting wide format",
-        "✅ Wide format reshaped successfully."
+      long_result <- safe_call(readxl::read_excel, path, sheet = sheet_name, guess_max = 1000000)
+      success_msg <- if (render_success) "✅ Long format loaded successfully." else NULL
+      return(
+        handle_safe_result(
+          long_result,
+          "❌ Error loading sheet",
+          success_msg
+        )
       )
     }
 
     observeEvent(list(input$sheet, input$data_source), {
       req(input$file, input$sheet, input$data_source != "example")
-      path <- input$file$datapath
-
-      if (input$data_source == "wide") {
-        reprocess_wide_upload()
-        return()
-      }
-
-      long_result <- safe_call(readxl::read_excel, path, sheet = input$sheet, guess_max = 1000000)
-      if (!handle_safe_result(
-        long_result,
-        "❌ Error loading sheet",
-        "✅ Long format loaded successfully."
-      )) {
-        return()
-      }
+      load_selected_sheet(input$sheet)
     })
 
     observeEvent(input$replicate_col, {
       req(input$file, input$sheet, input$data_source == "wide")
-      reprocess_wide_upload()
+      load_selected_sheet(input$sheet)
     }, ignoreInit = TRUE)
     
     # -----------------------------------------------------------

@@ -1,29 +1,51 @@
 #### Table Analyzer — Shared ANOVA Module  ####
 #### Section: UI & Output Binding ####
 
-build_anova_layout_controls <- function(ns, input, info) {
+build_anova_layout_controls <- function(ns, input, info, grid_cache = NULL) {
   has_strata <- !is.null(info$strata) && !is.null(info$strata$var)
+  strata_levels <- if (has_strata) info$strata$levels %||% character(0) else character(0)
   n_responses <- if (!is.null(info$responses)) length(info$responses) else 0
 
+  grid_state <- function(grid_id, axis) {
+    cache_key <- paste0(sub("_grid$", "", grid_id), "_", axis)
+    if (!is.null(grid_cache)) {
+      cached <- grid_cache[[cache_key]]
+      if (!is.null(cached) && !is.na(cached)) return(cached)
+    }
+
+    value <- input[[paste0(grid_id, "-", axis)]]
+    if (is.null(value)) value <- input[[paste0(ns(grid_id), "-", axis)]]
+    if (length(value) == 0) return(NULL)
+    parsed <- suppressWarnings(as.integer(value[1]))
+    if (is.na(parsed)) return(NULL)
+    parsed
+  }
+
   strata_inputs <- if (has_strata) {
+    strata_defaults <- compute_default_grid(max(1L, length(strata_levels)))
     plot_grid_ui(
       id = ns("strata_grid"),
-      rows_label = sprintf("Rows for strata (%s)", info$strata$var),
-      cols_label = sprintf("Cols for strata (%s)", info$strata$var),
+      rows_label = sprintf("Rows for strata (%s, n=%d)", info$strata$var, length(strata_levels)),
+      cols_label = sprintf("Cols for strata (%s, n=%d)", info$strata$var, length(strata_levels)),
       rows_help = "Rows of plots when displaying each stratum.",
-      cols_help = "Columns of plots when displaying each stratum."
+      cols_help = "Columns of plots when displaying each stratum.",
+      rows_value = grid_state("strata_grid", "rows") %||% strata_defaults$rows,
+      cols_value = grid_state("strata_grid", "cols") %||% strata_defaults$cols
     )
   } else {
     NULL
   }
 
   response_inputs <- if (!is.null(n_responses) && n_responses > 1) {
+    response_defaults <- compute_default_grid(n_responses)
     plot_grid_ui(
       id = ns("response_grid"),
       rows_label = sprintf("Rows for responses (n=%d)", n_responses),
       cols_label = sprintf("Cols for responses (n=%d)", n_responses),
       rows_help = "Rows of plots when multiple responses are shown together.",
-      cols_help = "Columns of plots when multiple responses are shown together."
+      cols_help = "Columns of plots when multiple responses are shown together.",
+      rows_value = grid_state("response_grid", "rows") %||% response_defaults$rows,
+      cols_value = grid_state("response_grid", "cols") %||% response_defaults$cols
     )
   } else {
     NULL
@@ -143,11 +165,12 @@ bind_single_model_outputs <- function(output, summary_id, download_id,
 
   output[[download_id]] <- downloadHandler(
     filename = function() {
-      base <- paste0("anova_results_", sanitize_name(response_name))
-      if (!is.null(stratum_label)) {
-        base <- paste0(base, "_stratum_", sanitize_name(stratum_label))
-      }
-      paste0(base, "_", Sys.Date(), ".docx")
+      build_export_filename(
+        analysis = "anova",
+        scope = "response",
+        response = response_name,
+        stratum = stratum_label
+      )
     },
     content = function(file) {
       if (is.null(model_entry) || !is.null(model_entry$error) || is.null(model_entry$model)) {
@@ -171,11 +194,7 @@ bind_single_model_outputs <- function(output, summary_id, download_id,
 }
 
 sanitize_name <- function(name) {
-  safe <- gsub("[^A-Za-z0-9]+", "_", name)
-  safe <- gsub("_+", "_", safe)
-  safe <- gsub("^_|_$", "", safe)
-  if (!nzchar(safe)) safe <- "unnamed"
-  safe
+  sanitize_export_part(name)
 }
 
 print_anova_summary_and_posthoc <- function(model_entry, factors) {
@@ -210,7 +229,7 @@ print_anova_summary_and_posthoc <- function(model_entry, factors) {
       anova_tbl$p.label <- ifelse(
         is.na(p_vals),
         "",
-        ifelse(p_vals < 0.0001, "<.0001", sprintf("%.4f", p_vals))
+        ifelse(p_vals < 0.0001, "<0.0001", sprintf("%.4f", p_vals))
       )
     }
     if (!"Fvalue_label" %in% names(anova_tbl)) {
@@ -233,7 +252,7 @@ print_anova_summary_and_posthoc <- function(model_entry, factors) {
   }
 
   if (length(results$posthoc_details) == 0) {
-    cat("\nNo post-hoc Tukey comparisons were generated.\n")
+    cat("\nNo post-hoc Dunnett comparisons were generated.\n")
   } else {
     for (factor_nm in names(results$posthoc_details)) {
       details <- results$posthoc_details[[factor_nm]]
@@ -241,19 +260,42 @@ print_anova_summary_and_posthoc <- function(model_entry, factors) {
         cat(
           "\n",
           format_safe_error_message(
-            paste("Post-hoc Tukey comparisons for", factor_nm, "failed"),
+            paste("Post-hoc Dunnett comparisons for", factor_nm, "failed"),
             details$error
           ),
           "\n",
           sep = ""
         )
       } else if (!is.null(details$table)) {
-        cat("\nPost-hoc Tukey comparisons for", factor_nm, ":\n")
-        print(details$table)
+        cat("\nPost-hoc Dunnett comparisons for", factor_nm, ":\n")
+        print(format_posthoc_table_for_print(details$table))
       }
     }
   }
   invisible(results)
 }
 
+format_posthoc_table_for_print <- function(df) {
+  if (is.null(df) || !is.data.frame(df)) return(df)
+
+  df <- as.data.frame(df)
+  class(df) <- "data.frame"
+
+  p_cols <- intersect(c("p.value", "p.value."), names(df))
+  for (col in names(df)) {
+    if (!is.numeric(df[[col]])) next
+    if (length(p_cols) > 0 && col == p_cols[1]) {
+      p_vals <- df[[col]]
+      df[[col]] <- ifelse(
+        is.na(p_vals),
+        "",
+        ifelse(p_vals < 0.0001, "<0.0001", sprintf("%.4f", p_vals))
+      )
+    } else {
+      df[[col]] <- sprintf("%.4f", df[[col]])
+    }
+  }
+
+  df
+}
 

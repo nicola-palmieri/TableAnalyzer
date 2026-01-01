@@ -6,6 +6,7 @@ visualize_lm_ui <- function(id) {
   ns <- NS(id)
   sidebarLayout(
     sidebarPanel(
+      class = "ta-sidebar",
       width = 4,
       h4("Step 4 — Visualize linear model"),
       p("Simple visualizations for LM/LMM results. For complex models, use the coefficient forest."),

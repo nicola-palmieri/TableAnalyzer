@@ -83,3 +83,35 @@ resolve_reactive <- function(value, default = NULL) {
   
   if (is.null(resolved)) default else resolved
 }
+
+#### Export filename helpers ####
+
+sanitize_export_part <- function(value) {
+  safe <- gsub("[^A-Za-z0-9]+", "_", as.character(value))
+  safe <- gsub("_+", "_", safe)
+  safe <- gsub("^_|_$", "", safe)
+  if (!nzchar(safe)) safe <- "unnamed"
+  safe
+}
+
+format_export_timestamp <- function(time = Sys.time()) {
+  format(time, "%Y%m%d-%H%M")
+}
+
+build_export_filename <- function(analysis, scope,
+                                  response = NULL,
+                                  stratum = NULL,
+                                  extra = NULL,
+                                  time = Sys.time()) {
+  parts <- c(sanitize_export_part(analysis))
+  if (!is.null(extra)) {
+    parts <- c(parts, vapply(extra, sanitize_export_part, character(1)))
+  }
+  if (!is.null(response)) {
+    parts <- c(parts, sanitize_export_part(response))
+  }
+  if (!is.null(stratum)) {
+    parts <- c(parts, "stratum", sanitize_export_part(stratum))
+  }
+  paste0(paste(parts, collapse = "_"), "_", format_export_timestamp(time), ".docx")
+}
