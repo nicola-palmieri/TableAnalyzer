@@ -219,12 +219,20 @@ two_way_anova_server <- function(id, filtered_data) {
         req(info)
         
         n_resp <- length(info$responses)
-        n_strata <- length(info$strata$levels %||% NULL)
-        label <- ifelse(n_strata == 0, "nostratum", paste0(n_strata, "strata"))
+        label <- if (!is.null(info$strata$var)) {
+          paste0("stratified_by_", janitor::make_clean_names(info$strata$var))
+        } else {
+          NULL
+        }
+        response_tag <- if (n_resp == 1) {
+          janitor::make_clean_names(info$responses[1])
+        } else {
+          paste0(n_resp, "resp")
+        }
         build_export_filename(
           analysis = "anova",
           scope = "all",
-          extra = c(paste0(n_resp, "resp"), label)
+          extra = c(response_tag, label)
         )
       },
       content = function(file) download_all_anova_results(models(), file)

@@ -224,17 +224,27 @@ regression_server <- function(id, data, engine = c("lm", "lmm"), allow_multi_res
           return(build_export_filename(analysis = engine, scope = "all"))
         }
 
-        if (length(mod$flat_models) == 1) {
-          entry <- mod$flat_models[[1]]
-          build_export_filename(
-            analysis = engine,
-            scope = "response",
-            response = entry$response,
-            stratum = entry$stratum
-          )
+        responses <- if (!is.null(mod$responses)) {
+          mod$responses
         } else {
-          build_export_filename(analysis = engine, scope = "all")
+          unique(vapply(mod$flat_models, function(x) x$response, character(1)))
         }
+        n_resp <- length(responses)
+        response_tag <- if (n_resp == 1) {
+          janitor::make_clean_names(responses[1])
+        } else {
+          paste0(n_resp, "resp")
+        }
+        label <- if (!is.null(mod$stratification) && !is.null(mod$stratification$var)) {
+          paste0("stratified_by_", janitor::make_clean_names(mod$stratification$var))
+        } else {
+          NULL
+        }
+        build_export_filename(
+          analysis = engine,
+          scope = "all",
+          extra = c(response_tag, label)
+        )
       },
       content = function(file) {
         mod <- models()

@@ -103,7 +103,7 @@ build_export_filename <- function(analysis, scope,
                                   stratum = NULL,
                                   extra = NULL,
                                   time = Sys.time()) {
-  parts <- c(sanitize_export_part(analysis), sanitize_export_part(scope))
+  parts <- c(sanitize_export_part(analysis))
   if (!is.null(extra)) {
     parts <- c(parts, vapply(extra, sanitize_export_part, character(1)))
   }
