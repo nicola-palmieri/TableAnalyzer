@@ -404,6 +404,11 @@ write_anova_docx <- function(content, file, response_name = NULL, stratum_label 
   if (is.null(anova_entries) || length(anova_entries) == 0) stop("No ANOVA results available to export.")
 
   combined_anova <- bind_rows(anova_entries)
+  if ("Stratum" %in% names(combined_anova)) {
+    combined_anova <- dplyr::arrange(combined_anova, Response, Stratum)
+  } else {
+    combined_anova <- dplyr::arrange(combined_anova, Response)
+  }
 
   required_cols <- c("Response", "Stratum", "Term", "SumSq", "Df", "Fvalue", "PrF")
   if (!all(required_cols %in% names(combined_anova))) stop("Missing required columns in ANOVA results.")

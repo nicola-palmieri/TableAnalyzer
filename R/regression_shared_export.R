@@ -189,6 +189,16 @@ format_flextable <- function(df, p_col = NULL, bold_p = TRUE, header_labels = NU
   ft <- border_remove(ft)
   black <- fp_border(color = "black", width = 1)
   ft <- border(ft, part = "header", border.top = black, border.bottom = black)
+  if ("Response" %in% names(df)) {
+    grouping_cols <- c("Response", if ("Stratum" %in% names(df)) "Stratum")
+    group_vals <- interaction(df[, grouping_cols, drop = FALSE], drop = TRUE)
+    if (length(group_vals) > 1) {
+      change_rows <- which(diff(as.numeric(group_vals)) != 0)
+      if (length(change_rows) > 0) {
+        ft <- border(ft, i = change_rows, part = "body", border.bottom = fp_border(color = "black", width = 0.5))
+      }
+    }
+  }
   if (nrow(df) > 0) {
     ft <- border(ft, i = nrow(df), part = "body", border.bottom = black)
   }

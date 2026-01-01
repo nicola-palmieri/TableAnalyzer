@@ -185,8 +185,11 @@ one_way_anova_server <- function(id, filtered_data) {
         n_resp <- length(info$responses)
         n_strata <- length(info$strata$levels %||% NULL)
         label <- ifelse(n_strata == 0, "nostratum", paste0(n_strata, "strata"))
-        paste0("anova_results_", n_resp, "resp_", label, "_",
-               format(Sys.time(), "%Y%m%d-%H%M"), ".docx")
+        build_export_filename(
+          analysis = "anova",
+          scope = "all",
+          extra = c(paste0(n_resp, "resp"), label)
+        )
       },
       content = function(file) download_all_anova_results(models(), file)
     )

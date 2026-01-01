@@ -221,16 +221,19 @@ regression_server <- function(id, data, engine = c("lm", "lmm"), allow_multi_res
       filename = function() {
         mod <- models()
         if (is.null(mod) || length(mod$flat_models) == 0) {
-          return(paste0(engine, "_results_", Sys.Date(), ".docx"))
+          return(build_export_filename(analysis = engine, scope = "all"))
         }
 
         if (length(mod$flat_models) == 1) {
           entry <- mod$flat_models[[1]]
-          parts <- c(engine, "results", entry$response)
-          if (!is.null(entry$stratum)) parts <- c(parts, entry$stratum)
-          paste0(paste(parts, collapse = "_"), "_", Sys.Date(), ".docx")
+          build_export_filename(
+            analysis = engine,
+            scope = "response",
+            response = entry$response,
+            stratum = entry$stratum
+          )
         } else {
-          paste0(engine, "_all_results_", Sys.Date(), ".docx")
+          build_export_filename(analysis = engine, scope = "all")
         }
       },
       content = function(file) {

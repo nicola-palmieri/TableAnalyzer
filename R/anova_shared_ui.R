@@ -165,11 +165,12 @@ bind_single_model_outputs <- function(output, summary_id, download_id,
 
   output[[download_id]] <- downloadHandler(
     filename = function() {
-      base <- paste0("anova_results_", sanitize_name(response_name))
-      if (!is.null(stratum_label)) {
-        base <- paste0(base, "_stratum_", sanitize_name(stratum_label))
-      }
-      paste0(base, "_", Sys.Date(), ".docx")
+      build_export_filename(
+        analysis = "anova",
+        scope = "response",
+        response = response_name,
+        stratum = stratum_label
+      )
     },
     content = function(file) {
       if (is.null(model_entry) || !is.null(model_entry$error) || is.null(model_entry$model)) {
@@ -193,11 +194,7 @@ bind_single_model_outputs <- function(output, summary_id, download_id,
 }
 
 sanitize_name <- function(name) {
-  safe <- gsub("[^A-Za-z0-9]+", "_", name)
-  safe <- gsub("_+", "_", safe)
-  safe <- gsub("^_|_$", "", safe)
-  if (!nzchar(safe)) safe <- "unnamed"
-  safe
+  sanitize_export_part(name)
 }
 
 print_anova_summary_and_posthoc <- function(model_entry, factors) {
