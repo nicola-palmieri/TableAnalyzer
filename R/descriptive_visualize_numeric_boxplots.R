@@ -209,8 +209,21 @@ visualize_numeric_boxplots_server <- function(id, filtered_data, summary_info, i
       
       s_vars <- resolve_reactive(info$selected_vars)
       g_var  <- resolve_reactive(info$group_var)
+      strata_levels <- resolve_reactive(info$strata_levels)
       processed <- resolve_reactive(info$processed_data)
       dat <- if (!is.null(processed)) processed else data
+      label_var <- validate_outlier_label(input$outlier_label)
+      if (!is.null(label_var) && !label_var %in% names(dat) && label_var %in% names(data)) {
+        label_data <- data
+        if (!is.null(g_var) && g_var %in% names(label_data) && !is.null(strata_levels)) {
+          label_data <- dplyr::filter(label_data, .data[[g_var]] %in% strata_levels)
+          label_data[[g_var]] <- factor(as.character(label_data[[g_var]]), levels = strata_levels)
+          label_data <- droplevels(label_data)
+        }
+        if (nrow(label_data) == nrow(dat)) {
+          dat[[label_var]] <- label_data[[label_var]]
+        }
+      }
 
       num_cols <- names(dat)[vapply(dat, is.numeric, logical(1))]
       selected_num_cols <- intersect(num_cols, s_vars)
@@ -229,7 +242,7 @@ visualize_numeric_boxplots_server <- function(id, filtered_data, summary_info, i
           group_var = g_var,
           show_points = input$show_points,
           show_outliers = input$show_outliers,
-          outlier_label_var = validate_outlier_label(input$outlier_label),
+          outlier_label_var = label_var,
           nrow_input = rows,
           ncol_input = cols,
           custom_colors = custom_colors(),
