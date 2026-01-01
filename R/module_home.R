@@ -134,7 +134,7 @@ home_ui <- function(id) {
           tagList(
             em("Developed by Nicola Palmieri"),
             br(),
-            span("Version v1.01", style = "color:#6c757d; font-size:0.9em;")
+            span("Version v1.10", style = "color:#6c757d; font-size:0.9em;")
           ),
           class = "text-muted small mb-0"
         )
