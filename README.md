@@ -85,8 +85,6 @@ If you use Table Analyzer in a publication, please cite it as:
 
 > Table Analyzer (version 1.10). GitHub repository: https://github.com/nicola-palmieri/TableAnalyzer. Accessed YYYY-MM-DD.
 
-Replace `1.10` with the app version you ran (or commit hash) and update the access date.
-
 ---
 ## 🔍 Transparency for users and reviewers
 
