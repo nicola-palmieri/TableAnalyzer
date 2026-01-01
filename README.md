@@ -1,6 +1,7 @@
-# 📊 Table Analyzer
+# 📊 Table Analyzer v1.10
 
 Table Analyzer is a modular R/Shiny application for analysing tabular datasets with modern statistical methods and generating publication-ready visualizations. It can process multiple variables in parallel, apply optional stratification, and produce fully auto-arranged plots without any manual positioning. Launching the app (via app.R) provides focused modules for uploading data, configuring analyses, refining inputs, and reviewing results — all powered by R directly in the browser.
+Current version: v1.10.
 
 ---
 
@@ -15,7 +16,8 @@ Table Analyzer is a modular R/Shiny application for analysing tabular datasets w
   - The filtered preview updates live and feeds downstream modules.
 - **Analysis hub**
   - Modules: Descriptive statistics, One-way ANOVA, Two-way ANOVA, Linear Model (LM), Linear Mixed Model (LMM), Pairwise Correlation, and Principal Component Analysis (PCA).
-  - ANOVA, LM, and LMM modules accept multiple responses and fit them as independent models; each run reports formulas, tidy summaries, Type-III ANOVA tables, downloadable `.docx` reports (LM/LMM) with formatted coefficients, random-effects variance, and ICC, plus optional per-analysis stratification (running the full analysis separately for every level of a chosen grouping variable).
+  - ANOVA, LM, and LMM modules accept multiple responses and fit them as independent models; each run reports formulas, tidy summaries, and Type-III ANOVA tables, plus optional per-analysis stratification (running the full analysis separately for every level of a chosen grouping variable).
+  - ANOVA/LM/LMM exports generate `.docx` reports; LM/LMM reports add formatted coefficients, random-effects variance, and ICC summaries.
 - **Visualization gallery**
   - Dedicated panels mirror the active analysis: descriptive dashboards, ANOVA interaction plots, LM/LMM diagnostics, correlation pair grids (`GGally::ggpairs`), and PCA biplots with optional loadings.
   - Built-in color palettes can be customized per grouping level.
@@ -53,7 +55,7 @@ For a step-by-step manual (including tips for basic users and how to reclassify 
 # Install packages (run once)
 install.packages(c(
   "bslib", "car", "dplyr", "DT", "emmeans", "fitdistrplus", "flextable",
-  "GGally", "ggplot2", "ggrepel", "lmerTest", "officer", "patchwork",
+  "GGally", "ggplot2", "ggrepel", "janitor", "lmerTest", "officer", "patchwork",
   "readxl", "shiny", "skimr", "tidyr", "zoo"
 ))
 
@@ -72,8 +74,8 @@ shiny::runApp(".")
 
 ## 📦 Exports & reporting
 
-- Every module exposes a “Download results” button that bundles the text outputs currently displayed; model tables use publication-style formatting with top and bottom rules for the header and a closing border at the table foot.
-- LM/LMM exports generate Word (`.docx`) reports with ANOVA tables, model coefficients, random-effects variance (if applicable), and ICC summaries rendered with the same publication-style borders.
+- Every module exposes a “Download results” button that bundles the outputs currently displayed; model tables use publication-style formatting with top and bottom rules for the header and a closing border at the table foot.
+- ANOVA/LM/LMM exports generate Word (`.docx`) reports; LM/LMM reports include ANOVA tables, model coefficients, random-effects variance (if applicable), and ICC summaries rendered with the same publication-style borders.
 - All plots download as publication-ready PNG files (300 dpi) with customizable width and height; PCA, correlation, and descriptive visuals can also be saved via each plot’s built-in controls.
 
 ---
@@ -81,9 +83,9 @@ shiny::runApp(".")
 
 If you use Table Analyzer in a publication, please cite it as:
 
-> Table Analyzer (version X.Y.Z). GitHub repository: https://github.com/nicola-palmieri/TableAnalyzer. Accessed YYYY-MM-DD.
+> Table Analyzer (version 1.10). GitHub repository: https://github.com/nicola-palmieri/TableAnalyzer. Accessed YYYY-MM-DD.
 
-Replace `X.Y.Z` with the app version you ran (or commit hash) and update the access date.
+Replace `1.10` with the app version you ran (or commit hash) and update the access date.
 
 ---
 ## 🔍 Transparency for users and reviewers
