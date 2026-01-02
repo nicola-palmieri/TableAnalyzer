@@ -1,6 +1,7 @@
-# Table Analyzer — User Guide
+# Table Analyzer v1.10 — User Guide
 
 This guide walks you through using Table Analyzer step by step. It is written for users with basic statistics knowledge. The goal is to get you from data upload to results and downloads with clear explanations of what each panel shows.
+Version: v1.10.
 
 ---
 
@@ -8,7 +9,7 @@ This guide walks you through using Table Analyzer step by step. It is written fo
 
 1. Install R packages listed in the README (`install.packages(c(...))`).
 2. From the repo root, run `shiny::runApp(".")`.
-3. Use the tabs in order: **Upload → Filter → Analyze → Visualize**.
+3. Use the tabs in order: **Upload -> Filter -> Analyze -> Visualize** (Filter is optional).
 
 Tip: If a categorical variable does not appear in dropdowns, go to the Upload tab, click **Edit column types**, and change it from Numeric to Categorical.
 
@@ -19,45 +20,55 @@ Tip: If a categorical variable does not appear in dropdowns, go to the Upload ta
 - **Long format (preferred):** One row per measurement. Columns include identifiers (e.g., Subject, Group) and numeric measurements.
 - **Wide format:** Two header rows: first row = variable/response names, second row = replicate labels. The app reshapes this to long format for you.
 - **Example files:** `data/toy_animal_trial_data_long.xlsx` and `data/toy_animal_trial_data_wide.xlsx`. Use them to see the expected structure.
-- **Missing values:** Allowed. Analyses drop rows with missing values only where needed.
 - **File types:** `.xlsx`, `.xls`, `.xlsm`. Maximum upload size: ~200 MB (as configured in `app.R`).
+
+---
+
+## Missing values
+
+Missing values are allowed, but each analysis handles them differently:
+
+- **Descriptive statistics:** Numeric summaries use `na.rm = TRUE` and missing counts are reported; categorical summaries keep NAs and count them.
+- **ANOVA / LM / LMM:** Rows with missing values in any variables used by the model are dropped (complete-case per model/stratum).
+- **Pairwise correlation:** Uses pairwise complete observations (each correlation uses rows where both variables are non-missing).
+- **PCA:** Uses complete cases across the selected numeric variables and reports how many rows were excluded.
 
 ---
 
 ## Upload tab (step 1)
 
 1. Choose **Data source**:
-   - **Upload (long format):** Standard tall table.
+   - **Upload (long format):** Standard long table.
    - **Upload (wide format):** Two header rows; the app will reshape to long.
    - **Example dataset:** Loads the bundled demo.
 2. If uploading, select your Excel file. Pick the **Sheet** once detected.
 3. For wide format, set **Replicate column name** (defaults to `Replicate`) and the app will convert to long.
 4. Review the preview table and validation messages.
-5. **Edit column types:** Click **Edit column types** to reclassify numeric-looking variables with few distinct values as Categorical.  
+5. **Edit column types:** Click **Edit column types** to reclassify numeric columns that represent groups (e.g., dose levels) as Categorical.  
    - If you cannot find a categorical variable in later dropdowns, come back here and change its type to **Categorical**.
 
 What happens under the hood:
-- Wide sheets are reshaped; duplicate measurements trigger an error.
+- Wide sheets are reshaped.
 - Character/factor columns get ordered levels (numeric-aware sorting).
 - Data is stored for downstream tabs once the preview is shown.
 
 ---
 
-## Filter tab (step 2)
+## Filter tab (step 2, optional)
 
-1. Select which columns to keep.
-2. Adjust filters:
+1. Skip this step if you want to analyze the full dataset.
+2. Select which columns to keep.
+3. Adjust filters:
    - Numeric: min/max boxes.
    - Categorical: multi-select pickers.
    - Logical: checkboxes.
-3. NA handling:
+4. NA handling:
    - **Drop rows with any NA in selected columns:** when checked, any row containing an NA in the columns you choose will be removed.
    - **Columns to check for NA:** pick which columns to enforce for NA removal (defaults to all).
-4. The filtered preview updates live; this subset is passed to analyses.
+5. The filtered preview updates live; this subset is passed to analyses.
 
 Tips:
 - Use filtering to remove obvious outliers before modeling.
-- If no rows remain, relax filters or check for missing values.
 
 ---
 
@@ -66,26 +77,26 @@ Tips:
 General layout:
 - **Select analysis type:** Top dropdown picks the module.
 - **Advanced options → Stratify by:** Choose a grouping variable and (optionally) which levels to keep; analyses repeat per stratum.
-- **Show results / Download results:** Run the analysis and export the outputs (text or `.docx` where available).
+- **Run analysis / Download results:** Run the analysis and export the outputs (text or `.docx` where available).
 
 Module walkthroughs and widgets:
 - **Descriptive statistics**
   - *Categorical variables:* Multi-select of factors/characters to count.
   - *Numeric variables:* Multi-select of numeric columns for means/SD/quantiles.
-  - *Show summary / Download summary:* Compute and export the text summary.
+  - *Run analysis / Download results:* Compute and export the text summary.
 - **One-way ANOVA**
   - *Response variables:* Choose one or more numeric outcomes.
   - *Categorical predictor:* Choose the grouping factor.
   - *Order of levels (first = reference):* Reorder factor levels; first becomes reference.
-  - *Stratify by (advanced):* Optional group variable + level picker.
-  - *Show results / Download results:* Fit ANOVA and export tables/post-hoc/diagnostics.
+  - *Stratify by (advanced):* Optional; repeats the analysis per stratum..
+  - *Run analysis / Download results:* Fit ANOVA and export tables/post-hoc/diagnostics.
 - **Two-way ANOVA**
   - *Response variables:* One or more numeric outcomes.
   - *Categorical predictor 1 (x-axis):* First factor.
   - *Categorical predictor 2 (lines):* Second factor.
   - *Order of levels (first = reference) for each factor:* Set the level order separately.
   - *Stratify by (advanced):* Optional; repeats the analysis per stratum.
-  - *Show results / Download results:* Fit models and export.
+  - *Run analysis / Download results:* Fit models and export.
 - **Linear Model (LM)**
   - *Response variable(s):* One or more numeric outcomes.
   - *Categorical predictors:* Factors to include as fixed effects; each gets a level-order control (reference = first level).
@@ -93,26 +104,26 @@ Module walkthroughs and widgets:
   - *Interactions:* Choose two-way interactions among categorical predictors.
   - *Formula preview:* Shows the model formula that will be fitted.
   - *Stratify by (advanced):* Optional per-group fits.
-  - *Show results / Download results:* Fit LM(s), show summaries and diagnostics, export `.docx`.
+  - *Run analysis / Download results:* Fit LM(s), show summaries and diagnostics, export `.docx`.
 - **Linear Mixed Model (LMM)**
   - Same as LM plus:
   - *Random effect(s) (categorical):* Grouping factors for random intercepts.
   - *Nest random effects in selection order:* Treat selected random effects as nested.
-  - *Show results / Download results:* Fit LMM(s), show fixed/random effects, ICC, diagnostics, export `.docx`.
+  - *Run analysis / Download results:* Fit LMM(s), show fixed/random effects, ICC, diagnostics, export `.docx`.
 - **Pairwise correlation**
   - *Numeric variables:* Select ≥2 numeric columns for the matrix.
   - *Stratify by (advanced):* Optional; computes a matrix per group.
-  - *Show correlation matrix / Download results:* Compute correlations (and later plots) and export text.
+  - *Run analysis / Download results:* Compute correlations (and later plots) and export text.
 - **Principal Component Analysis (PCA)**
   - *Numeric variables:* Select ≥2 numeric columns; rows missing any selected variable are dropped for PCA.
   - Stratification is disabled (PCA uses one common coordinate system).
-  - *Show PCA summary / Download results:* Compute PCA, view summary/loadings, see excluded-row counts, export text.
+  - *Run analysis / Download results:* Compute PCA, view summary/loadings, see excluded-row counts, export text.
 
 ---
 
 ## Visualize tab (step 4)
 
-The tab shows only the visuals that match the most recent analysis. Each panel has **Apply changes** (to rebuild the plot) and **Download plot** (PNG, 300 dpi).
+The tab shows only the visuals that match the most recent analysis. Each panel has **Apply changes** (to rebuild the plot) and a download button (**Download plot** for descriptive charts, **Download results** for the other visuals).
 
 ### Descriptive visualizations
 - **Plot type:** Categorical barplots, numeric boxplots, or numeric histograms.
@@ -139,7 +150,7 @@ The tab shows only the visuals that match the most recent analysis. Each panel h
 - **Layout:** Choose rows/cols when faceting; set plot width/height.
 - **Loadings:** Toggle arrows for variable loadings; adjust loading arrow scale.
 
-If a control references a grouping variable that does not appear, return to **Upload → Edit column types** and set that column to **Categorical**, then rerun the analysis.
+If a control references a grouping variable that does not appear, return to **Upload -> Edit column types** and set that column to **Categorical**, then rerun the analysis.
 
 ---
 
@@ -177,14 +188,14 @@ If a control references a grouping variable that does not appear, return to **Up
 ## Downloads
 
 - **Summary text:** Descriptive stats as plain text.
-- **ANOVA/LM/LMM:** Tables plus `.docx` reports (LM/LMM).
+- **ANOVA/LM/LMM:** Tables plus `.docx` reports.
 - **Plots:** PNG files (300 dpi) with configurable size.
 
 ---
 
 ## Troubleshooting and tips
 
-- **Categorical variable missing from dropdowns:** Go to **Upload → Edit column types** and set it to **Categorical**, then rerun.
+- **Categorical variable missing from dropdowns:** Go to **Upload -> Edit column types** and set it to **Categorical**, then rerun.
 - **Wide upload errors about duplicates:** Ensure header pairs (variable, replicate) are unique.
 - **Too many missing rows:** Check filters; consider removing variables with heavy missingness.
 - **Stratification drops data:** Verify the chosen group has more than one non-missing level in filtered data.
