@@ -1,7 +1,6 @@
 # Table Analyzer v1.10 — User Guide
 
 This guide walks you through using Table Analyzer step by step. It is written for users with basic statistics knowledge. The goal is to get you from data upload to results and downloads with clear explanations of what each panel shows.
-Version: v1.10.
 
 ---
 
