@@ -58,7 +58,7 @@ home_ui <- function(id) {
             class = "col-lg-6",
             div(
               class = "home-panel home-panel-steps",
-              h5("Workflow at a glance"),
+              h5("How to use the app"),
               div(
                 class = "row g-3",
                 div(
@@ -66,8 +66,8 @@ home_ui <- function(id) {
                   div(
                     class = "home-step-card",
                     icon("upload", class = "fa-lg text-primary mb-2"),
-                    h6("Upload"),
-                    p("Bring in datasets and auto-detect variable types.")
+                    h6("1. Upload"),
+                    p("Pick a file and select the sheet to load your data.")
                   )
                 ),
                 div(
@@ -75,8 +75,8 @@ home_ui <- function(id) {
                   div(
                     class = "home-step-card",
                     icon("filter", class = "fa-lg text-primary mb-2"),
-                    h6("Filter"),
-                    p("Narrow down the rows you analyze with flexible filtering.")
+                    h6("2. Filter"),
+                    p("Optionally keep only the rows or columns you need.")
                   )
                 ),
                 div(
@@ -84,8 +84,8 @@ home_ui <- function(id) {
                   div(
                     class = "home-step-card",
                     icon("square-poll-horizontal", class = "fa-lg text-primary mb-2"),
-                    h6("Analyze"),
-                    p("Run your models with guided validation and diagnostics.")
+                    h6("3. Analyze"),
+                    p("Choose a module, set variables, then click Run analysis.")
                   )
                 ),
                 div(
@@ -93,8 +93,8 @@ home_ui <- function(id) {
                   div(
                     class = "home-step-card",
                     icon("chart-area", class = "fa-lg text-primary mb-2"),
-                    h6("Visualize"),
-                    p("Generate polished plots ready for reporting.")
+                    h6("4. Visualize"),
+                    p("Adjust plots and download results or figures.")
                   )
                 )
               )
