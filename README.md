@@ -29,16 +29,16 @@ Current version: v1.10.
 
 ## 🧭 App workflow
 
-1. **Upload** (Tab “1️⃣ Upload”)
+1. **Upload** (Tab “Upload”, icon `upload`)
    - Select the example dataset or upload Excel workbooks (`.xlsx`, `.xls`, `.xlsm`).
-   - For wide layouts, Table Analyzer reshapes the sheet to tidy long format after reconciling multi-row headers.
+  - For wide layouts, Table Analyzer reshapes the sheet to tidy long format by merging the two header rows (response name and replicate ID) into a single column name, then stacks the measurements into one column.
    - Review validation messages and the live preview before proceeding.
-2. **Filter** (Tab “2️⃣ Filter”)
-   - Pick the columns you care about and adjust numeric ranges or factor selections to create the analysis-ready subset.
-3. **Analyze** (Tab “3️⃣ Analyze”)
+2. **Filter** (Tab “Filter”, optional, icon `filter`)
+   - Skip this step if you want to analyze the full dataset; use it when you need to subset rows or columns first.
+3. **Analyze** (Tab “Analyze”, icon `square-poll-horizontal`)
    - Choose a module and configure responses, predictors, covariates, interactions, stratification, and (for LMM) random intercepts.
    - Click **Run analysis** to run the model; export everything with **Download results**.
-4. **Visualize** (Tab “4️⃣ Visualize”)
+4. **Visualize** (Tab “Visualize”, icon `chart-area`)
    - Explore plots tailored to the active analysis, including multi-panel layouts for stratified fits and customizable color themes.
 
 ---
