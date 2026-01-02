@@ -10,7 +10,7 @@ Current version: v1.10.
 - **Excel-native uploads**
   - Accepts long-format workbooks or wide-format plates with two header rows (response × replicate). Wide sheets are reshaped automatically and validated for duplicate measurements.
   - Bundled demo datasets illustrate both layouts and can be loaded instantly from the UI.
-  - Ambiguous numeric columns (≤10 distinct values) can be re-typed as categorical factors directly in the upload panel.
+  - Numeric columns can be re-typed as categorical factors using the column type editor in the Upload tab.
 - **Interactive filtering**
   - Choose any subset of columns, then refine rows with auto-generated range sliders (numeric), checkboxes (logical), or multi-select pickers (categorical).
   - The filtered preview updates live and feeds downstream modules.
@@ -37,7 +37,7 @@ Current version: v1.10.
    - Pick the columns you care about and adjust numeric ranges or factor selections to create the analysis-ready subset.
 3. **Analyze** (Tab “3️⃣ Analyze”)
    - Choose a module and configure responses, predictors, covariates, interactions, stratification, and (for LMM) random intercepts.
-   - Click **Show results** to run the model; export everything with **Download results**.
+   - Click **Run analysis** to run the model; export everything with **Download results**.
 4. **Visualize** (Tab “4️⃣ Visualize”)
    - Explore plots tailored to the active analysis, including multi-panel layouts for stratified fits and customizable color themes.
 
@@ -74,7 +74,7 @@ shiny::runApp(".")
 
 ## 📦 Exports & reporting
 
-- Every module exposes a “Download results” button that bundles the outputs currently displayed; model tables use publication-style formatting with top and bottom rules for the header and a closing border at the table foot.
+- Every module exposes a **Download results** button that bundles the outputs currently displayed; model tables use publication-style formatting with top and bottom rules for the header and a closing border at the table foot.
 - ANOVA/LM/LMM exports generate Word (`.docx`) reports; LM/LMM reports include ANOVA tables, model coefficients, random-effects variance (if applicable), and ICC summaries rendered with the same publication-style borders.
 - All plots download as publication-ready PNG files (300 dpi) with customizable width and height; PCA, correlation, and descriptive visuals can also be saved via each plot’s built-in controls.
 
