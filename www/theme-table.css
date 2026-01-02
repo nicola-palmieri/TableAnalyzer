@@ -262,6 +262,12 @@ a.nav-link.disabled{
   padding: 18px;
   box-shadow: var(--shadow-sm);
 }
+.home-panel-steps{
+  background: var(--sidebar-bg);
+  border: 1px solid var(--sidebar-border);
+  color: var(--sidebar-text);
+  box-shadow: 0 14px 32px rgba(4,6,20,.25);
+}
 .home-panel h5{
   margin-top: 0;
   margin-bottom: 12px;
