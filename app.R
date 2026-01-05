@@ -31,7 +31,14 @@ for (f in list.files("R", full.names = TRUE, pattern = "\\.R$")) source(f)
 # UI
 # ---------------------------------------------------------------
 ui <- navbarPage(
-  title = tagList(icon("table"), "Table Analyzer"),
+  title = tagList(
+    tags$img(
+      src = "logo.jpeg",
+      class = "ta-navbar-logo",
+      alt = "Table Analyzer logo"
+    ),
+    "Table Analyzer"
+  ),
   id = "main_nav",
   theme = bs_theme(bootswatch = "flatly"),
   
