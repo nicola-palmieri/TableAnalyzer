@@ -1,0 +1,158 @@
+.home-wrapper{
+  min-height: calc(100vh - 140px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 28px;
+  padding-bottom: 28px;
+}
+.home-wrapper .hero{
+  max-width: 1200px;
+  width: 100%;
+}
+.home-hero{
+  text-align: left;
+}
+.home-panel{
+  background: var(--panel);
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  box-shadow: var(--shadow-sm);
+}
+.home-panel h5{
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+.home-soft-card,
+.home-step-card,
+.home-feature-card,
+.ta-modal-block{
+  background: var(--panel-soft);
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius);
+}
+.home-step-card{
+  padding: 12px;
+  height: 100%;
+}
+.home-step-card h6,
+.home-feature-card h6{
+  margin: 0 0 6px;
+  font-weight: 700;
+}
+.home-step-card h6{
+  color: #111827;
+}
+.home-step-card p{
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.home-chip-row{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 10px;
+}
+.home-chip{
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(31,94,234,.2);
+  background: rgba(31,94,234,.08);
+  color: var(--txt);
+  font-size: 11px;
+  font-weight: 600;
+}
+.home-checklist{
+  padding-left: 18px;
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.home-checklist li{
+  margin-bottom: 6px;
+}
+.home-feature-row{
+  margin-top: 6px;
+}
+.home-feature-card{
+  padding: 14px;
+  height: 100%;
+}
+.home-feature-card p{
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.ta-layout-caption{
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.ta-logo{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.ta-logo-svg{
+  width: 76px;
+  height: 76px;
+}
+.ta-logo-frame{
+  fill: #ffffff;
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+.ta-logo-grid{
+  stroke: rgba(15,23,42,.18);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.ta-logo-line{
+  fill: none;
+  stroke: var(--accent-2);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.ta-logo-dot{
+  fill: var(--accent-3);
+}
+.ta-logo-wordmark{
+  text-align: left;
+}
+.ta-logo-name{
+  font-size: 26px;
+  margin: 0;
+}
+.ta-logo-tagline{
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.ta-modal-grid{
+  margin-top: 6px;
+}
+.ta-modal-block{
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+.ta-modal-block h4{
+  font-size: 14px;
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+.ta-modal-block ul{
+  margin-bottom: 0;
+  padding-left: 18px;
+}
