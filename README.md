@@ -4,6 +4,12 @@ Table Analyzer is a modular R/Shiny application for analysing tabular datasets w
 
 ---
 
+## Open the app
+
+Live app: https://nicola-palmieri.shinyapps.io/tableanalyzer/
+
+---
+
 ## ✨ Highlights
 
 - **Excel-native uploads**
