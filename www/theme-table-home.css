@@ -1,0 +1,170 @@
+.home-simple-wrapper{
+  min-height: calc(100vh - 140px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 28px;
+  padding-bottom: 28px;
+}
+
+.home-simple-wrapper .hero{
+  max-width: 960px;
+  width: 100%;
+}
+
+.home-simple{
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.home-simple-header{
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.home-simple-logo{
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
+.home-simple-header h1{
+  margin: 0;
+  font-size: 30px;
+}
+
+.home-simple-subtitle{
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.home-simple-intro{
+  margin: 0;
+  color: var(--txt);
+  font-size: 15px;
+  max-width: 78ch;
+}
+
+.home-simple-cta{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius);
+  background: var(--panel-soft);
+}
+
+.home-simple-cta .btn{
+  min-width: 180px;
+}
+
+.home-simple-cta-note{
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.home-simple-grid{
+  margin-top: 0;
+}
+
+.home-simple-card{
+  height: 100%;
+  background: var(--panel-soft);
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+
+.home-simple-card h5{
+  margin: 0 0 8px;
+  font-weight: 700;
+}
+
+.home-simple-card p{
+  margin: 0;
+  color: var(--muted);
+}
+
+.home-simple-card ul,
+.home-simple-card ol{
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+}
+
+.home-simple-card li{
+  margin-bottom: 5px;
+}
+
+.home-simple-card li:last-child{
+  margin-bottom: 0;
+}
+
+.home-simple-footer{
+  margin-top: 2px;
+}
+
+.ta-layout-caption{
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.ta-modal-grid{
+  margin-top: 6px;
+}
+
+.ta-modal-block{
+  background: var(--panel-soft);
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+
+.ta-modal-block h4{
+  font-size: 14px;
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.ta-modal-block ul{
+  margin-bottom: 0;
+  padding-left: 18px;
+}
+
+@media (max-width: 768px){
+  .home-simple-wrapper{
+    padding-top: 18px;
+    padding-bottom: 18px;
+  }
+
+  .home-simple{
+    gap: 14px;
+  }
+
+  .home-simple-header h1{
+    font-size: 24px;
+  }
+
+  .home-simple-logo{
+    width: 52px;
+    height: 52px;
+  }
+
+  .home-simple-cta{
+    align-items: flex-start;
+  }
+
+  .home-simple-cta .btn{
+    width: 100%;
+    min-width: 0;
+  }
+}

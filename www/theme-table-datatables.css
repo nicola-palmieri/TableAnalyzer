@@ -1,0 +1,47 @@
+/* DATATABLES */
+.dataTables_wrapper{
+  color: var(--txt);
+  font-size: 12px;
+}
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter{
+  margin-bottom: 10px;
+  font-size: inherit;
+}
+.dataTables_wrapper .dataTables_filter input,
+.dataTables_wrapper .dataTables_length select{
+  background-color: #ffffff !important;
+  border: 1px solid rgba(15,23,42,.16) !important;
+  color: inherit !important;
+  border-radius: var(--radius-sm) !important;
+  font-size: inherit;
+  padding: 3px 6px;
+  min-height: 28px;
+}
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_paginate{
+  color: inherit !important;
+  font-size: inherit;
+}
+table.dataTable{
+  background: var(--panel) !important;
+  color: var(--txt) !important;
+  font-size: 12.5px;
+}
+table.dataTable thead th{
+  background: var(--panel-soft) !important;
+  border-bottom: 1px solid var(--stroke) !important;
+}
+table.dataTable tbody td{
+  border-top: 1px solid rgba(15,23,42,.08) !important;
+}
+.shiny-plot-output,
+.shiny-plot-output > img,
+.shiny-plot-output > svg,
+.shiny-plot-output > canvas,
+.plotly,
+.plotly .svg-container{
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}

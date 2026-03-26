@@ -7,136 +7,83 @@ home_ui <- function(id) {
 
   fluidPage(
     div(
-      class = "home-wrapper px-3",
+      class = "home-simple-wrapper px-3",
       div(
-        class = "hero home-hero mx-auto",
+        class = "hero home-simple mx-auto",
         div(
-          class = "row gy-4 align-items-center",
+          class = "home-simple-header",
+          tags$img(
+            src = "logo.jpeg",
+            class = "home-simple-logo",
+            alt = "Table Analyzer logo"
+          ),
           div(
-            class = "col-lg-6",
-            div(
-              class = "ta-logo",
-              div(
-                class = "ta-logo-mark",
-                HTML(
-                  paste0(
-                    "<svg class=\"ta-logo-svg\" viewBox=\"0 0 120 120\" role=\"img\" aria-label=\"Table Analyzer logo\">",
-                    "<rect class=\"ta-logo-frame\" x=\"10\" y=\"10\" width=\"100\" height=\"100\" rx=\"18\"/>",
-                    "<path class=\"ta-logo-grid\" d=\"M30 40h60M30 60h60M30 80h60\"/>",
-                    "<path class=\"ta-logo-grid\" d=\"M40 30v60M60 30v60M80 30v60\"/>",
-                    "<path class=\"ta-logo-line\" d=\"M28 78L50 58L70 68L92 44\"/>",
-                    "<circle class=\"ta-logo-dot\" cx=\"92\" cy=\"44\" r=\"4\"/>",
-                    "</svg>"
-                  )
-                )
-              ),
-              div(
-                class = "ta-logo-wordmark",
-                h1(class = "ta-logo-name", "Table Analyzer"),
-                span(class = "ta-logo-tagline", "Modern statistics for scientific tables")
-              )
-            ),
+            h1("Table Analyzer"),
             p(
-              class = "lead text-muted",
-              "Turn your tabular data into publication-ready tables and plots."
-            ),
+              class = "home-simple-subtitle",
+              "Statistical analysis for scientific tables, without spreadsheet chaos."
+            )
+          )
+        ),
+        p(
+          class = "home-simple-intro",
+          "Table Analyzer helps you upload Excel data, run analysis modules, and export publication-ready tables and plots in one guided workflow."
+        ),
+        div(
+          class = "home-simple-cta",
+          actionButton(
+            ns("go_upload"),
+            "Go to Upload",
+            class = "btn btn-primary btn-lg"
+          ),
+          span(
+            class = "home-simple-cta-note",
+            "Start with your own workbook or the built-in example dataset."
+          )
+        ),
+        div(
+          class = "row g-3 home-simple-grid",
+          div(
+            class = "col-md-4",
             div(
-              class = "home-chip-row",
-              span(class = "home-chip", "Auto means & SD"),
-              span(class = "home-chip", "Multi-response ready"),
-              span(class = "home-chip", "Stratified outputs"),
-              span(class = "home-chip", "Consistent formatting")
-            ),
-            tags$ul(
-              class = "home-checklist",
-              tags$li("Automatic group means, standard deviations, and summaries — no manual spreadsheet formulas."),
-              tags$li("One workflow from filtered data to model output, without copy-paste."),
-              tags$li("Exports that keep tables and plots consistent across analyses.")
+              class = "home-simple-card",
+              h5("What it is"),
+              p("A browser-based app that runs statistical analyses on tabular data and creates the associated plots for reporting.")
             )
           ),
           div(
-            class = "col-lg-6",
+            class = "col-md-4",
             div(
-              class = "home-panel home-panel-steps",
-              h5("Workflow at a glance"),
-              div(
-                class = "row g-3",
-                div(
-                  class = "col-6",
-                  div(
-                    class = "home-step-card",
-                    icon("upload", class = "fa-lg text-primary mb-2"),
-                    h6("Upload"),
-                    p("Bring in datasets and auto-detect variable types.")
-                  )
-                ),
-                div(
-                  class = "col-6",
-                  div(
-                    class = "home-step-card",
-                    icon("filter", class = "fa-lg text-primary mb-2"),
-                    h6("Filter"),
-                    p("Narrow down the rows you analyze with flexible filtering.")
-                  )
-                ),
-                div(
-                  class = "col-6",
-                  div(
-                    class = "home-step-card",
-                    icon("square-poll-horizontal", class = "fa-lg text-primary mb-2"),
-                    h6("Analyze"),
-                    p("Run your models with guided validation and diagnostics.")
-                  )
-                ),
-                div(
-                  class = "col-6",
-                  div(
-                    class = "home-step-card",
-                    icon("chart-area", class = "fa-lg text-primary mb-2"),
-                    h6("Visualize"),
-                    p("Generate polished plots ready for reporting.")
-                  )
-                )
+              class = "home-simple-card",
+              h5("Key advantages"),
+              tags$ul(
+                tags$li("Simple, guided interface that reduces setup time."),
+                tags$li("Quick, easy plots and summaries without manual formulas or spreadsheet copy-paste."),
+                tags$li("Supports multiple response variables, optional stratified analyses, and methods based on modern statistics.")
+              )
+            )
+          ),
+          div(
+            class = "col-md-4",
+            div(
+              class = "home-simple-card",
+              h5("Workflow"),
+              tags$ol(
+                tags$li(tags$b("Upload"), " data."),
+                tags$li(tags$b("Filter"), " rows or variables."),
+                tags$li(tags$b("Analyze"), " by choosing among 7 powerful analysis modules."),
+                tags$li(tags$b("Visualize"), " and export.")
               )
             )
           )
         ),
-        tags$hr(class = "my-4"),
-        div(
-          class = "row g-3 home-feature-row",
-          div(
-            class = "col-md-4",
-            div(
-              class = "home-feature-card",
-              h6("Built-in quality checks"),
-              p("Catch invalid inputs early so outputs are dependable.")
-            )
-          ),
-          div(
-            class = "col-md-4",
-            div(
-              class = "home-feature-card",
-              h6("Simultaneous multivariate reporting"),
-              p("Handle multiple responses and stratified reporting in one run.")
-            )
-          ),
-          div(
-            class = "col-md-4",
-            div(
-              class = "home-feature-card",
-              h6("Ready-to-share outputs"),
-              p("Publication-ready plots and tables, exportable with one click.")
-            )
-          )
-        ),
-        tags$hr(class = "my-4"),
         p(
           tagList(
             em("Developed by Nicola Palmieri"),
             br(),
-            span("Version v1.10", style = "color:#6c757d; font-size:0.9em;")
+            span("Version v1.10", style = "font-size:0.9em;")
           ),
-          class = "text-muted small mb-0"
+          class = "text-muted small home-simple-footer mb-0"
         )
       )
     )
@@ -146,6 +93,12 @@ home_ui <- function(id) {
 
 home_server <- function(id) {
   moduleServer(id, function(input, output, session) {
-    # Placeholder for future home page interactivity
+    observeEvent(input$go_upload, {
+      updateNavbarPage(
+        session = session$rootScope(),
+        inputId = "main_nav",
+        selected = "upload_tab"
+      )
+    })
   })
 }
