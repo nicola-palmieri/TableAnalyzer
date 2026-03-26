@@ -88,7 +88,7 @@ shiny::runApp(".")
 
 If you use Table Analyzer in a publication, please cite it as:
 
-> Table Analyzer (version 1.10). GitHub repository: https://github.com/nicola-palmieri/TableAnalyzer. Accessed YYYY-MM-DD.
+> Palmieri, N. (2026). *Table Analyzer* (Version 1.10) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.19233119
 
 ---
 ## 🔍 Transparency for users and reviewers
