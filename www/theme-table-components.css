@@ -11,22 +11,22 @@
   background: var(--panel);
   border: 1px solid var(--stroke);
   border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
 }
 
 .well{
-  padding: 10px 12px;
+  padding: 18px;
 }
 .well.ta-sidebar{
   background: var(--sidebar-bg);
   border-color: var(--sidebar-border);
-  box-shadow: 0 14px 32px rgba(4,6,20,.6);
+  box-shadow: var(--shadow-sm);
 }
 .well.ta-sidebar .form-control,
 .well.ta-sidebar .selectize-input,
 .well.ta-sidebar .selectize-control.single .selectize-input{
-  background-color: rgba(255,255,255,.05);
-  border-color: rgba(255,255,255,.25);
+  background-color: var(--panel-soft);
+  border-color: var(--stroke-strong);
   color: var(--sidebar-text);
 }
 .well h4{
@@ -37,7 +37,7 @@
   margin-bottom: 6px;
 }
 .well hr{
-  margin: 8px 0;
+  margin: 14px 0;
 }
 .ta-formula-preview{
   box-shadow: none;
@@ -50,14 +50,14 @@
 }
 
 .form-group{
-  margin-bottom: 6px;
+  margin-bottom: 12px;
 }
 label,
 .control-label{
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--muted);
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 .help-block{
   font-size: 11px;
@@ -81,13 +81,13 @@ select.form-control,
   font-size: 13px;
   font-family: var(--font-body);
   line-height: 1.4;
-  min-height: 30px;
-  padding: 4px 8px;
+  min-height: 36px;
+  padding: 7px 9px;
 }
 .form-control:focus,
 .selectize-input.focus{
-  border-color: rgba(29,78,216,.45);
-  box-shadow: 0 0 0 2px rgba(29,78,216,.15);
+  border-color: rgba(11,107,96,.55);
+  box-shadow: 0 0 0 3px rgba(11,107,96,.11);
 }
 .selectize-input input{
   color: var(--txt);
@@ -99,8 +99,8 @@ select.form-control,
 .ta-sidebar .selectize-input,
 .ta-sidebar .selectize-control.single .selectize-input{
   color: inherit !important;
-  background: rgba(255,255,255,.05);
-  border-color: rgba(255,255,255,.25);
+  background: var(--panel-soft);
+  border-color: var(--stroke-strong);
 }
 .ta-sidebar .selectize-input input{
   color: inherit !important;
@@ -110,21 +110,21 @@ select.form-control,
 }
 .ta-sidebar input[type="file"]{
   color: var(--txt) !important;
-  background: rgba(255,255,255,.08);
-  border: 1px solid rgba(255,255,255,.3);
+  background: var(--panel-soft);
+  border: 1px solid var(--stroke-strong);
   border-radius: var(--radius-sm);
   padding: 6px 8px;
 }
 .tab-pane#upload_tab,
 .tab-pane#upload_tab .container-fluid{
-  background: var(--sidebar-bg);
-  color: var(--sidebar-text);
+  background: transparent;
+  color: var(--txt);
 }
 .tab-pane#upload_tab .well,
 .tab-pane#upload_tab .panel{
-  background: var(--sidebar-bg);
-  border-color: var(--sidebar-border);
-  color: var(--sidebar-text);
+  background: var(--panel);
+  border-color: var(--stroke);
+  color: var(--txt);
 }
 .selectize-dropdown,
 .selectize-dropdown-content{
@@ -142,29 +142,32 @@ select.form-control,
 
 .btn,
 .btn-default{
-  background: var(--bg1);
-  border: 1px solid rgba(15,23,42,.12);
+  background: var(--panel);
+  border: 1px solid var(--stroke-strong);
   color: var(--txt);
   border-radius: var(--radius-sm);
-  padding: 5px 10px;
-  font-size: 12px;
+  padding: 8px 12px;
+  font-size: 13px;
   line-height: 1.2;
 }
 .btn:hover,
 .btn:focus{
-  background: var(--bg1);
-  color: var(--txt);
-  box-shadow: 0 0 0 2px rgba(15,23,42,.08);
+  background: var(--panel-soft);
+  color: var(--accent);
+  border-color: var(--accent);
+  box-shadow: none;
 }
 .btn-primary{
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
-  border: none;
+  background: var(--accent);
+  border: 1px solid var(--accent);
   color: #ffffff;
   font-weight: 600;
 }
 .btn-primary:hover,
 .btn-primary:focus{
-  filter: brightness(1.03);
+  background: #08584f;
+  border-color: #08584f;
+  filter: none;
   color: #ffffff;
 }
 
@@ -180,21 +183,21 @@ select.form-control,
 }
 
 hr{
-  border-top: 1px solid rgba(31,94,234,.18);
+  border-top: 1px solid var(--stroke);
 }
 
 .empty-state{
   max-width: 420px;
   margin-left: auto;
   margin-right: auto;
-  border: 1px dashed rgba(31,94,234,.22);
+  border: 1px dashed var(--stroke-strong);
   border-radius: var(--radius);
   background: transparent;
 }
 .analysis-empty-state{
   background: var(--panel);
-  box-shadow: var(--shadow);
-  border-color: rgba(15,23,42,.12);
+  box-shadow: none;
+  border-color: var(--stroke);
 }
 .empty-state-icon{
   color: var(--accent-2);
