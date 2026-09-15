@@ -8,7 +8,7 @@ upload_ui <- function(id) {
     sidebarPanel(
       class = "ta-sidebar",
       width = 4,
-      h4(class = "ta-sidebar-title", "Upload data"),
+      h4(class = "ta-sidebar-title", "Step 1 - Upload data"),
       p(class = "ta-sidebar-subtitle", "Choose whether to load the example dataset or upload your own Excel file."),
       hr(),
       with_help_tooltip(
@@ -43,7 +43,7 @@ upload_ui <- function(id) {
 }
 
 
-upload_server <- function(id, track_event = NULL) {
+upload_server <- function(id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     df <- reactiveVal(NULL)
@@ -130,7 +130,6 @@ upload_server <- function(id, track_event = NULL) {
         )) {
           return()
         }
-        if (is.function(track_event)) track_event("example_loaded")
       } else {
         render_validation("Please upload an Excel file.")
       }

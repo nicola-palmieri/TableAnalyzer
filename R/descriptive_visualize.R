@@ -8,7 +8,7 @@ visualize_descriptive_ui <- function(id) {
     sidebarPanel(
       class = "ta-sidebar",
       width = 4,
-      h4(class = "ta-sidebar-title", "Descriptive figures"),
+      h4(class = "ta-sidebar-title", "Step 5 - Visualize descriptive statistics"),
       p(class = "ta-sidebar-subtitle", "Explore distributions, variability, and normality across variables."),
       hr(),
       with_help_tooltip(

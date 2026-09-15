@@ -29,17 +29,11 @@ table.dataTable{
   font-size: 12.5px;
 }
 table.dataTable thead th{
-  background: #eef3ef !important;
-  color: var(--txt) !important;
-  font-weight: 700;
+  background: var(--panel-soft) !important;
   border-bottom: 1px solid var(--stroke) !important;
 }
 table.dataTable tbody td{
-  border-top: 1px solid var(--stroke) !important;
-}
-table.dataTable.stripe tbody tr.odd,
-table.dataTable.display tbody tr.odd{
-  background-color: #fafbf9 !important;
+  border-top: 1px solid rgba(15,23,42,.08) !important;
 }
 .shiny-plot-output,
 .shiny-plot-output > img,

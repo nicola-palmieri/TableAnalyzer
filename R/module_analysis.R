@@ -8,8 +8,8 @@ analysis_ui <- function(id) {
     sidebarPanel(
       class = "ta-sidebar",
       width = 4,
-      h4(class = "ta-sidebar-title", "Configure analysis"),
-      p(class = "ta-sidebar-subtitle", "Choose a method, set its variables, and run it. Completed output opens in Results."),
+      h4(class = "ta-sidebar-title", "Step 3 - Analyze results"),
+      p(class = "ta-sidebar-subtitle", "Select an analysis type to explore your data, then inspect the summaries on the right."),
       hr(),
       
       # --- CSS: expand dropdown height for better visibility ---
@@ -48,27 +48,15 @@ analysis_ui <- function(id) {
     
     mainPanel(
       width = 8,
-      uiOutput(ns("setup_panel"))
-    )
-  )
-}
-
-
-analysis_results_ui <- function(id) {
-  ns <- NS(id)
-  div(
-    class = "ta-results-workspace",
-    div(
-      class = "ta-results-header",
       div(
-        span(class = "ta-eyebrow", "Statistical output"),
-        h3("Analysis results")
+        class = "ta-results-header",
+        h4("Analysis results"),
+        uiOutput(ns("summary_help_icon"))
       ),
-      uiOutput(ns("summary_help_icon"))
-    ),
-    div(
-      class = "ta-analysis-results",
-      uiOutput(ns("results_panel"))
+      div(
+        class = "ta-analysis-results",
+        uiOutput(ns("results_panel"))
+      )
     )
   )
 }
@@ -92,10 +80,7 @@ analysis_module_registry <- function() {
 }
 
 
-analysis_server <- function(id,
-                            filtered_data,
-                            modules = analysis_module_registry(),
-                            track_event = NULL) {
+analysis_server <- function(id, filtered_data, modules = analysis_module_registry()) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     df <- reactive(filtered_data())
@@ -165,7 +150,6 @@ analysis_server <- function(id,
       if (current_value > baseline_value) {
         has_run(TRUE)
         data_changed_since_run(FALSE)
-        if (is.function(track_event)) track_event("analysis_run")
       }
     }, ignoreInit = TRUE)
 
@@ -190,35 +174,6 @@ analysis_server <- function(id,
       ui <- mod$ui(ns(mod$id))
       req(ui)
       ui$config
-    })
-
-    output$setup_panel <- renderUI({
-      data <- df()
-      if (is.null(data) || nrow(data) == 0) {
-        return(analysis_empty_state(
-          "No data available",
-          "Load data and adjust its filters before configuring an analysis."
-        ))
-      }
-
-      selection <- input$analysis_type
-      selection_text <- if (is.null(selection) || identical(selection, "none")) {
-        "Choose a method from the control panel to begin."
-      } else {
-        paste0("Configure ", selection, " on the left, then run it to open the Results workspace.")
-      }
-
-      div(
-        class = "ta-workspace-guide",
-        span(class = "ta-eyebrow", "Analysis workspace"),
-        h2("From data to defensible results"),
-        p(selection_text),
-        div(
-          class = "ta-data-summary",
-          span(tags$b(format(nrow(data), big.mark = ",")), " rows"),
-          span(tags$b(ncol(data)), " columns")
-        )
-      )
     })
 
     output$results_panel <- renderUI({
@@ -282,7 +237,6 @@ analysis_server <- function(id,
     
     list(
       results = model_out,
-      has_results = reactive(isTRUE(has_run())),
       selection = reactive({
         selection <- input$analysis_type
         if (is.null(selection) || !nzchar(selection) || identical(selection, "none")) {

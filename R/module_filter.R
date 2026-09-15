@@ -8,7 +8,7 @@ filter_ui <- function(id) {
     sidebarPanel(
       class = "ta-sidebar",
       width = 4,
-      h4(class = "ta-sidebar-title", "Filter records"),
+      h4(class = "ta-sidebar-title", "Step 2 - Filter records"),
       p(class = "ta-sidebar-subtitle", "Select the columns to focus on and adjust the filters to refine the dataset for analysis."),
       hr(),
       uiOutput(ns("column_selector")),

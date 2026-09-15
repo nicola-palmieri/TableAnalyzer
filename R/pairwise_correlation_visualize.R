@@ -8,7 +8,7 @@ visualize_ggpairs_ui <- function(id) {
     sidebarPanel(
       class = "ta-sidebar",
       width = 4,
-      h4(class = "ta-sidebar-title", "Correlation figure"),
+      h4(class = "ta-sidebar-title", "Step 4 - Visualize pairwise correlation"),
       p(class = "ta-sidebar-subtitle", "Visualize pairwise relationships and correlation coefficients among numeric variables."),
       hr(),
       with_help_tooltip(

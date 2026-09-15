@@ -8,8 +8,6 @@ Table Analyzer is a modular R/Shiny application for analysing tabular datasets w
 
 Live app: https://nicola-palmieri.shinyapps.io/tableanalyzer/
 
-Select **Try the 30-second demo** on the home page to load the bundled dataset, run a three-response one-way ANOVA, and open its composite figure automatically.
-
 ---
 
 ## ✨ Highlights
@@ -36,25 +34,17 @@ Select **Try the 30-second demo** on the home page to load the bundled dataset, 
 
 ## 🧭 App workflow
 
-1. **Data** (Upload view)
+1. **Upload** (Tab “Upload”)
    - Select the example dataset or upload Excel workbooks (`.xlsx`, `.xls`, `.xlsm`).
   - For wide layouts, Table Analyzer reshapes the sheet to tidy long format by merging the two header rows (response name and replicate ID) into a single column name, then stacks the measurements into one column.
    - Review validation messages and the live preview before proceeding.
-2. **Data** (Filter view, optional)
+2. **Filter** (Tab “Filter”, optional)
    - Skip this step if you want to analyze the full dataset; use it when you need to subset rows or columns first.
 3. **Analyze** (Tab “Analyze”)
    - Choose a module and configure responses, predictors, covariates, interactions, stratification, and (for LMM) random intercepts.
    - Click **Run analysis** to run the model; export everything with **Download results**.
-4. **Results**
-   - Review statistical output in the **Results** view and create analysis-specific figures in **Plots**, including multi-panel layouts for stratified fits and customizable color themes.
-
----
-
-## Privacy and anonymous usage events
-
-Uploaded workbooks are processed for the current Shiny session. Table Analyzer does not write filenames, column names, table values, model formulas, or statistical results to a permanent application database or analytics log.
-
-The app logs only four workflow events: `session_started`, `example_loaded`, `analysis_run`, and `plot_downloaded`. Events carry a random per-session code so the basic workflow funnel can be evaluated; there are no cookies or persistent user identifiers. Set `TABLEANALYZER_TELEMETRY=false` before launch to disable these events.
+4. **Visualize** (Tab “Visualize”)
+   - Explore plots tailored to the active analysis, including multi-panel layouts for stratified fits and customizable color themes.
 
 ---
 
