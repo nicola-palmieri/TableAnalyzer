@@ -9,12 +9,13 @@ library(purrr)
 source("../R/module_upload_helpers.R")
 
 test_that("convert_wide_to_long behaves correctly across 20 Excel scenarios", {
-  
-  dir.create("test_excels", showWarnings = FALSE)
+  test_dir <- tempfile("table-analyzer-excel-tests-")
+  dir.create(test_dir)
+  on.exit(unlink(test_dir, recursive = TRUE), add = TRUE)
   
   write_test_excel <- function(data, name, index) {
     filename <- sprintf("%02d_%s.xlsx", index, name)
-    path <- file.path("test_excels", filename)
+    path <- file.path(test_dir, filename)
     openxlsx::write.xlsx(data, path, colNames = FALSE)
     path
   }
@@ -159,6 +160,9 @@ test_that("convert_wide_to_long behaves correctly across 20 Excel scenarios", {
   # ---- Test 2 ----
   out2 <- results[[2]]
   expect_null(out2$error)
+  expect_equal(names(out2$result), c("ID", "Group", "Replicate", "A"))
+  expect_equal(as.character(out2$result$Replicate), c("Rep1", "Rep2"))
+  expect_equal(as.character(out2$result$A), c("10", "12"))
   
   # ---- Test 3 ----
   out3 <- results[[3]]

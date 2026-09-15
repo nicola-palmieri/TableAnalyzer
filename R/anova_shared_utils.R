@@ -6,7 +6,7 @@ anova_protect_vars <- function(vars) {
   vals <- vapply(vars, function(v) {
     if (is.null(v) || is.na(v) || !nzchar(v)) return("")
     if (grepl("^`.*`$", v)) v else paste0("`", v, "`")
-  }, character(1))
+  }, character(1), USE.NAMES = FALSE)
 
   vals[nzchar(vals)]
 }

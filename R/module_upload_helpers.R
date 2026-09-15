@@ -1,6 +1,13 @@
 # Convert characters to ordered factors
 preprocess_uploaded_table <- function(df) {
-  df |> mutate(across(where(is.character) | where(is.factor), auto_factor_order))
+  df |>
+    janitor::clean_names() |>
+    dplyr::mutate(
+      dplyr::across(
+        where(is.character) | where(is.factor),
+        auto_factor_order
+      )
+    )
 }
 
 # Convert character/factor to factor with numeric-aware order
@@ -33,7 +40,9 @@ convert_wide_to_long <- function(path, sheet = 1, replicate_col = "Replicate") {
   header2[is.na(header2) | header2 == ""] <- ""
   
   if (all(header2 == "")) {
-    header2 <- ifelse(grepl("_", header1), sub(".*_", "", header1), "")
+    combined_headers <- grepl("_[^_]+$", header1)
+    header2 <- ifelse(combined_headers, sub(".*_", "", header1), "")
+    header1 <- ifelse(combined_headers, sub("_[^_]+$", "", header1), header1)
   }
   
   clean_names <- ifelse(header2 == "", header1, paste0(header1, "_", header2))

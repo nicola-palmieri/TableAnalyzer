@@ -59,13 +59,22 @@ For a step-by-step manual (including tips for basic users and how to reclassify 
 ```r
 # Install packages (run once)
 install.packages(c(
-  "bslib", "car", "dplyr", "DT", "emmeans", "fitdistrplus", "flextable",
-  "GGally", "ggplot2", "ggrepel", "janitor", "lmerTest", "officer", "patchwork",
-  "readxl", "shiny", "skimr", "tidyr", "zoo"
+  "bslib", "bsicons", "car", "dplyr", "DT", "emmeans", "fitdistrplus",
+  "flextable", "GGally", "ggplot2", "ggrepel", "htmltools", "janitor",
+  "lme4", "lmerTest", "officer", "patchwork", "purrr", "readxl", "rlang",
+  "scales", "shiny", "skimr", "stringr", "tibble", "tidyr", "tidyselect",
+  "zoo"
 ))
 
 # Launch the app from the repository root
 shiny::runApp(".")
+```
+
+### Run the unit tests
+
+```r
+install.packages(c("openxlsx", "testthat"))
+source("tests/run_tests.R")
 ```
 
 ## 📂 Data expectations
