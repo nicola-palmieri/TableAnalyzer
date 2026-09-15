@@ -62,7 +62,25 @@ analysis_ui <- function(id) {
 }
 
 
-analysis_server <- function(id, filtered_data) {
+analysis_module_registry <- function() {
+  list(
+    "Descriptive Statistics" = list(id = "desc",  ui = descriptive_ui, server = descriptive_server, type = "desc"),
+    "One-way ANOVA"          = list(id = "anova1", ui = one_way_anova_ui, server = one_way_anova_server, type = "anova1"),
+    "Two-way ANOVA"          = list(id = "anova2", ui = two_way_anova_ui, server = two_way_anova_server, type = "anova2"),
+    "Linear Model (LM)"      = list(id = "lm",     ui = lm_ui, server = lm_server, type = "lm"),
+    "Linear Mixed Model (LMM)" = list(id = "lmm",  ui = lmm_ui, server = lmm_server, type = "lmm"),
+    "Pairwise Correlation"   = list(
+      id = "pairs",
+      ui = ggpairs_ui,
+      server = ggpairs_server,
+      type = "pairs"
+    ),
+    "PCA"                    = list(id = "pca",    ui = pca_ui, server = pca_server, type = "pca")
+  )
+}
+
+
+analysis_server <- function(id, filtered_data, modules = analysis_module_registry()) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     df <- reactive(filtered_data())
@@ -74,22 +92,6 @@ analysis_server <- function(id, filtered_data) {
     has_run <- reactiveVal(FALSE)
     data_changed_since_run <- reactiveVal(FALSE)
     run_baseline <- reactiveVal(0L)
-    
-    # ---- Mapping of available modules ----
-    modules <- list(
-      "Descriptive Statistics" = list(id = "desc",  ui = descriptive_ui, server = descriptive_server, type = "desc"),
-      "One-way ANOVA"          = list(id = "anova1", ui = one_way_anova_ui, server = one_way_anova_server, type = "anova1"),
-      "Two-way ANOVA"          = list(id = "anova2", ui = two_way_anova_ui, server = two_way_anova_server, type = "anova2"),
-      "Linear Model (LM)"      = list(id = "lm",     ui = lm_ui, server = lm_server, type = "lm"),
-      "Linear Mixed Model (LMM)" = list(id = "lmm",  ui = lmm_ui, server = lmm_server, type = "lmm"),
-      "Pairwise Correlation"   = list(
-        id = "pairs",
-        ui = ggpairs_ui,
-        server = ggpairs_server,
-        type = "pairs"
-      ),
-      "PCA"                    = list(id = "pca",    ui = pca_ui, server = pca_server, type = "pca")
-    )
     
     # ---- Cache for lazily created servers ----
     server_cache <- reactiveValues()
@@ -256,7 +258,7 @@ normalize_analysis_type <- function(mod_type) {
     pairs = "CORR",
     pca = "PCA"
   )
-  lookup[[mod_type]] %||% toupper(mod_type)
+  if (mod_type %in% names(lookup)) lookup[[mod_type]] else toupper(mod_type)
 }
 
 analysis_defaults <- function(mod_type) {
