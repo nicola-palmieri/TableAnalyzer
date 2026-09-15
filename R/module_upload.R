@@ -43,7 +43,7 @@ upload_ui <- function(id) {
 }
 
 
-upload_server <- function(id) {
+upload_server <- function(id, track_event = NULL) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     df <- reactiveVal(NULL)
@@ -130,6 +130,7 @@ upload_server <- function(id) {
         )) {
           return()
         }
+        if (is.function(track_event)) track_event("example_loaded")
       } else {
         render_validation("Please upload an Excel file.")
       }

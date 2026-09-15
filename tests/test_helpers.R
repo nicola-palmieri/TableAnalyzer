@@ -2,6 +2,29 @@ library(testthat)
 
 source("../R/helpers.R")
 
+test_that("anonymous usage tracker emits only approved event metadata", {
+  tracker <- new_usage_tracker(
+    session_code = "session123",
+    clock = function() as.POSIXct("2026-09-15 12:00:00", tz = "UTC")
+  )
+
+  expect_message(
+    tracker("analysis_run"),
+    paste0(
+      "tableanalyzer_event timestamp=2026-09-15T12:00:00Z ",
+      "session=session123 event=analysis_run"
+    ),
+    fixed = TRUE
+  )
+  expect_error(tracker("column_selected"), "Unsupported anonymous usage event")
+})
+
+test_that("anonymous usage tracking can be disabled", {
+  tracker <- new_usage_tracker(enabled = FALSE, session_code = "session123")
+
+  expect_false(tracker("session_started"))
+})
+
 test_that("format_safe_error_message normalizes common error inputs", {
   expect_equal(format_safe_error_message(NULL), "Error:")
   expect_equal(format_safe_error_message("Upload", simpleError("bad file")), "Upload:\nbad file")

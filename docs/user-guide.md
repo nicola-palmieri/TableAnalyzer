@@ -8,9 +8,10 @@ This guide walks you through using Table Analyzer step by step. It is written fo
 
 1. Install R packages listed in the README (`install.packages(c(...))`).
 2. From the repo root, run `shiny::runApp(".")`.
-3. Use the tabs in order: **Upload -> Filter -> Analyze -> Visualize** (Filter is optional).
+3. Use the workspaces in order: **Data -> Analyze -> Results**. Filtering inside Data is optional.
+4. Alternatively, select **Try the 30-second demo** on Home to load and analyze the bundled example automatically.
 
-Tip: If a categorical variable does not appear in dropdowns, go to the Upload tab, click **Edit column types**, and change it from Numeric to Categorical.
+Tip: If a categorical variable does not appear in dropdowns, open **Data -> Upload**, click **Edit column types**, and change it from Numeric to Categorical.
 
 ---
 
@@ -34,7 +35,7 @@ Missing values are allowed, but each analysis handles them differently:
 
 ---
 
-## Upload tab (step 1)
+## Data workspace: Upload
 
 1. Choose **Data source**:
    - **Upload (long format):** Standard long table.
@@ -53,7 +54,7 @@ What happens under the hood:
 
 ---
 
-## Filter tab (step 2, optional)
+## Data workspace: Filter (optional)
 
 1. Skip this step if you want to analyze the full dataset.
 2. Select which columns to keep.
@@ -71,7 +72,7 @@ Tips:
 
 ---
 
-## Analyze tab (step 3)
+## Analyze workspace
 
 General layout:
 - **Select analysis type:** Top dropdown picks the module.
@@ -120,9 +121,9 @@ Module walkthroughs and widgets:
 
 ---
 
-## Visualize tab (step 4)
+## Results workspace: Plots
 
-The tab shows only the visuals that match the most recent analysis. Each panel has **Apply changes** (to rebuild the plot) and a download button (**Download plot** for descriptive charts, **Download results** for the other visuals).
+The **Plots** view shows only visuals that match the most recent analysis. The **Results** view contains the corresponding statistical output. Each plot panel has **Apply changes** and a download button (**Download plot** for descriptive charts, **Download results** for the other visuals).
 
 ### Descriptive visualizations
 - **Plot type:** Categorical barplots, numeric boxplots, or numeric histograms.
@@ -149,7 +150,7 @@ The tab shows only the visuals that match the most recent analysis. Each panel h
 - **Layout:** Choose rows/cols when faceting; set plot width/height.
 - **Loadings:** Toggle arrows for variable loadings; adjust loading arrow scale.
 
-If a control references a grouping variable that does not appear, return to **Upload -> Edit column types** and set that column to **Categorical**, then rerun the analysis.
+If a control references a grouping variable that does not appear, return to **Data -> Upload -> Edit column types**, set that column to **Categorical**, then rerun the analysis.
 
 ---
 
@@ -194,7 +195,7 @@ If a control references a grouping variable that does not appear, return to **Up
 
 ## Troubleshooting and tips
 
-- **Categorical variable missing from dropdowns:** Go to **Upload -> Edit column types** and set it to **Categorical**, then rerun.
+- **Categorical variable missing from dropdowns:** Go to **Data -> Upload -> Edit column types** and set it to **Categorical**, then rerun.
 - **Wide upload errors about duplicates:** Ensure header pairs (variable, replicate) are unique.
 - **Too many missing rows:** Check filters; consider removing variables with heavy missingness.
 - **Stratification drops data:** Verify the chosen group has more than one non-missing level in filtered data.

@@ -92,7 +92,10 @@ analysis_module_registry <- function() {
 }
 
 
-analysis_server <- function(id, filtered_data, modules = analysis_module_registry()) {
+analysis_server <- function(id,
+                            filtered_data,
+                            modules = analysis_module_registry(),
+                            track_event = NULL) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     df <- reactive(filtered_data())
@@ -162,6 +165,7 @@ analysis_server <- function(id, filtered_data, modules = analysis_module_registr
       if (current_value > baseline_value) {
         has_run(TRUE)
         data_changed_since_run(FALSE)
+        if (is.function(track_event)) track_event("analysis_run")
       }
     }, ignoreInit = TRUE)
 

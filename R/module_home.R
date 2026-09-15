@@ -7,82 +7,111 @@ home_ui <- function(id) {
 
   fluidPage(
     div(
-      class = "home-simple-wrapper px-3",
+      class = "home-v2-wrapper px-3",
       div(
-        class = "hero home-simple mx-auto",
+        class = "hero home-v2 mx-auto",
         div(
-          class = "home-simple-header",
-          tags$img(
-            src = "logo.jpeg",
-            class = "home-simple-logo",
-            alt = "Table Analyzer logo"
-          ),
+          class = "row home-v2-hero",
           div(
-            h1("Table Analyzer"),
+            class = "col-lg-6 home-v2-copy",
+            span(class = "ta-eyebrow", "From Excel to evidence"),
+            h1("One table. Every outcome. Publication-ready."),
             p(
-              class = "home-simple-subtitle",
-              "Statistical analysis for scientific tables, without spreadsheet chaos."
+              class = "home-v2-lead",
+              "Upload one scientific table, repeat validated analyses across outcomes or groups, and export consistent results without spreadsheet copy-paste."
+            ),
+            div(
+              class = "home-v2-actions",
+              actionButton(
+                ns("try_demo"),
+                "Try the 30-second demo",
+                icon = icon("play"),
+                class = "btn btn-primary btn-lg"
+              ),
+              actionButton(
+                ns("go_upload"),
+                "Use my own data",
+                class = "btn btn-default btn-lg"
+              )
+            ),
+            div(
+              class = "home-v2-trust",
+              span(icon("circle-check"), " No account required"),
+              span(icon("flask"), " Built-in example")
+            )
+          ),
+          div(
+            class = "col-lg-6 home-v2-preview",
+            tags$figure(
+              tags$img(
+                src = "demo-preview.png",
+                alt = "Three-panel example showing treatment means and standard errors for cortisol, glucose, and heart rate"
+              ),
+              tags$figcaption(
+                tags$b("One analysis, three outcomes."),
+                " The demo produces this composite treatment comparison from the bundled data."
+              )
             )
           )
         ),
-        p(
-          class = "home-simple-intro",
-          "Table Analyzer helps you upload Excel data, run analysis modules, and export publication-ready tables and plots in one guided workflow."
+        div(
+          class = "row home-v2-capabilities",
+          div(
+            class = "col-md-4",
+            div(
+              class = "home-v2-capability",
+              span("01"),
+              h4("Multiple outcomes"),
+              p("Run the same model across several response variables with explicit formulas and factor ordering.")
+            )
+          ),
+          div(
+            class = "col-md-4",
+            div(
+              class = "home-v2-capability",
+              span("02"),
+              h4("Stratified analysis"),
+              p("Repeat the complete analysis independently across selected experimental or biological groups.")
+            )
+          ),
+          div(
+            class = "col-md-4",
+            div(
+              class = "home-v2-capability",
+              span("03"),
+              h4("Consistent exports"),
+              p("Download statistical tables, diagnostics, and configurable multi-panel figures for reporting.")
+            )
+          )
         ),
         div(
-          class = "home-simple-cta",
-          actionButton(
-            ns("go_upload"),
-            "Go to Upload",
-            class = "btn btn-primary btn-lg"
-          ),
+          class = "home-v2-privacy",
+          div(class = "home-v2-privacy-icon", icon("shield-halved")),
+          div(
+            h4("Your scientific data stays out of analytics"),
+            p(
+              "Workbooks are processed only for the current app session and Table Analyzer does not write them to a permanent database. Anonymous usage logs contain only session started, example loaded, analysis run, and plot downloaded events. They never contain filenames, column names, table values, formulas, or results."
+            )
+          )
+        ),
+        div(
+          class = "home-v2-footer",
+          span("Developed by Nicola Palmieri · Version v1.10"),
           span(
-            class = "home-simple-cta-note",
-            "Start with your own workbook or the built-in example dataset."
-          )
-        ),
-        div(
-          class = "row g-3 home-simple-grid",
-          div(
-            class = "col-md-4",
-            div(
-              class = "home-simple-card",
-              h5("What it is"),
-              p("A browser-based app that runs statistical analyses on tabular data and creates the associated plots for reporting.")
-            )
-          ),
-          div(
-            class = "col-md-4",
-            div(
-              class = "home-simple-card",
-              h5("Key advantages"),
-              tags$ul(
-                tags$li("Simple, guided interface that reduces setup time."),
-                tags$li("Quick, easy plots and summaries without manual formulas or spreadsheet copy-paste."),
-                tags$li("Supports multiple response variables, optional stratified analyses, and methods based on modern statistics.")
-              )
-            )
-          ),
-          div(
-            class = "col-md-4",
-            div(
-              class = "home-simple-card",
-              h5("Workflow"),
-              tags$ol(
-                tags$li(tags$b("Data"), " - upload and refine your table."),
-                tags$li(tags$b("Analyze"), " - configure and run a statistical method."),
-                tags$li(tags$b("Results"), " - inspect tables, create plots, and export.")
-              )
+            tags$a(
+              "Live app",
+              href = "https://nicola-palmieri.shinyapps.io/tableanalyzer/",
+              target = "_blank",
+              rel = "noopener noreferrer"
+            ),
+            " · ",
+            tags$a(
+              "DOI 10.5281/zenodo.19233119",
+              href = "https://doi.org/10.5281/zenodo.19233119",
+              target = "_blank",
+              rel = "noopener noreferrer"
             )
           )
-        ),
-        p(
-          tagList(
-            em("Developed by Nicola Palmieri"),
-            br(),
-            span("Version v1.10", style = "font-size:0.9em;")
-          ),
-          class = "text-muted small home-simple-footer mb-0"
         )
       )
     )
@@ -92,6 +121,8 @@ home_ui <- function(id) {
 
 home_server <- function(id) {
   moduleServer(id, function(input, output, session) {
+    demo_requested <- reactiveVal(0L)
+
     observeEvent(input$go_upload, {
       updateNavbarPage(
         session = session$rootScope(),
@@ -104,5 +135,11 @@ home_server <- function(id) {
         selected = "upload_view"
       )
     })
+
+    observeEvent(input$try_demo, {
+      demo_requested(demo_requested() + 1L)
+    })
+
+    reactive(demo_requested())
   })
 }

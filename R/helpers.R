@@ -1,3 +1,42 @@
+#### Anonymous usage events ####
+
+TABLEANALYZER_USAGE_EVENTS <- c(
+  "session_started",
+  "example_loaded",
+  "analysis_run",
+  "plot_downloaded"
+)
+
+new_usage_tracker <- function(enabled = getOption("tableanalyzer.telemetry", TRUE),
+                              session_code = NULL,
+                              clock = Sys.time) {
+  if (is.null(session_code)) {
+    alphabet <- c(letters, 0:9)
+    session_code <- paste(sample(alphabet, 12, replace = TRUE), collapse = "")
+  }
+
+  force(enabled)
+  force(session_code)
+  force(clock)
+
+  function(event) {
+    if (!isTRUE(enabled)) return(invisible(FALSE))
+    if (!event %in% TABLEANALYZER_USAGE_EVENTS) {
+      stop("Unsupported anonymous usage event: ", event, call. = FALSE)
+    }
+
+    timestamp <- format(clock(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")
+    message(sprintf(
+      "tableanalyzer_event timestamp=%s session=%s event=%s",
+      timestamp,
+      session_code,
+      event
+    ))
+    invisible(TRUE)
+  }
+}
+
+
 #### Error helpers ####
 
 format_safe_error_message <- function(title, details = NULL) {
