@@ -24,7 +24,13 @@ plot_anova_lineplot_meanse <- function(data,
   }
 
   shared_y_limits <- if (isTRUE(share_y_axis)) {
-    compute_lineplot_shared_limits(context, data, factor1, factor2)
+    compute_lineplot_shared_limits(
+      context,
+      data,
+      factor1,
+      factor2,
+      include_raw = show_jitter
+    )
   } else {
     NULL
   }
@@ -67,7 +73,11 @@ plot_anova_lineplot_meanse <- function(data,
   )
 }
 
-compute_lineplot_shared_limits <- function(context, data, factor1, factor2) {
+compute_lineplot_shared_limits <- function(context,
+                                           data,
+                                           factor1,
+                                           factor2,
+                                           include_raw = FALSE) {
   combined <- NULL
 
   for (resp in context$responses) {
@@ -82,6 +92,9 @@ compute_lineplot_shared_limits <- function(context, data, factor1, factor2) {
 
         stats_df <- apply_anova_factor_levels(stats_df, factor1, factor2, context$order1, context$order2)
         y_values <- c(stats_df$mean - stats_df$se, stats_df$mean + stats_df$se)
+        if (isTRUE(include_raw) && resp %in% names(subset_data)) {
+          y_values <- c(y_values, subset_data[[resp]])
+        }
         combined <- update_numeric_range(combined, y_values)
       }
     } else {
@@ -89,6 +102,9 @@ compute_lineplot_shared_limits <- function(context, data, factor1, factor2) {
       if (nrow(stats_df) == 0) next
       stats_df <- apply_anova_factor_levels(stats_df, factor1, factor2, context$order1, context$order2)
       y_values <- c(stats_df$mean - stats_df$se, stats_df$mean + stats_df$se)
+      if (isTRUE(include_raw) && resp %in% names(data)) {
+        y_values <- c(y_values, data[[resp]])
+      }
       combined <- update_numeric_range(combined, y_values)
     }
   }
@@ -170,10 +186,14 @@ build_stratified_lineplot <- function(resp,
     }
 
     stats_df <- apply_anova_factor_levels(stats_df, factor1, factor2, context$order1, context$order2)
+    raw_data <- prepare_lineplot_raw_data(subset_data, resp, factor1, factor2)
     y_values <- c(y_values, stats_df$mean - stats_df$se, stats_df$mean + stats_df$se)
+    if (isTRUE(show_jitter) && !is.null(raw_data)) {
+      y_values <- c(y_values, raw_data[[resp]])
+    }
     stratum_stats[[stratum]] <- list(
       stats = stats_df,
-      raw = prepare_lineplot_raw_data(subset_data, resp, factor1, factor2)
+      raw = raw_data
     )
   }
 
@@ -235,7 +255,11 @@ build_unstratified_lineplot <- function(resp,
   }
 
   stats_df <- apply_anova_factor_levels(stats_df, factor1, factor2, context$order1, context$order2)
+  raw_data <- prepare_lineplot_raw_data(data, resp, factor1, factor2)
   y_values <- c(stats_df$mean - stats_df$se, stats_df$mean + stats_df$se)
+  if (isTRUE(show_jitter) && !is.null(raw_data)) {
+    y_values <- c(y_values, raw_data[[resp]])
+  }
   y_limits <- range(y_values, na.rm = TRUE)
   if (!all(is.finite(y_limits))) {
     y_limits <- NULL
@@ -252,7 +276,7 @@ build_unstratified_lineplot <- function(resp,
       factor2 = factor2,
       line_colors = line_colors,
       base_size = base_size,
-      raw_data = prepare_lineplot_raw_data(data, resp, factor1, factor2),
+      raw_data = raw_data,
       response_var = resp,
       show_lines = show_lines,
       show_jitter = show_jitter,
@@ -423,7 +447,7 @@ build_line_plot_panel <- function(stats_df,
   }
 
   if (!is.null(y_limits) && all(is.finite(y_limits))) {
-    p <- p + scale_y_continuous(limits = y_limits)
+    p <- p + coord_cartesian(ylim = y_limits)
   }
 
   if (!is.null(title_text) && nzchar(title_text)) {
@@ -439,4 +463,3 @@ build_line_plot_panel <- function(stats_df,
     p
   }
 }
-

@@ -122,7 +122,7 @@ one_way_anova_server <- function(id, filtered_data) {
       # Group must have >= 2 levels
       grp <- df[[input$group]]
       validate(
-        need(dplyr::n_distinct(grp) > 1,
+        need(dplyr::n_distinct(grp, na.rm = TRUE) > 1,
              paste0("Categorical predictor '", input$group, "' must contain at least two levels."))
       )
       
@@ -154,7 +154,7 @@ one_way_anova_server <- function(id, filtered_data) {
         for (lev in s_info$levels) {
           sub_df <- df[df[[s_info$var]] == lev, ]
 
-          k <- dplyr::n_distinct(sub_df[[input$group]])
+          k <- dplyr::n_distinct(sub_df[[input$group]], na.rm = TRUE)
           validate(
             need(k > 1,
                  paste0("In stratum '", lev, "', categorical predictor '", input$group,

@@ -136,13 +136,13 @@ two_way_anova_server <- function(id, filtered_data) {
       
       # Factor 1 must have ≥ 2 levels
       validate(
-        need(dplyr::n_distinct(df[[input$factor1]]) > 1,
+        need(dplyr::n_distinct(df[[input$factor1]], na.rm = TRUE) > 1,
              paste0("Categorical predictor '", input$factor1, "' must contain at least two levels."))
       )
       
       # Factor 2 must have ≥ 2 levels
       validate(
-        need(dplyr::n_distinct(df[[input$factor2]]) > 1,
+        need(dplyr::n_distinct(df[[input$factor2]], na.rm = TRUE) > 1,
              paste0("Categorical predictor '", input$factor2, "' must contain at least two levels."))
       )
       
@@ -182,13 +182,13 @@ two_way_anova_server <- function(id, filtered_data) {
           sub <- df[df[[s$var]] == lev, ]
           
           validate(
-            need(dplyr::n_distinct(sub[[input$factor1]]) > 1,
+            need(dplyr::n_distinct(sub[[input$factor1]], na.rm = TRUE) > 1,
                  paste0("In stratum '", lev, "', categorical predictor '", input$factor1,
                         "' contains fewer than two levels."))
           )
 
           validate(
-            need(dplyr::n_distinct(sub[[input$factor2]]) > 1,
+            need(dplyr::n_distinct(sub[[input$factor2]], na.rm = TRUE) > 1,
                  paste0("In stratum '", lev, "', categorical predictor '", input$factor2,
                         "' contains fewer than two levels."))
           )

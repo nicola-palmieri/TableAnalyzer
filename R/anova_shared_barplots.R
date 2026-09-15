@@ -131,8 +131,7 @@ ensure_barplot_zero_baseline <- function(range_vals) {
     return(range_vals)
   }
 
-  if (!is.na(range_vals[1])) range_vals[1] <- 0
-  range_vals
+  c(min(range_vals[1], 0), max(range_vals[2], 0))
 }
 
 get_posthoc_entry_for_response <- function(posthoc_all, resp) {
@@ -351,13 +350,14 @@ build_single_factor_barplot <- function(stats_df,
       axis.line = element_line(color = "#9ca3af"),
       axis.ticks = element_line(color = "#9ca3af")
     )
-  
+
   plot_obj <- add_significance_after_build(
     p = plot_obj,
     stats_df = stats_df,
     factor1 = factor1,
     factor2 = NULL,
-    posthoc_entry = posthoc_entry
+    posthoc_entry = posthoc_entry,
+    y_limits = y_limits
   )
   
   plot_obj
@@ -409,13 +409,14 @@ build_two_factor_barplot <- function(stats_df,
       axis.ticks = element_line(color = "#9ca3af")
     ) +
     scale_fill_manual(values = palette)
-  
+
   plot_obj <- add_significance_after_build(
     p = plot_obj,
     stats_df = stats_df,
     factor1 = factor1,
     factor2 = factor2,
-    posthoc_entry = nested_posthoc
+    posthoc_entry = nested_posthoc,
+    y_limits = y_limits
   )
   
   plot_obj
@@ -604,9 +605,14 @@ add_significance_after_build <- function(p,
                                          factor1,
                                          factor2 = NULL,
                                          posthoc_entry = NULL,
+                                         y_limits = NULL,
                                          text_size = 4) {
   
-  if (is.null(posthoc_entry)) return(p)
+  has_y_limits <- !is.null(y_limits) && length(y_limits) == 2 && all(is.finite(y_limits))
+  if (is.null(posthoc_entry)) {
+    if (has_y_limits) return(p + coord_cartesian(ylim = y_limits))
+    return(p)
+  }
   
   barpos <- extract_bar_positions(p, factor1, factor2)
   barpos <- barpos[is.finite(barpos$y), , drop = FALSE]
@@ -629,20 +635,25 @@ add_significance_after_build <- function(p,
     )
   }
   
-  if (is.null(ann) || nrow(ann) == 0) return(p)
+  if (is.null(ann) || nrow(ann) == 0) {
+    if (has_y_limits) return(p + coord_cartesian(ylim = y_limits))
+    return(p)
+  }
   
   max_y <- max(ann$y, na.rm = TRUE)
   
   p_build <- ggplot_build(p)
   current_limits <- p_build$layout$panel_params[[1]]$y.range
+  base_limits <- if (has_y_limits) y_limits else current_limits
   
-  new_upper <- max(current_limits[2], max_y * 1.05)
+  padding <- max(diff(base_limits) * 0.03, abs(max_y) * 0.05, .Machine$double.eps)
+  new_limits <- c(
+    min(base_limits[1], current_limits[1], 0),
+    max(base_limits[2], current_limits[2], max_y + padding, 0)
+  )
   
   p +
-    scale_y_continuous(
-      limits = c(0, new_upper),
-      expand = expansion(mult = c(0, 0))
-    ) +
+    coord_cartesian(ylim = new_limits) +
     geom_text(
       data = ann,
       aes(x = x, y = y, label = label),

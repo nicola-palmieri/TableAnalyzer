@@ -20,7 +20,7 @@ validate_regression_inputs <- function(df, input, engine, strat_details) {
   if (length(input$fixed) > 0) {
     for (f in input$fixed) {
       validate(
-        need(dplyr::n_distinct(df[[f]]) > 1,
+        need(dplyr::n_distinct(df[[f]], na.rm = TRUE) > 1,
              paste0("Categorical predictor '", f, "' must contain at least two levels."))
       )
     }
@@ -64,7 +64,7 @@ validate_regression_inputs <- function(df, input, engine, strat_details) {
         if (!r %in% names(df)) next
         values <- droplevels(factor(df[[r]]))
         validate(
-          need(dplyr::n_distinct(values) > 1,
+          need(dplyr::n_distinct(values, na.rm = TRUE) > 1,
                paste0("Random effect '", r, "' must contain at least two levels."))
         )
       }
@@ -86,7 +86,7 @@ validate_regression_inputs <- function(df, input, engine, strat_details) {
       if (length(input$fixed) > 0) {
         for (f in input$fixed) {
           validate(
-            need(dplyr::n_distinct(sub[[f]]) > 1,
+            need(dplyr::n_distinct(sub[[f]], na.rm = TRUE) > 1,
                  paste0("In stratum '", lev, "', predictor '", f,
                         "' contains fewer than two levels."))
           )
@@ -98,7 +98,7 @@ validate_regression_inputs <- function(df, input, engine, strat_details) {
           if (!r %in% names(sub)) next
           sub[[r]] <- droplevels(factor(sub[[r]]))
           validate(
-            need(dplyr::n_distinct(sub[[r]]) > 1,
+            need(dplyr::n_distinct(sub[[r]], na.rm = TRUE) > 1,
                  paste0("In stratum '", lev, "', random effect '", r,
                         "' must have at least two levels."))
           )
