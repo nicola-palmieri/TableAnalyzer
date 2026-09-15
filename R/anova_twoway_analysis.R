@@ -84,12 +84,12 @@ two_way_anova_server <- function(id, filtered_data) {
       with_help_tooltip(
         selectInput(
           ns("order1"),
-          paste("Order of levels (first = reference)", input$factor1),
+          paste("Order of levels (first = post-hoc reference)", input$factor1),
           choices = lev,
           selected = lev,
           multiple = TRUE
         ),
-        sprintf("Arrange the levels of %s. The first is the reference.", input$factor1)
+        sprintf("Arrange the levels of %s. The first is the post-hoc reference.", input$factor1)
       )
     })
     
@@ -99,12 +99,12 @@ two_way_anova_server <- function(id, filtered_data) {
       with_help_tooltip(
         selectInput(
           ns("order2"),
-          paste("Order of levels (first = reference)", input$factor2),
+          paste("Order of levels (first = post-hoc reference)", input$factor2),
           choices = lev,
           selected = lev,
           multiple = TRUE
         ),
-        sprintf("Arrange the levels of %s. The first is the reference.", input$factor2)
+        sprintf("Arrange the levels of %s. The first is the post-hoc reference.", input$factor2)
       )
     })
     

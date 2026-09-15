@@ -1,10 +1,6 @@
 #### Section: ANOVA Output Processing ####
 
 prepare_anova_outputs <- function(model_obj, factor_names) {
-  old_contrasts <- options("contrasts")
-  on.exit(options(old_contrasts), add = TRUE)
-  options(contrasts = c("contr.sum", "contr.poly"))
-  
   safe_anova <- purrr::safely(function(mod) {
     car::Anova(mod, type = 3)
   })

@@ -2,14 +2,17 @@
 # ?? Regression shared modeling utilities
 # ===============================================================
 
-reg_fit_model <- function(dep, rhs, data, engine = c("lm","lmm")) {
+reg_fit_model <- function(dep, rhs, data, engine = c("lm", "lmm")) {
   engine <- match.arg(engine)
   form <- as.formula(reg_formula_text(dep, rhs))
+  fixed_form <- if (engine == "lmm") lme4::nobars(form) else form
+  fixed_variables <- setdiff(all.vars(fixed_form), dep)
+  contrast_list <- build_sum_contrasts(data, fixed_variables)
+
   if (engine == "lm") {
-    lm(form, data = data)
+    stats::lm(form, data = data, contrasts = contrast_list)
   } else {
-    # LMM: lme4 + lmerTest for p-values
-    lmerTest::lmer(form, data = data)
+    lmerTest::lmer(form, data = data, contrasts = contrast_list)
   }
 }
 

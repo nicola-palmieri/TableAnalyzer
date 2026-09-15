@@ -72,6 +72,25 @@ resolve_order_levels <- function(values) {
   }
 }
 
+build_sum_contrasts <- function(data, variables) {
+  variables <- intersect(variables, names(data))
+  factor_variables <- variables[vapply(
+    variables,
+    function(variable) is.factor(data[[variable]]) || is.character(data[[variable]]),
+    logical(1)
+  )]
+
+  contrast_list <- lapply(factor_variables, function(variable) {
+    values <- data[[variable]]
+    factor_values <- if (is.factor(values)) droplevels(values) else factor(values)
+    if (nlevels(factor_values) < 2) return(NULL)
+
+    stats::contr.sum(nlevels(factor_values))
+  })
+  names(contrast_list) <- factor_variables
+  Filter(Negate(is.null), contrast_list)
+}
+
 #### Reactive helpers ####
 
 resolve_reactive <- function(value, default = NULL) {

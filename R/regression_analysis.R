@@ -96,12 +96,15 @@ regression_server <- function(id, data, engine = c("lm", "lmm"), allow_multi_res
           with_help_tooltip(
             selectInput(
               ns(paste0("order_", var)),
-              paste("Order of levels (first = reference)", var),
+              paste("Order of levels", var),
               choices = lvls,
               selected = lvls,
               multiple = TRUE
             ),
-            sprintf("Arrange the levels of %s; the first level becomes the model reference.", var)
+            sprintf(
+              "Arrange the levels of %s for display and coefficient labels. Type III tests use sum-to-zero contrasts.",
+              var
+            )
           )
         })
       )
@@ -197,7 +200,7 @@ regression_server <- function(id, data, engine = c("lm", "lmm"), allow_multi_res
         df <- sanitize_random_effects(df, input$random)
       }
 
-      # ---- Apply user-specified factor level orders (controls reference levels) ----
+      # ---- Apply user-specified factor level orders before sum-contrast fitting ----
       if (length(input$fixed) > 0) {
         df <- apply_fixed_level_orders(df, input$fixed, input)
       }
@@ -320,4 +323,3 @@ regression_server <- function(id, data, engine = c("lm", "lmm"), allow_multi_res
     })
   })
 }
-

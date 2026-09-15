@@ -79,12 +79,12 @@ one_way_anova_server <- function(id, filtered_data) {
       with_help_tooltip(
         selectInput(
           ns("order"),
-          "Order of levels (first = reference)",
+          "Order of levels (first = post-hoc reference)",
           choices = levels,
           selected = levels,
           multiple = TRUE
         ),
-        "Arrange the group levels; the first level is used as the reference in outputs."
+        "Arrange the group levels; the first level is used as the reference for post-hoc comparisons."
       )
     })
     

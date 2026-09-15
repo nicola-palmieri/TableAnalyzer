@@ -86,19 +86,19 @@ Module walkthroughs and widgets:
 - **One-way ANOVA**
   - *Response variables:* Choose one or more numeric outcomes.
   - *Categorical predictor:* Choose the grouping factor.
-  - *Order of levels (first = reference):* Reorder factor levels; first becomes reference.
+  - *Order of levels (first = post-hoc reference):* Reorder factor levels; the first is used for reference-vs-others post-hoc comparisons. The Type III model uses sum-to-zero contrasts.
   - *Stratify by (advanced):* Optional; repeats the analysis per stratum..
   - *Run analysis / Download results:* Fit ANOVA and export tables/post-hoc/diagnostics.
 - **Two-way ANOVA**
   - *Response variables:* One or more numeric outcomes.
   - *Categorical predictor 1 (x-axis):* First factor.
   - *Categorical predictor 2 (lines):* Second factor.
-  - *Order of levels (first = reference) for each factor:* Set the level order separately.
+  - *Order of levels (first = post-hoc reference) for each factor:* Set the level order separately. Type III tests use sum-to-zero contrasts.
   - *Stratify by (advanced):* Optional; repeats the analysis per stratum.
   - *Run analysis / Download results:* Fit models and export.
 - **Linear Model (LM)**
   - *Response variable(s):* One or more numeric outcomes.
-  - *Categorical predictors:* Factors to include as fixed effects; each gets a level-order control (reference = first level).
+  - *Categorical predictors:* Factors to include as fixed effects; each gets a level-order control. Type III tests use sum-to-zero contrasts, so coefficients represent deviations from the grand mean rather than comparisons with a reference level.
   - *Numeric predictors:* Continuous covariates.
   - *Interactions:* Choose two-way interactions among categorical predictors.
   - *Formula preview:* Shows the model formula that will be fitted.

@@ -52,7 +52,14 @@ prepare_stratified_anova <- function(
   rhs <- if (is.null(rhs) || rhs == "") "1" else rhs
 
   build_formula <- function(resp) stats::as.formula(paste(anova_protect_vars(resp), "~", rhs))
-  safe_fit <- purrr::safely(function(fml, data) stats::lm(fml, data = data))
+  contrast_vars <- c(factor1_var, factor2_var)
+  safe_fit <- purrr::safely(function(fml, data) {
+    stats::lm(
+      fml,
+      data = data,
+      contrasts = build_sum_contrasts(data, contrast_vars)
+    )
+  })
 
   base_info <- list(
     type = model,

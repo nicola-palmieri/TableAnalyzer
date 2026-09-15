@@ -1,6 +1,7 @@
 library(testthat)
 
 source("../R/regression_shared_utils.R")
+source("../R/helpers.R")
 source("../R/regression_shared_model.R")
 
 test_that("LM helpers fit and tidy a model with protected column names", {
@@ -16,10 +17,30 @@ test_that("LM helpers fit and tidy a model with protected column names", {
   result <- tidy_regression_model(model, engine = "lm")
 
   expect_s3_class(model, "lm")
+  expect_equal(colSums(model$contrasts[["group name"]]), 0)
   expect_true(all(c("term", "estimate", "std_error", "statistic", "p_value") %in% names(result$summary)))
   expect_equal(result$effects$metrics$metric, c("sigma", "r_squared", "adj_r_squared", "nobs"))
   expect_equal(result$effects$metrics$value[result$effects$metrics$metric == "nobs"], 6)
   expect_true("Effect" %in% names(result$effects$anova))
+})
+
+test_that("LMM fixed factors use sum-to-zero contrasts", {
+  data <- data.frame(
+    response = c(2.0, 2.2, 3.0, 3.1, 4.0, 4.3, 5.0, 5.2),
+    group = factor(rep(c("control", "treated"), each = 4)),
+    subject = factor(rep(paste0("s", 1:4), 2))
+  )
+
+  model <- suppressWarnings(reg_fit_model(
+    "response",
+    c("`group`", "(1|`subject`)"),
+    data,
+    engine = "lmm"
+  ))
+
+  expect_s4_class(model, "lmerModLmerTest")
+  model_contrasts <- attr(lme4::getME(model, "X"), "contrasts")
+  expect_equal(colSums(model_contrasts$group), 0)
 })
 
 test_that("ANOVA formatting handles missing and very small p-values", {
