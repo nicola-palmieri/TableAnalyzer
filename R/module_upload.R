@@ -8,7 +8,7 @@ upload_ui <- function(id) {
     sidebarPanel(
       class = "ta-sidebar",
       width = 4,
-      h4(class = "ta-sidebar-title", "Step 1 - Upload data"),
+      h4(class = "ta-sidebar-title", "Upload data"),
       p(class = "ta-sidebar-subtitle", "Choose whether to load the example dataset or upload your own Excel file."),
       hr(),
       with_help_tooltip(

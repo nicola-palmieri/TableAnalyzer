@@ -69,10 +69,9 @@ home_ui <- function(id) {
               class = "home-simple-card",
               h5("Workflow"),
               tags$ol(
-                tags$li(tags$b("Upload"), " data."),
-                tags$li(tags$b("Filter"), " rows or variables."),
-                tags$li(tags$b("Analyze"), " by choosing among 7 powerful analysis modules."),
-                tags$li(tags$b("Visualize"), " and export.")
+                tags$li(tags$b("Data"), " - upload and refine your table."),
+                tags$li(tags$b("Analyze"), " - configure and run a statistical method."),
+                tags$li(tags$b("Results"), " - inspect tables, create plots, and export.")
               )
             )
           )
@@ -97,7 +96,12 @@ home_server <- function(id) {
       updateNavbarPage(
         session = session$rootScope(),
         inputId = "main_nav",
-        selected = "upload_tab"
+        selected = "data_tab"
+      )
+      updateTabsetPanel(
+        session = session$rootScope(),
+        inputId = "data_views",
+        selected = "upload_view"
       )
     })
   })

@@ -64,7 +64,7 @@ ui <- navbarPage(
 
       // Disable downstream tabs immediately on load to avoid flicker before Shiny initializes.
       document.addEventListener('DOMContentLoaded', function() {
-        ['filter_tab', 'analysis_tab', 'visualize_tab'].forEach(function(tab) {
+        ['filter_view', 'analysis_tab', 'results_tab'].forEach(function(tab) {
           tabManager(tab, true);
         });
       });
@@ -87,14 +87,23 @@ ui <- navbarPage(
   ),
 
   tabPanel(
-    title = tagList(icon("upload"), " Upload"),
-    value = "upload_tab",
-    fluidPage(upload_ui("upload"))
-  ),
-  tabPanel(
-    title = tagList(icon("filter"), " Filter"),
-    value = "filter_tab",
-    fluidPage(filter_ui("filter"))
+    title = tagList(icon("table-list"), " Data"),
+    value = "data_tab",
+    fluidPage(
+      tabsetPanel(
+        id = "data_views",
+        tabPanel(
+          title = tagList(icon("upload"), " Upload"),
+          value = "upload_view",
+          upload_ui("upload")
+        ),
+        tabPanel(
+          title = tagList(icon("filter"), " Filter"),
+          value = "filter_view",
+          filter_ui("filter")
+        )
+      )
+    )
   ),
   tabPanel(
     title = tagList(icon("square-poll-horizontal"), " Analyze"),
@@ -102,9 +111,23 @@ ui <- navbarPage(
     fluidPage(analysis_ui("analysis"))
   ),
   tabPanel(
-    title = tagList(icon("chart-area"), " Visualize"),
-    value = "visualize_tab",
-    fluidPage(visualize_ui("visualize"))
+    title = tagList(icon("file-lines"), " Results"),
+    value = "results_tab",
+    fluidPage(
+      tabsetPanel(
+        id = "result_views",
+        tabPanel(
+          title = tagList(icon("table"), " Results"),
+          value = "results_view",
+          analysis_results_ui("analysis")
+        ),
+        tabPanel(
+          title = tagList(icon("chart-area"), " Plots"),
+          value = "plots_view",
+          visualize_ui("visualize")
+        )
+      )
+    )
   ),
 )
 
@@ -120,19 +143,32 @@ server <- function(input, output, session) {
 
   observe({
     has_data <- !is.null(uploaded())
-    tabs <- c("filter_tab", "analysis_tab", "visualize_tab")
+    has_results <- isTRUE(analyzed$has_results())
 
-    lapply(tabs, function(tab) {
+    lapply(c("filter_view", "analysis_tab"), function(tab) {
       session$sendCustomMessage(
         "toggleTabState",
         list(tab = tab, disable = !has_data)
       )
     })
+    session$sendCustomMessage(
+      "toggleTabState",
+      list(tab = "results_tab", disable = !has_results)
+    )
 
-    if (!has_data && input$main_nav %in% tabs) {
-      updateNavbarPage(session, "main_nav", selected = "upload_tab")
+    if (!has_data && input$main_nav %in% c("analysis_tab", "results_tab")) {
+      updateNavbarPage(session, "main_nav", selected = "data_tab")
+      updateTabsetPanel(session, "data_views", selected = "upload_view")
+    } else if (has_data && !has_results && identical(input$main_nav, "results_tab")) {
+      updateNavbarPage(session, "main_nav", selected = "analysis_tab")
     }
   })
+
+  observeEvent(analyzed$has_results(), {
+    if (!isTRUE(analyzed$has_results())) return()
+    updateNavbarPage(session, "main_nav", selected = "results_tab")
+    updateTabsetPanel(session, "result_views", selected = "results_view")
+  }, ignoreInit = TRUE)
 }
 
 # ---------------------------------------------------------------
