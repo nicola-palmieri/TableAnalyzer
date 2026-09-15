@@ -72,6 +72,7 @@ analysis_server <- function(id, filtered_data) {
     })
     analysis_switch_token <- reactiveVal(0L)
     has_run <- reactiveVal(FALSE)
+    data_changed_since_run <- reactiveVal(FALSE)
     run_baseline <- reactiveVal(0L)
     
     # ---- Mapping of available modules ----
@@ -127,7 +128,17 @@ analysis_server <- function(id, filtered_data) {
     observeEvent(input$analysis_type, {
       analysis_switch_token(analysis_switch_token() + 1L)
       has_run(FALSE)
+      data_changed_since_run(FALSE)
       run_baseline(current_run_signal() %||% 0L)
+    }, ignoreInit = TRUE)
+
+    observeEvent(df(), {
+      if (isTRUE(has_run())) {
+        data_changed_since_run(TRUE)
+      }
+      analysis_switch_token(analysis_switch_token() + 1L)
+      has_run(FALSE)
+      run_baseline(isolate(current_run_signal()) %||% 0L)
     }, ignoreInit = TRUE)
 
     observeEvent(current_run_signal(), {
@@ -136,6 +147,7 @@ analysis_server <- function(id, filtered_data) {
       if (is.null(current_value)) return()
       if (current_value > baseline_value) {
         has_run(TRUE)
+        data_changed_since_run(FALSE)
       }
     }, ignoreInit = TRUE)
 
@@ -179,6 +191,12 @@ analysis_server <- function(id, filtered_data) {
       }
 
       if (!isTRUE(has_run())) {
+        if (isTRUE(data_changed_since_run())) {
+          return(analysis_empty_state(
+            "Data changed",
+            "The uploaded data or active filters changed. Run the analysis again to refresh the results."
+          ))
+        }
         return(analysis_empty_state(
           "Run the selected analysis",
           "Run the analysis to view results."
@@ -207,6 +225,7 @@ analysis_server <- function(id, filtered_data) {
 
     # ---- Unified model output ----
     model_out <- reactive({
+      if (!isTRUE(has_run())) return(NULL)
       mod <- current_mod()
       if (is.null(mod)) return(NULL)
       srv <- ensure_module_server(mod)
@@ -293,4 +312,3 @@ ensure_analysis_server <- function(mod, df, server_cache, reset_trigger = NULL) 
   server_cache[[key]] <- standardized
   standardized
 }
-
