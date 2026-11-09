@@ -85,14 +85,14 @@ ggpairs_server <- function(id, data_reactive, reset_trigger = reactive(NULL)) {
     }, ignoreInit = FALSE)
 
     # ---- Compute correlation matrix ----
-    observeEvent(input$run, {
+    compute_correlations <- function() {
       data <- req(df())
       numeric_vars <- names(data)[vapply(data, is.numeric, logical(1))]
       selected_vars <- if (length(input$vars)) input$vars else numeric_vars
       selected_vars <- intersect(selected_vars, numeric_vars)
 
       if (length(selected_vars) < 2) {
-        correlation_store(list(
+        return(list(
           message = "Need at least two numeric columns.",
           matrices = list(),
           plots = list(),
@@ -101,7 +101,6 @@ ggpairs_server <- function(id, data_reactive, reset_trigger = reactive(NULL)) {
           data_used = NULL,
           strata_levels = NULL
         ))
-        return()
       }
 
       strat_details <- strat_info()
@@ -220,7 +219,7 @@ ggpairs_server <- function(id, data_reactive, reset_trigger = reactive(NULL)) {
         })
       }
 
-      correlation_store(list(
+      list(
         matrices = matrices,
         plots = plots,
         group_var = group_var,
@@ -228,7 +227,25 @@ ggpairs_server <- function(id, data_reactive, reset_trigger = reactive(NULL)) {
         data_used = processed_data,
         strata_levels = if (!is.null(group_var)) strata_levels else NULL,
         warnings = warning_messages
-      ))
+      )
+    }
+
+    observeEvent(input$run, {
+      correlation_store(NULL)
+      result <- tryCatch(compute_correlations(), error = function(e) {
+        message <- conditionMessage(e)
+        if (!nzchar(message)) message <- "No data available for correlation analysis."
+        list(
+          message = format_safe_error_message("Correlation analysis failed", message),
+          matrices = list(),
+          plots = list(),
+          selected_vars = input$vars,
+          data_used = NULL,
+          group_var = NULL,
+          strata_levels = NULL
+        )
+      })
+      correlation_store(result)
     })
 
     output$summary <- renderPrint({
