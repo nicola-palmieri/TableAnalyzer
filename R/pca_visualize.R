@@ -830,6 +830,17 @@ build_pca_biplot <- function(
   scores <- as.data.frame(pca_obj$x[, 1:2])
   names(scores) <- c("PC1", "PC2")
 
+  # Resolve shapes before faceting so a group keeps the same shape in every panel.
+  shape_levels <- NULL
+  if (!is.null(shape_var) && !is.null(data) && shape_var %in% names(data)) {
+    values <- data[[shape_var]]
+    shape_levels <- if (is.factor(values)) {
+      levels(droplevels(values))
+    } else {
+      unique(as.character(values[!is.na(values)]))
+    }
+  }
+
   # ---- Subset if needed ----
   if (!is.null(subset_rows)) {
     subset_rows <- unique(subset_rows)
@@ -890,18 +901,15 @@ build_pca_biplot <- function(
   # ---- Base plot (WITHOUT geom_point yet) ----
   g <- ggplot(plot_data, aes_mapping)
 
-  # ---- Add geom_point depending on whether color_var is mapped ----
-  if (is.null(color_var)) {
-    g <- g + geom_point(
-      size = 3,
-      shape = if (is.null(shape_var)) 16 else NULL,
-      color = single_color
-    )
-  } else {
-    g <- g + geom_point(
-      size = 3,
-      shape = if (is.null(shape_var)) 16 else NULL
-    )
+  point_options <- list(size = 3)
+  if (is.null(color_var)) point_options$color <- single_color
+  if (is.null(shape_var)) point_options$shape <- 16
+  g <- g + do.call(ggplot2::geom_point, point_options)
+
+  if (!is.null(shape_var)) {
+    shape_palette <- c(16, 17, 15, 3, 7, 8, 0, 1, 2, 5)
+    shapes <- stats::setNames(rep(shape_palette, length.out = length(shape_levels)), shape_levels)
+    g <- g + scale_shape_manual(values = shapes, drop = FALSE, na.value = 16)
   }
 
   # ---- Ellipses ----
