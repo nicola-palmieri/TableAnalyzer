@@ -3,25 +3,12 @@
 # ===============================================================
 
 library(bslib)
-library(bsicons)
-library(car)
 library(dplyr)
 library(DT)
-library(emmeans)
-library(fitdistrplus)
 library(flextable)
-library(GGally)
 library(ggplot2)
-library(ggrepel)
-library(janitor)
-library(lmerTest)
 library(officer)
-library(patchwork)
-library(readxl)
 library(shiny)
-library(skimr)
-library(tidyr)
-library(zoo)
 
 options(shiny.autoreload = interactive())
 options(shiny.maxRequestSize = 200 * 1024^2)
@@ -53,7 +40,7 @@ ui <- navbarPage(
   
   # ---- Custom CSS ----
   header = tags$head(
-    tags$link(rel = "stylesheet", type = "text/css", href = "theme-table.css?v=minimal-12"),
+    tags$link(rel = "stylesheet", type = "text/css", href = "theme-table.css?v=minimal-13"),
     tags$script(HTML("
       const tabManager = function(tab, disable) {
         var selector = 'a[data-value=\"' + tab + '\"]';

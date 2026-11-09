@@ -103,32 +103,6 @@ apply_grid_defaults_if_empty <- function(input, session, grid_id, defaults, n_it
   }
 }
 
-adjust_grid_layout <- function(n_items, layout) {
-  if (is.null(layout) || length(layout) == 0) {
-    layout <- list(nrow = 1L, ncol = 1L)
-  }
-
-  n_items <- coerce_grid_value(n_items, default = 1L)
-  rows <- coerce_grid_value(layout$nrow, default = 1L)
-  cols <- coerce_grid_value(layout$ncol, default = 1L)
-
-  if (rows * cols < n_items) {
-    defaults <- compute_default_grid(n_items)
-    rows <- defaults$rows
-    cols <- defaults$cols
-  }
-
-  while (rows > 1L && n_items <= (rows - 1L) * cols) {
-    rows <- rows - 1L
-  }
-
-  while (cols > 1L && n_items <= rows * (cols - 1L)) {
-    cols <- cols - 1L
-  }
-
-  list(nrow = rows, ncol = cols)
-}
-
 plot_grid_ui <- function(id,
                          rows_label = "Grid rows",
                          cols_label = "Grid columns",

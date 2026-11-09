@@ -60,7 +60,7 @@ visualize_twoway_ui <- function(id) {
       uiOutput(ns("layout_controls")),
       
       fluidRow(
-        column(6, add_color_customization_ui(ns, multi_group = TRUE)),
+        column(6, add_color_customization_ui(ns)),
         column(
           6,
           tagList(
@@ -297,13 +297,6 @@ visualize_twoway_server <- function(id, filtered_data, model_info) {
         return()
       }
       
-      # Count panels
-      has_strata <- !is.null(info$strata) && !is.null(info$strata$levels)
-      n_strata <- if (has_strata) length(info$strata$levels) else 1L
-      
-      responses <- info$responses
-      n_responses <- if (!is.null(responses) && length(responses) > 0L) length(responses) else 1L
-      
       # Final grid layouts
       layout_inputs <- list(
         strata_rows = strata_grid$rows(),
@@ -313,13 +306,17 @@ visualize_twoway_server <- function(id, filtered_data, model_info) {
       )
       
       # Legend handling
-      legend_supported <- TRUE
-      use_common_legend <- legend_supported && common_legend_available() && legend_state$enabled
+      use_common_legend <- common_legend_available() && legend_state$enabled
       legend_position <- if (use_common_legend) legend_state$position else NULL
       
       # Compute plots
-      build_results <- function(layout_inputs) {
-        list(
+      chosen <- input$plot_type
+      if (is.null(chosen) || !chosen %in% c("lineplot_mean_se", "barplot_mean_se", "boxplot")) {
+        chosen <- "lineplot_mean_se"
+      }
+
+      build_result <- function(layout_inputs) {
+        switch(chosen,
           lineplot_mean_se = plot_anova_lineplot_meanse(
             data, info, layout_inputs,
             line_colors      = custom_colors(),
@@ -352,13 +349,7 @@ visualize_twoway_server <- function(id, filtered_data, model_info) {
         )
       }
 
-      results <- build_results(layout_inputs)
-      
-      chosen <- input$plot_type
-      if (is.null(chosen) || !chosen %in% names(results)) {
-        chosen <- "lineplot_mean_se"
-      }
-      chosen_result <- results[[chosen]]
+      chosen_result <- build_result(layout_inputs)
 
       is_grid_warning <- function(msg) {
         !is.null(msg) && grepl("Grid", msg, fixed = TRUE)
@@ -371,8 +362,7 @@ visualize_twoway_server <- function(id, filtered_data, model_info) {
           resp_rows   = chosen_result$defaults$responses$rows,
           resp_cols   = chosen_result$defaults$responses$cols
         )
-        results <- build_results(default_inputs)
-        chosen_result <- results[[chosen]]
+        chosen_result <- build_result(default_inputs)
       }
 
       stored$warning <- chosen_result$warning

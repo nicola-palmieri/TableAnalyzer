@@ -226,7 +226,7 @@ regression_server <- function(id, data, engine = c("lm", "lmm"), allow_multi_res
       filename = function() {
         mod <- models()
         if (is.null(mod) || length(mod$flat_models) == 0) {
-          return(build_export_filename(analysis = engine, scope = "all"))
+          return(build_export_filename(analysis = engine))
         }
 
         responses <- if (!is.null(mod$responses)) {
@@ -247,7 +247,6 @@ regression_server <- function(id, data, engine = c("lm", "lmm"), allow_multi_res
         }
         build_export_filename(
           analysis = engine,
-          scope = "all",
           extra = c(response_tag, label)
         )
       },

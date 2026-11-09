@@ -232,7 +232,6 @@ two_way_anova_server <- function(id, filtered_data, reset_trigger = reactive(NUL
         }
         build_export_filename(
           analysis = "anova",
-          scope = "all",
           extra = c(response_tag, label)
         )
       },
@@ -246,10 +245,10 @@ two_way_anova_server <- function(id, filtered_data, reset_trigger = reactive(NUL
     # Results UI
     # ------------------------------------------------------------
     output$summary_ui <- renderUI({
-      render_anova_results(ns, models(), "Two-way ANOVA")
+      render_anova_results(ns, models())
     })
     
-    bind_anova_outputs(ns, output, models, download_guard = require_current)
+    bind_anova_outputs(output, models)
     
     # ------------------------------------------------------------
     # Exportable results object

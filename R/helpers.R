@@ -140,7 +140,7 @@ format_export_timestamp <- function(time = Sys.time()) {
   format(time, "%Y%m%d-%H%M")
 }
 
-build_export_filename <- function(analysis, scope,
+build_export_filename <- function(analysis,
                                   response = NULL,
                                   stratum = NULL,
                                   extra = NULL,

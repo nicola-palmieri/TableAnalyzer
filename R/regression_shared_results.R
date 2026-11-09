@@ -194,7 +194,7 @@ render_qq_plot <- function(model_obj) {
     )
 }
 
-assign_model_outputs <- function(output, engine, response, idx, model_obj, stratum_idx = NULL) {
+assign_model_outputs <- function(output, engine, idx, model_obj, stratum_idx = NULL) {
   model_obj <- force(model_obj)
   engine <- force(engine)
   suffix <- if (is.null(stratum_idx)) idx else paste(idx, stratum_idx, sep = "_")
@@ -319,7 +319,6 @@ render_model_outputs <- function(output, models_info, engine) {
       assign_model_outputs(
         output,
         engine,
-        response,
         idx,
         stratum$model,
         stratum_idx = if (is_stratified) j else NULL

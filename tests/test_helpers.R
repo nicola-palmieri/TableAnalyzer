@@ -36,7 +36,6 @@ test_that("export filenames are deterministic and filesystem safe", {
   expect_equal(
     build_export_filename(
       analysis = "Linear Model",
-      scope = "all",
       response = "Weight (g)",
       stratum = "Diet A",
       time = timestamp

@@ -23,7 +23,7 @@ basic_color_palette <- c(
 )
 
 # ---- UI ----
-add_color_customization_ui <- function(ns, multi_group = TRUE) {
+add_color_customization_ui <- function(ns) {
   uiOutput(ns("color_custom_ui"))
 }
 

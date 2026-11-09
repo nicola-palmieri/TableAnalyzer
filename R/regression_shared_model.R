@@ -126,7 +126,6 @@ format_coef_matrix_lines <- function(coef_mat) {
     stringsAsFactors = FALSE
   )
 
-  num_cols <- c("Estimate", "Std. Error", "t value", "z value", "Std. error", "Std.Error", "Std error")
   stat_col <- intersect(colnames(coef_mat), c("t value", "z value"))
   p_col <- intersect(colnames(coef_mat), grep("^Pr", colnames(coef_mat), value = TRUE))
 

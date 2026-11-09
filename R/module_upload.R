@@ -327,9 +327,6 @@ upload_server <- function(id) {
     # 5️⃣ Column Type Editor (New, Modal-based)
     # -----------------------------------------------------------
     
-    # Which columns are editable
-    editable_cols <- reactiveVal(NULL)
-    
     # Open modal when clicking the button
     observeEvent(input$open_type_editor, {
       data <- df()

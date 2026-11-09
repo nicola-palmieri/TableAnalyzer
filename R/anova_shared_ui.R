@@ -57,7 +57,7 @@ build_anova_layout_controls <- function(ns, input, info, grid_cache = NULL) {
 
 #### Formula utilities ####
 
-render_anova_results <- function(ns, model_info, module_label = "ANOVA") {
+render_anova_results <- function(ns, model_info) {
   if (is.null(model_info)) return(NULL)
   
   responses <- model_info$responses
@@ -97,7 +97,7 @@ render_anova_results <- function(ns, model_info, module_label = "ANOVA") {
   do.call(tabsetPanel, c(list(id = ns("results_tabs")), tabs))
 }
 
-bind_anova_outputs <- function(ns, output, models_reactive, download_guard = function() NULL) {
+bind_anova_outputs <- function(output, models_reactive) {
   observeEvent(models_reactive(), {
     model_info <- models_reactive()
     if (is.null(model_info)) return()
@@ -117,11 +117,8 @@ bind_anova_outputs <- function(ns, output, models_reactive, download_guard = fun
           bind_single_model_outputs(
             output,
             summary_id = paste0("summary_", idx),
-            download_id = paste0("download_", idx),
             model_entry = model_entry,
-            response_name = response_name,
-            factors = factors,
-            download_guard = download_guard
+            factors = factors
           )
         })
       }
@@ -141,12 +138,8 @@ bind_anova_outputs <- function(ns, output, models_reactive, download_guard = fun
           bind_single_model_outputs(
             output,
             summary_id = paste0("summary_", idx, "_", stratum_idx),
-            download_id = paste0("download_", idx, "_", stratum_idx),
             model_entry = model_entry,
-            response_name = response_name,
-            factors = factors,
-            stratum_label = stratum_label,
-            download_guard = download_guard
+            factors = factors
           )
         })
       }
@@ -154,50 +147,14 @@ bind_anova_outputs <- function(ns, output, models_reactive, download_guard = fun
   })
 }
 
-#### Results export ####
+#### Summary output binding ####
 
-bind_single_model_outputs <- function(output, summary_id, download_id,
-                                      model_entry, response_name, factors,
-                                      stratum_label = NULL, download_guard = function() NULL) {
+bind_single_model_outputs <- function(output, summary_id, model_entry, factors) {
   output[[summary_id]] <- renderPrint({
     old_opts <- options(scipen = 6)
     on.exit(options(old_opts), add = TRUE)
     print_anova_summary_and_posthoc(model_entry, factors)
   })
-
-  output[[download_id]] <- downloadHandler(
-    filename = function() {
-      build_export_filename(
-        analysis = "anova",
-        scope = "response",
-        response = response_name,
-        stratum = stratum_label
-      )
-    },
-    content = function(file) {
-      download_guard()
-      if (is.null(model_entry) || !is.null(model_entry$error) || is.null(model_entry$model)) {
-        stop("Model not available for download due to fitting error.")
-      }
-      results <- prepare_anova_outputs(model_entry$model, factors)
-      if (!is.null(results$error)) {
-        stop(paste0("ANOVA results unavailable: ", results$error))
-      }
-      if (is.null(results$anova_table)) {
-        stop("ANOVA results are unavailable for export.")
-      }
-      write_anova_docx(
-        file = file,
-        content = results,
-        response_name = response_name,
-        stratum_label = stratum_label
-      )
-    }
-  )
-}
-
-sanitize_name <- function(name) {
-  sanitize_export_part(name)
 }
 
 print_anova_summary_and_posthoc <- function(model_entry, factors) {

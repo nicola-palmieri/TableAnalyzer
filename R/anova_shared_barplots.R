@@ -90,13 +90,7 @@ compute_barplot_shared_limits <- function(context,
     )
 
     for (entry in stats_entries) {
-      rng <- compute_barplot_panel_range(
-        entry$stats_df,
-        factor1,
-        factor2,
-        posthoc_entry = entry$posthoc,
-        nested_posthoc = entry$posthoc
-      )
+      rng <- compute_barplot_panel_range(entry$stats_df)
       combined <- update_numeric_range(combined, rng)
     }
   }
@@ -107,11 +101,7 @@ compute_barplot_shared_limits <- function(context,
   ensure_barplot_zero_baseline(limits)
 }
 
-compute_barplot_panel_range <- function(stats_df,
-                                        factor1,
-                                       factor2,
-                                       posthoc_entry = NULL,
-                                       nested_posthoc = NULL) {
+compute_barplot_panel_range <- function(stats_df) {
   if (is.null(stats_df) || nrow(stats_df) == 0) return(NULL)
   values <- c(stats_df$.ta_mean - stats_df$.ta_se, stats_df$.ta_mean + stats_df$.ta_se)
   values <- values[is.finite(values)]
@@ -275,13 +265,7 @@ build_bar_plot_panel <- function(stats_df,
                                  y_limits = NULL,
                                  response_var = NULL) {
   if (is.null(y_limits)) {
-    panel_range <- compute_barplot_panel_range(
-      stats_df,
-      factor1,
-      factor2,
-      posthoc_entry = posthoc_entry,
-      nested_posthoc = nested_posthoc
-    )
+    panel_range <- compute_barplot_panel_range(stats_df)
     
     if (!is.null(panel_range)) {
       y_limits <- expand_axis_limits(panel_range, lower_mult = 0, upper_mult = 0.12)
@@ -310,7 +294,6 @@ build_bar_plot_panel <- function(stats_df,
     factor1 = factor1,
     factor2 = factor2,
     line_colors = line_colors,
-    base_fill = base_fill,
     base_size = base_size,
     nested_posthoc = nested_posthoc,
     y_limits = y_limits,
@@ -368,7 +351,6 @@ build_two_factor_barplot <- function(stats_df,
                                      factor1,
                                      factor2,
                                      line_colors,
-                                     base_fill,
                                      base_size,
                                      nested_posthoc = NULL,
                                      y_limits = NULL,

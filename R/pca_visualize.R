@@ -164,7 +164,7 @@ visualize_pca_ui <- function(id, filtered_data = NULL) {
         height_help = "Set the height of the PCA plot in pixels."
       ),
       fluidRow(
-        column(6, add_color_customization_ui(ns, multi_group = TRUE)),
+        column(6, add_color_customization_ui(ns)),
         column(6, base_size_ui(
           ns,
           default = 13,
@@ -579,31 +579,6 @@ visualize_pca_server <- function(id, filtered_data, model_fit, reset_trigger = r
       show_loadings <- isTRUE(input$show_loadings)
       loading_scale <- ifelse(is.null(input$loading_scale) || is.na(input$loading_scale), 1.2, input$loading_scale)
 
-      max_levels <- if (exists("MAX_STRATIFICATION_LEVELS")) MAX_STRATIFICATION_LEVELS else 10L
-
-      validate_levels <- function(var) {
-        if (is.null(var) || !var %in% names(data)) {
-          return(NULL)
-        }
-
-        column <- data[[var]]
-        values <- if (is.factor(column)) {
-          levels(base::droplevels(column))
-        } else {
-          unique(as.character(column[!is.na(column)]))
-        }
-
-        values <- values[!is.na(values) & nzchar(values)]
-        n_levels <- length(values)
-
-        validate(need(
-          n_levels <= max_levels,
-          sprintf("'%s' has too many levels (%d > %d).", var, n_levels, max_levels)
-        ))
-
-        values
-      }
-
       facet_info <- facet_selection()
       facet_var <- facet_info$var
       facet_levels <- facet_info$levels
@@ -667,7 +642,6 @@ visualize_pca_server <- function(id, filtered_data, model_fit, reset_trigger = r
           loading_scale = loading_scale,
           custom_colors = custom_colors(),
           subset_rows = idx,
-          color_levels = NULL,
           x_limits = x_limits,
           y_limits = y_limits,
           base_size = base_size()
@@ -819,7 +793,6 @@ build_pca_biplot <- function(
   loading_scale = 1.2,
   custom_colors = NULL,
   subset_rows = NULL,
-  color_levels = NULL,
   x_limits = NULL, y_limits = NULL,
   base_size = 13
 ) {

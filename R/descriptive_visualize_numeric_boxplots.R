@@ -34,7 +34,7 @@ visualize_numeric_boxplots_ui <- function(id) {
     ),
     
     fluidRow(
-      column(6, add_color_customization_ui(ns, multi_group = TRUE)),
+      column(6, add_color_customization_ui(ns)),
       column(6, tagList(
         base_size_ui(
           ns,

@@ -54,3 +54,44 @@ test_that("the analysis coordinator blocks stale model downloads until rerun", {
     expect_true(file.exists(output[["lm-download_model"]]))
   })
 })
+
+for (engine in c("oneway", "twoway")) {
+  test_that(paste(engine, "ANOVA retains stratified summaries and the guarded combined Word report"), {
+    data <- expand.grid(
+      group = factor(c("Control", "Drug")), sex = factor(c("Female", "Male")),
+      batch = factor(c("first", "second")), replicate = 1:5
+    )
+    data$value <- 2 + as.integer(data$group) * 3 + as.integer(data$sex) +
+      as.integer(data$batch) / 2 + sin(data$replicate)
+    filtered <- reactiveVal(data)
+    analysis <- if (engine == "oneway") one_way_anova_server else two_way_anova_server
+
+    testServer(analysis, args = list(filtered_data = filtered), {
+      session$setInputs(
+        `response-response` = "value", `response-multi_resp` = FALSE,
+        `strat-stratify_var` = "batch", `strat-strata_order` = levels(data$batch)
+      )
+      if (engine == "oneway") {
+        session$setInputs(group = "group", order = levels(data$group))
+      } else {
+        session$setInputs(
+          factor1 = "group", order1 = levels(data$group),
+          factor2 = "sex", order2 = levels(data$sex)
+        )
+      }
+      session$setInputs(run = 1L)
+      expect_match(output$summary_ui$html, "summary_1_1", fixed = TRUE)
+      expect_true(nzchar(output$summary_1_1))
+      expect_true(nzchar(output$summary_1_2))
+      report <- output$download_all
+      expect_true(file.exists(report))
+      expect_true("word/document.xml" %in% unzip(report, list = TRUE)$Name)
+
+      filtered(data[-1, , drop = FALSE])
+      session$flushReact()
+      expect_error(output$download_all, "Run the analysis again", class = "shiny.silent.error")
+      session$setInputs(run = 2L)
+      expect_true(file.exists(output$download_all))
+    })
+  })
+}

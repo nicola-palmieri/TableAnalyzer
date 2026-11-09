@@ -10,7 +10,7 @@ pairwise_correlation_visualize_ggpairs_ui <- function(id, base_size_value = NULL
     uiOutput(ns("size_controls")),
     uiOutput(ns("grid_controls")),
     fluidRow(
-      column(6, add_color_customization_ui(ns, multi_group = TRUE)),
+      column(6, add_color_customization_ui(ns)),
       column(6, base_size_ui(
         ns,
         default = base_size_value,

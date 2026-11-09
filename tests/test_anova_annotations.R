@@ -31,6 +31,6 @@ test_that("two-way numeric levels receive stars within each first-factor level",
   expect_true(all(outputs$posthoc_table$p.value < .001))
 
   stats <- anova_summarise_stats(info$data_used, "response", "batch", "dose")
-  plot <- build_two_factor_barplot(stats, "", "batch", "dose", NULL, "steelblue", 12, outputs$posthoc_table)
+  plot <- build_two_factor_barplot(stats, "", "batch", "dose", NULL, 12, outputs$posthoc_table)
   expect_equal(ggplot_build(plot)$data[[3]]$label, rep("***", 4))
 })
