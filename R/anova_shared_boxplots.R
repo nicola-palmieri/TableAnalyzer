@@ -7,7 +7,8 @@ plot_anova_boxplot <- function(data,
                                base_size = 14,
                                share_y_axis = FALSE,
                                common_legend = FALSE,
-                               legend_position = NULL) {
+                               legend_position = NULL,
+                               show_jitter = FALSE) {
   context <- initialize_anova_plot_context(data, info, layout_values)
   data <- context$data
   factor1 <- context$factor1
@@ -42,6 +43,14 @@ plot_anova_boxplot <- function(data,
           width = 0.6,
           fill = base_fill
         )
+      if (isTRUE(show_jitter)) {
+        p <- p + geom_jitter(
+          position = position_jitter(width = 0.15, height = 0, seed = 1L),
+          shape = 21, fill = base_fill, color = "#1b2637",
+          alpha = 0.6, size = 1.6, stroke = 0.25,
+          show.legend = FALSE
+        )
+      }
     } else {
       p <- ggplot(subset_data, aes(x = .data[[factor1]], y = .data[[resp]], fill = .data[[factor2]])) +
         geom_boxplot(
@@ -50,6 +59,16 @@ plot_anova_boxplot <- function(data,
           width = 0.7,
           position = position_dodge(width = 0.8)
         )
+      if (isTRUE(show_jitter)) {
+        p <- p + geom_jitter(
+          position = position_jitterdodge(
+            jitter.width = 0.15, jitter.height = 0, dodge.width = 0.8, seed = 1L
+          ),
+          shape = 21, color = "#1b2637",
+          alpha = 0.6, size = 1.6, stroke = 0.25,
+          show.legend = FALSE
+        )
+      }
     }
 
     p <- p +

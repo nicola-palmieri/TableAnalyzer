@@ -6,8 +6,8 @@ visualize_numeric_boxplots_ui <- function(id) {
   ns <- NS(id)
   tagList(
     with_help_tooltip(
-      checkboxInput(ns("show_points"), "Show individual data points", TRUE),
-      "Add the raw observations on top of each boxplot."
+      checkboxInput(ns("show_points"), "Overlay jittered data", FALSE),
+      "Overlay raw observations with horizontal jitter."
     ),
     with_help_tooltip(
       checkboxInput(ns("show_outliers"), "Highlight boxplot outliers", FALSE),
@@ -240,7 +240,7 @@ visualize_numeric_boxplots_server <- function(id, filtered_data, summary_info, i
           df = dat,
           selected_vars = s_vars,
           group_var = g_var,
-          show_points = input$show_points,
+          show_points = isTRUE(input$show_points),
           show_outliers = input$show_outliers,
           outlier_label_var = label_var,
           nrow_input = rows,
@@ -382,7 +382,7 @@ visualize_numeric_boxplots_server <- function(id, filtered_data, summary_info, i
 build_descriptive_numeric_boxplot <- function(df,
                                               selected_vars = NULL,
                                               group_var = NULL,
-                                              show_points = TRUE,
+                                              show_points = FALSE,
                                               show_outliers = FALSE,
                                               outlier_label_var = NULL,
                                               nrow_input = NULL,
@@ -430,12 +430,11 @@ build_descriptive_numeric_boxplot <- function(df,
       needs_color_scale <- FALSE
       if (isTRUE(show_points)) {
         p <- p + geom_jitter(
-          aes(color = .data[[group_var]]),
-          width = 0.2,
-          alpha = 0.5,
-          size = 1
+          position = position_jitter(width = 0.2, height = 0, seed = 1L),
+          shape = 21, color = "#1b2637",
+          alpha = 0.6, size = 1.6, stroke = 0.25,
+          show.legend = FALSE
         )
-        needs_color_scale <- TRUE
       }
 
       if (isTRUE(show_outliers)) {
@@ -491,7 +490,12 @@ build_descriptive_numeric_boxplot <- function(df,
         )
 
       if (isTRUE(show_points)) {
-        p <- p + geom_jitter(color = single_color, width = 0.05, alpha = 0.5, size = 1)
+        p <- p + geom_jitter(
+          position = position_jitter(width = 0.05, height = 0, seed = 1L),
+          shape = 21, fill = single_color, color = "#1b2637",
+          alpha = 0.6, size = 1.6, stroke = 0.25,
+          show.legend = FALSE
+        )
       }
 
       if (isTRUE(show_outliers)) {

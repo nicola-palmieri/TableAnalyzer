@@ -155,12 +155,13 @@ visualize_twoway_server <- function(id, filtered_data, model_info) {
     output$axis_and_jitter <- renderUI({
       jitter_widget <- NULL
       
-      if (input$plot_type == "lineplot_mean_se") {
+      if (isTRUE(input$plot_type %in% c("lineplot_mean_se", "boxplot"))) {
+        jitter_id <- if (identical(input$plot_type, "boxplot")) "boxplot_show_jitter" else "lineplot_show_jitter"
         jitter_widget <- with_help_tooltip(
           checkboxInput(
-            ns("lineplot_show_jitter"),
+            ns(jitter_id),
             "Overlay jittered data",
-            value = isTRUE(input$lineplot_show_jitter)
+            value = isTRUE(input[[jitter_id]])
           ),
           "Overlay raw observations with jitter."
         )
@@ -305,6 +306,7 @@ visualize_twoway_server <- function(id, filtered_data, model_info) {
           ),
           boxplot = plot_anova_boxplot(
             data, info, layout_inputs,
+            show_jitter      = isTRUE(input$boxplot_show_jitter),
             line_colors      = custom_colors(),
             base_size        = base_size(),
             share_y_axis     = isTRUE(input$share_y_axis),

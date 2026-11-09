@@ -32,6 +32,14 @@ visualize_oneway_ui <- function(id) {
         )
       ),
       
+      conditionalPanel(
+        condition = sprintf("input['%s'] === 'boxplot'", ns("plot_type")),
+        with_help_tooltip(
+          checkboxInput(ns("boxplot_show_jitter"), "Overlay jittered data", value = FALSE),
+          "Overlay raw observations with horizontal jitter."
+        )
+      ),
+
       checkboxInput(
         ns("share_y_axis"),
         "Use common y-axis across plots",
@@ -152,6 +160,7 @@ visualize_oneway_server <- function(id, filtered_data, model_info) {
           boxplot = plot_anova_boxplot(
             data,
             info,
+            show_jitter = isTRUE(input$boxplot_show_jitter),
             layout_values = layout_inputs,
             line_colors   = custom_colors(),
             base_size     = base_size(),
