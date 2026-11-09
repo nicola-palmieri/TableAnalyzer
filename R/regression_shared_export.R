@@ -161,7 +161,7 @@ insert_blank_line <- function(doc, text = "", style = "Normal") {
 format_p_values <- function(df, p_col) {
   if (is.null(p_col) || !p_col %in% names(df)) return(df)
   p_vals <- as.numeric(df[[p_col]])
-  df[[p_col]] <- ifelse(p_vals < 0.0001, "<0.0001", sprintf("%.4f", p_vals))
+  df[[p_col]] <- ifelse(is.na(p_vals), "", ifelse(p_vals < 0.0001, "<0.0001", sprintf("%.4f", p_vals)))
   df
 }
 
@@ -184,6 +184,10 @@ format_flextable <- function(df, p_col = NULL, bold_p = TRUE, header_labels = NU
   if (length(numeric_cols) > 0) {
     ft <- align(ft, j = numeric_cols, align = "right", part = "all")
     ft <- colformat_num(ft, j = numeric_cols, digits = 4)
+  }
+  if (!is.null(p_col) && p_col %in% numeric_cols) {
+    labels <- format_p_values(df, p_col)[[p_col]]
+    ft <- compose(ft, j = p_col, value = as_paragraph(labels))
   }
 
   ft <- border_remove(ft)
@@ -234,14 +238,12 @@ extract_anova_entry <- function(entry) {
 
   anova_tbl <- if (is_lmm) as.data.frame(anova(model, type = 3)) else as.data.frame(car::Anova(model, type = 3))
   anova_tbl <- tibble::rownames_to_column(anova_tbl, "Effect")
-  for (col in names(anova_tbl)) {
-    if (is.numeric(anova_tbl[[col]])) anova_tbl[[col]] <- round(anova_tbl[[col]], 4)
-  }
   p_col <- grep("^Pr", names(anova_tbl), value = TRUE)
+  for (col in names(anova_tbl)) {
+    if (is.numeric(anova_tbl[[col]]) && !col %in% p_col) anova_tbl[[col]] <- round(anova_tbl[[col]], 4)
+  }
   if (length(p_col) > 0) {
     names(anova_tbl)[names(anova_tbl) == p_col[1]] <- "Pr(>F)"
-    p_col <- "Pr(>F)"
-    anova_tbl <- format_p_values(anova_tbl, p_col)
   }
   anova_tbl$Response <- resp
   anova_tbl$Stratum <- strat
@@ -257,13 +259,9 @@ extract_coef_entry <- function(entry) {
   coef_tbl <- tibble::rownames_to_column(coef_tbl, "Term")
   names(coef_tbl)[1] <- "Term"
   names(coef_tbl) <- gsub("Pr\\(>\\|t\\|\\)", "Pr(>|t|)", names(coef_tbl))
-  for (col in names(coef_tbl)) {
-    if (is.numeric(coef_tbl[[col]])) coef_tbl[[col]] <- round(coef_tbl[[col]], 4)
-  }
   p_col_coef <- grep("^Pr", names(coef_tbl), value = TRUE)
-  if (length(p_col_coef) > 0) {
-    p_col_coef <- p_col_coef[1]
-    coef_tbl <- format_p_values(coef_tbl, p_col_coef)
+  for (col in names(coef_tbl)) {
+    if (is.numeric(coef_tbl[[col]]) && !col %in% p_col_coef) coef_tbl[[col]] <- round(coef_tbl[[col]], 4)
   }
   coef_tbl$Response <- resp
   coef_tbl$Stratum <- strat
