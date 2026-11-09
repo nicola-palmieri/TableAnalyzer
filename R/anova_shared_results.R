@@ -80,7 +80,7 @@ prepare_anova_outputs <- function(model_obj, factor_names) {
         ref_idx <- which(levels(model_obj$model[[f1]]) == ref_lvl)
         
         # Only reference-vs-others contrasts (clean, robust)
-        contrasts <- emmeans::contrast(emm, method = "trt.vs.ctrl", ref = ref_idx)
+        contrasts <- emmeans::contrast(emm, method = "trt.vs.ctrl", ref = ref_idx, enhance.levels = FALSE)
         res_df <- as.data.frame(summary(contrasts))
         
         res_df$Factor <- f1
@@ -122,7 +122,8 @@ prepare_anova_outputs <- function(model_obj, factor_names) {
       contrasts_nested <- emmeans::contrast(
         emm_nested,
         method = "trt.vs.ctrl",
-        ref = ref_idx
+        ref = ref_idx,
+        enhance.levels = FALSE
       )
       
       df <- as.data.frame(summary(contrasts_nested))
