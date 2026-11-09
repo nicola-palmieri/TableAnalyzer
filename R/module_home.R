@@ -31,10 +31,14 @@ home_ui <- function(id) {
               alt = "Table Analyzer logo"
             ),
             div(
-              h1("Table Analyzer"),
+              div(
+                class = "home-title-row",
+                h1("Table Analyzer"),
+                span(class = "home-version", "v1.10")
+              ),
               p(
                 class = "home-simple-subtitle",
-                "Statistical analysis for scientific tables, without spreadsheet chaos."
+                "Turn your tabular data into publication-ready summary tables and plots"
               )
             )
           ),
@@ -93,30 +97,9 @@ home_ui <- function(id) {
               p("Explore patterns with tailored plots. Export publication-ready figures and formatted model reports.")
             )
           )
-        ),
-        div(
-          class = "home-workflow",
-          span(class = "home-workflow-label", "A clear path through your analysis"),
-          lapply(seq_len(4), function(i) {
-            tagList(
-              span(
-                class = "home-workflow-step",
-                span(class = "home-workflow-number", sprintf("%02d", i)),
-                c("Upload", "Filter", "Analyze", "Visualize")[i]
-              ),
-              if (i < 4) span(class = "home-workflow-arrow", `aria-hidden` = "true", HTML("&rarr;"))
-            )
-          })
-        ),
-        p(
-          tagList(
-            em("Developed by Nicola Palmieri"),
-            br(),
-            span("Version v1.10", style = "font-size:0.9em;")
-          ),
-          class = "text-muted small home-simple-footer mb-0"
         )
-      )
+      ),
+      p(class = "home-developer", "Developed by Nicola Palmieri")
     )
   )
 }
