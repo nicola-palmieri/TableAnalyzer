@@ -113,7 +113,7 @@ compute_barplot_panel_range <- function(stats_df,
                                        posthoc_entry = NULL,
                                        nested_posthoc = NULL) {
   if (is.null(stats_df) || nrow(stats_df) == 0) return(NULL)
-  values <- c(stats_df$mean - stats_df$se, stats_df$mean + stats_df$se)
+  values <- c(stats_df$.ta_mean - stats_df$.ta_se, stats_df$.ta_mean + stats_df$.ta_se)
   values <- values[is.finite(values)]
   if (length(values) == 0) return(NULL)
   range(values)
@@ -326,10 +326,10 @@ build_single_factor_barplot <- function(stats_df,
                                         posthoc_entry,
                                         y_limits = NULL,
                                         response_var = NULL) {
-  plot_obj <- ggplot(stats_df, aes(x = !!sym(factor1), y = mean)) +
+  plot_obj <- ggplot(stats_df, aes(x = !!sym(factor1), y = .ta_mean)) +
     geom_col(fill = base_fill, width = 0.6, alpha = 0.8) +
     geom_errorbar(
-      aes(ymin = mean - se, ymax = mean + se),
+      aes(ymin = .ta_mean - .ta_se, ymax = .ta_mean + .ta_se),
       width = 0.15,
       color = "gray40",
       linewidth = 0.5
@@ -382,10 +382,10 @@ build_two_factor_barplot <- function(stats_df,
   palette <- resolve_palette_for_levels(group_levels, custom = line_colors)
   dodge <- position_dodge(width = 0.7)
   
-  plot_obj <- ggplot(stats_df, aes(x = !!sym(factor1), y = mean, fill = !!sym(factor2))) +
+  plot_obj <- ggplot(stats_df, aes(x = !!sym(factor1), y = .ta_mean, fill = !!sym(factor2))) +
     geom_col(position = dodge, width = 0.6, alpha = 0.85) +
     geom_errorbar(
-      aes(ymin = mean - se, ymax = mean + se),
+      aes(ymin = .ta_mean - .ta_se, ymax = .ta_mean + .ta_se),
       position = dodge,
       width = 0.2,
       color = "gray40",
@@ -500,8 +500,8 @@ build_annotations_single_factor <- function(barpos,
     bar_row <- barpos[gsub("[()]", "", as.character(barpos[[factor1]])) == lvl, , drop = FALSE]
     if (nrow(bar_row) == 0) next
     
-    mean_val <- stats_df$mean[gsub("[()]", "", as.character(stats_df[[factor1]])) == lvl]
-    se_val   <- stats_df$se[gsub("[()]", "", as.character(stats_df[[factor1]])) == lvl]
+    mean_val <- stats_df$.ta_mean[gsub("[()]", "", as.character(stats_df[[factor1]])) == lvl]
+    se_val   <- stats_df$.ta_se[gsub("[()]", "", as.character(stats_df[[factor1]])) == lvl]
     
     # --- label above SE ---
     y_ann <- (mean_val + se_val) + se_val * offset_mult
@@ -576,10 +576,10 @@ build_annotations_two_factor <- function(barpos,
       ]
       if (nrow(bar_row) == 0) next
       
-      mean_val <- stats_df$mean[
+      mean_val <- stats_df$.ta_mean[
         stats_df[[factor1]] == g1 & stats_df[[factor2]] == lvl
       ]
-      se_val <- stats_df$se[
+      se_val <- stats_df$.ta_se[
         stats_df[[factor1]] == g1 & stats_df[[factor2]] == lvl
       ]
       

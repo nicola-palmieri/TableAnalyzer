@@ -36,10 +36,10 @@ test_that("ANOVA summaries calculate grouped means and standard errors", {
   one_way <- anova_summarise_stats(data, "response", "treatment", NULL)
   two_way <- anova_summarise_stats(data, "response", "treatment", "sex")
 
-  expect_equal(one_way$mean, c(2, 6))
-  expect_equal(one_way$se, c(1, 1))
+  expect_equal(one_way$.ta_mean, c(2, 6))
+  expect_equal(one_way$.ta_se, c(1, 1))
   expect_equal(nrow(two_way), 4)
-  expect_true(all(is.na(two_way$se)))
+  expect_true(all(is.na(two_way$.ta_se)))
 })
 
 test_that("ANOVA factor levels follow requested plotting order", {

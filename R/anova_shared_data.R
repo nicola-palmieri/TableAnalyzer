@@ -9,16 +9,16 @@ anova_summarise_stats <- function(df_subset, resp_name, factor1, factor2) {
     df_subset |>
       dplyr::group_by(.data[[factor1]]) |>
       dplyr::summarise(
-        mean = mean(.data[[resp_name]], na.rm = TRUE),
-        se = sd(.data[[resp_name]], na.rm = TRUE) / sqrt(sum(!is.na(.data[[resp_name]]))),
+        .ta_mean = mean(.data[[resp_name]], na.rm = TRUE),
+        .ta_se = sd(.data[[resp_name]], na.rm = TRUE) / sqrt(sum(!is.na(.data[[resp_name]]))),
         .groups = "drop"
       )
   } else {
     df_subset |>
       dplyr::group_by(.data[[factor1]], .data[[factor2]]) |>
       dplyr::summarise(
-        mean = mean(.data[[resp_name]], na.rm = TRUE),
-        se = sd(.data[[resp_name]], na.rm = TRUE) / sqrt(sum(!is.na(.data[[resp_name]]))),
+        .ta_mean = mean(.data[[resp_name]], na.rm = TRUE),
+        .ta_se = sd(.data[[resp_name]], na.rm = TRUE) / sqrt(sum(!is.na(.data[[resp_name]]))),
         .groups = "drop"
       )
   }

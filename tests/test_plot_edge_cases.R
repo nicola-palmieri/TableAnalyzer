@@ -19,8 +19,8 @@ test_that("barplot limits preserve zero for negative-only values", {
 
   stats_df <- data.frame(
     treatment = factor(c("a", "b")),
-    mean = c(-10, -5),
-    se = c(1, 1)
+    .ta_mean = c(-10, -5),
+    .ta_se = c(1, 1)
   )
   plot <- build_single_factor_barplot(
     stats_df = stats_df,
@@ -36,6 +36,32 @@ test_that("barplot limits preserve zero for negative-only values", {
 
   expect_lt(plotted_limits[1], -10)
   expect_gte(plotted_limits[2], 0)
+})
+
+test_that("ANOVA summaries and plots accept columns named mean and se", {
+  response_mean <- data.frame(group = factor(c("a", "a", "b", "b")), mean = c(1,3,5,7))
+  stats <- anova_summarise_stats(response_mean, "mean", "group", NULL)
+  expect_equal(stats$.ta_mean, c(2, 6))
+  expect_equal(stats$.ta_se, c(1, 1))
+
+  predictor_mean <- data.frame(mean = factor(c("a", "a", "b", "b")), se = c(1,3,5,7))
+  stats <- anova_summarise_stats(predictor_mean, "se", "mean", NULL)
+  expect_equal(as.character(stats$mean), c("a", "b"))
+  expect_equal(stats$.ta_mean, c(2, 6))
+  expect_equal(stats$.ta_se, c(1, 1))
+  plot <- build_single_factor_barplot(stats, "", "mean", "steelblue", 12, NULL)
+  built <- ggplot_build(plot)
+  expect_equal(built$data[[1]]$y, c(2, 6))
+  expect_equal(built$data[[2]]$ymin, c(1, 5))
+  expect_equal(built$data[[2]]$ymax, c(3, 7))
+
+  two_way <- expand.grid(mean = factor(c("a", "b")), se = factor(c("x", "y")), replicate = 1:2)
+  two_way$value <- seq_len(nrow(two_way))
+  stats <- anova_summarise_stats(two_way, "value", "mean", "se")
+  expect_equal(stats$.ta_mean, c(3, 5, 4, 6))
+  expect_equal(stats$.ta_se, rep(2, 4))
+  expect_true(is.factor(stats$mean))
+  expect_true(is.factor(stats$se))
 })
 
 test_that("lineplot limits include raw observations when jitter is shown", {

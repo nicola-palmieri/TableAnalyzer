@@ -91,7 +91,7 @@ compute_lineplot_shared_limits <- function(context,
         if (nrow(stats_df) == 0) next
 
         stats_df <- apply_anova_factor_levels(stats_df, factor1, factor2, context$order1, context$order2)
-        y_values <- c(stats_df$mean - stats_df$se, stats_df$mean + stats_df$se)
+        y_values <- c(stats_df$.ta_mean - stats_df$.ta_se, stats_df$.ta_mean + stats_df$.ta_se)
         if (isTRUE(include_raw) && resp %in% names(subset_data)) {
           y_values <- c(y_values, subset_data[[resp]])
         }
@@ -101,7 +101,7 @@ compute_lineplot_shared_limits <- function(context,
       stats_df <- anova_summarise_stats(data, resp, factor1, factor2)
       if (nrow(stats_df) == 0) next
       stats_df <- apply_anova_factor_levels(stats_df, factor1, factor2, context$order1, context$order2)
-      y_values <- c(stats_df$mean - stats_df$se, stats_df$mean + stats_df$se)
+      y_values <- c(stats_df$.ta_mean - stats_df$.ta_se, stats_df$.ta_mean + stats_df$.ta_se)
       if (isTRUE(include_raw) && resp %in% names(data)) {
         y_values <- c(y_values, data[[resp]])
       }
@@ -187,7 +187,7 @@ build_stratified_lineplot <- function(resp,
 
     stats_df <- apply_anova_factor_levels(stats_df, factor1, factor2, context$order1, context$order2)
     raw_data <- prepare_lineplot_raw_data(subset_data, resp, factor1, factor2)
-    y_values <- c(y_values, stats_df$mean - stats_df$se, stats_df$mean + stats_df$se)
+    y_values <- c(y_values, stats_df$.ta_mean - stats_df$.ta_se, stats_df$.ta_mean + stats_df$.ta_se)
     if (isTRUE(show_jitter) && !is.null(raw_data)) {
       y_values <- c(y_values, raw_data[[resp]])
     }
@@ -256,7 +256,7 @@ build_unstratified_lineplot <- function(resp,
 
   stats_df <- apply_anova_factor_levels(stats_df, factor1, factor2, context$order1, context$order2)
   raw_data <- prepare_lineplot_raw_data(data, resp, factor1, factor2)
-  y_values <- c(stats_df$mean - stats_df$se, stats_df$mean + stats_df$se)
+  y_values <- c(stats_df$.ta_mean - stats_df$.ta_se, stats_df$.ta_mean + stats_df$.ta_se)
   if (isTRUE(show_jitter) && !is.null(raw_data)) {
     y_values <- c(y_values, raw_data[[resp]])
   }
@@ -320,7 +320,7 @@ build_line_plot_panel <- function(stats_df,
     } else {
       resolve_single_color()
     }
-    p <- ggplot(stats_df, aes(x = !!sym(factor1), y = mean))
+    p <- ggplot(stats_df, aes(x = !!sym(factor1), y = .ta_mean))
 
     if (isTRUE(show_jitter) && !is.null(raw_data) &&
         !is.null(response_var) && response_var %in% names(raw_data) &&
@@ -347,7 +347,7 @@ build_line_plot_panel <- function(stats_df,
     p <- p +
       geom_point(size = 3, color = color_value) +
       geom_errorbar(
-        aes(ymin = mean - se, ymax = mean + se),
+        aes(ymin = .ta_mean - .ta_se, ymax = .ta_mean + .ta_se),
         width = 0.15,
         color = color_value
       ) +
@@ -377,7 +377,7 @@ build_line_plot_panel <- function(stats_df,
     jitter_dodge_width <- if (is.null(dodge_width)) 0 else dodge_width
     p <- ggplot(stats_df, aes(
       x = !!sym(factor1),
-      y = mean,
+      y = .ta_mean,
       color = !!sym(factor2),
       group = !!sym(factor2)
     ))
@@ -416,12 +416,12 @@ build_line_plot_panel <- function(stats_df,
 
     errorbar_layer <- if (is.null(dodge)) {
       geom_errorbar(
-        aes(ymin = mean - se, ymax = mean + se),
+        aes(ymin = .ta_mean - .ta_se, ymax = .ta_mean + .ta_se),
         width = 0.15
       )
     } else {
       geom_errorbar(
-        aes(ymin = mean - se, ymax = mean + se),
+        aes(ymin = .ta_mean - .ta_se, ymax = .ta_mean + .ta_se),
         width = 0.15,
         position = dodge
       )
