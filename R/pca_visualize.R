@@ -126,7 +126,6 @@ visualize_pca_ui <- function(id, filtered_data = NULL) {
         ),
         "Split the plot into small multiples based on a grouping variable."
       ),
-      uiOutput(ns("layout_controls")),
       fluidRow(
         column(
           6,
@@ -171,6 +170,7 @@ visualize_pca_ui <- function(id, filtered_data = NULL) {
           help_text = "Adjust the base font size used for PCA plots."
         ))
       ),
+      uiOutput(ns("layout_controls")),
       br(),
       fluidRow(
         column(6, actionButton(ns("apply_plot"), "Apply changes", width = "100%")),

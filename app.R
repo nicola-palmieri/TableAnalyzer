@@ -40,7 +40,7 @@ ui <- navbarPage(
   
   # ---- Custom CSS ----
   header = tags$head(
-    tags$link(rel = "stylesheet", type = "text/css", href = "theme-table.css?v=minimal-16"),
+    tags$link(rel = "stylesheet", type = "text/css", href = "theme-table.css?v=minimal-17"),
     tags$script(HTML("
       const tabManager = function(tab, disable) {
         var selector = 'a[data-value=\"' + tab + '\"]';

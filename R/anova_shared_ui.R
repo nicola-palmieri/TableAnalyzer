@@ -28,6 +28,7 @@ build_anova_layout_controls <- function(ns, input, info, grid_cache = NULL) {
     strata_defaults <- defaults$strata
     plot_grid_ui(
       id = ns("strata_grid"),
+      advanced = FALSE,
       rows_label = sprintf("Rows for strata (%s, n=%d)", info$strata$var, length(strata_levels)),
       cols_label = sprintf("Cols for strata (%s, n=%d)", info$strata$var, length(strata_levels)),
       rows_help = "Rows of plots when displaying each stratum.",
@@ -43,6 +44,7 @@ build_anova_layout_controls <- function(ns, input, info, grid_cache = NULL) {
     response_defaults <- defaults$responses
     plot_grid_ui(
       id = ns("response_grid"),
+      advanced = FALSE,
       rows_label = sprintf("Rows for responses (n=%d)", n_responses),
       cols_label = sprintf("Cols for responses (n=%d)", n_responses),
       rows_help = "Rows of plots when multiple responses are shown together.",
@@ -54,7 +56,12 @@ build_anova_layout_controls <- function(ns, input, info, grid_cache = NULL) {
     NULL
   }
 
-  tagList(strata_inputs, response_inputs)
+  if (is.null(strata_inputs) && is.null(response_inputs)) return(NULL)
+  tags$details(
+    tags$summary(strong("Advanced options")),
+    strata_inputs,
+    response_inputs
+  )
 }
 
 

@@ -16,11 +16,6 @@ visualize_numeric_histograms_ui <- function(id) {
       height_help = "Set the height of each histogram panel in pixels."
     ),
     
-    plot_grid_ui(
-      id = ns("plot_grid"),
-      rows_help = "Choose how many rows of histograms to display.",
-      cols_help = "Choose how many columns of histograms to display."
-    ),
     
     fluidRow(
       column(6, add_color_customization_ui(ns)),
@@ -33,6 +28,11 @@ visualize_numeric_histograms_ui <- function(id) {
         br(),
         uiOutput(ns("common_legend_controls"))
       ))
+    ),
+    plot_grid_ui(
+      id = ns("plot_grid"),
+      rows_help = "Choose how many rows of histograms to display.",
+      cols_help = "Choose how many columns of histograms to display."
     ),
     br(),
     fluidRow(

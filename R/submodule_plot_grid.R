@@ -117,7 +117,8 @@ plot_grid_ui <- function(id,
                          cols_min = 1L,
                          cols_max = 10L,
                          rows_value = NA,
-                         cols_value = NA) {
+                         cols_value = NA,
+                         advanced = TRUE) {
   ns <- NS(id)
   
   rows_input <- numericInput(
@@ -141,10 +142,14 @@ plot_grid_ui <- function(id,
   if (!is.null(rows_help)) rows_input <- with_help_tooltip(rows_input, rows_help)
   if (!is.null(cols_help)) cols_input <- with_help_tooltip(cols_input, cols_help)
   
-  tagList(
-    fluidRow(
-      column(6, rows_input),
-      column(6, cols_input)
-    )
+  controls <- fluidRow(
+    column(6, rows_input),
+    column(6, cols_input)
+  )
+  if (!advanced) return(controls)
+
+  tags$details(
+    tags$summary(strong("Advanced options")),
+    controls
   )
 }

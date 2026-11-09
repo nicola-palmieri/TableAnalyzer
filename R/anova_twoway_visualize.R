@@ -57,7 +57,6 @@ visualize_twoway_ui <- function(id) {
       
       uiOutput(ns("axis_and_jitter")),
       subplot_size_ui(ns),
-      uiOutput(ns("layout_controls")),
       
       fluidRow(
         column(6, add_color_customization_ui(ns)),
@@ -75,6 +74,7 @@ visualize_twoway_ui <- function(id) {
         )
       ),
       
+      uiOutput(ns("layout_controls")),
       br(),
       
       fluidRow(

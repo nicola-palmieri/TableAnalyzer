@@ -116,7 +116,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--accent); }
 .shiny-file-input-progress { margin-top: 8px; height: 5px; border-radius: 3px; }
 .progress-bar { background: var(--accent); }
 hr { border: 0; border-top: 1px solid var(--stroke); opacity: 1; }
-.ta-sidebar details { margin: 2px 0; padding: 6px 0; border-top: 1px solid var(--stroke); border-bottom: 1px solid var(--stroke); }
+.ta-sidebar details { margin: 12px 0 2px; padding: 6px 0; border-top: 1px solid var(--stroke); border-bottom: 1px solid var(--stroke); }
 .ta-sidebar summary { color: #465369; font-size: 12px; cursor: pointer; }
 .ta-sidebar summary strong { font-weight: 550; }
 .ta-sidebar details[open] summary { margin-bottom: 6px; }

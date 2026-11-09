@@ -8,7 +8,6 @@ pairwise_correlation_visualize_ggpairs_ui <- function(id, base_size_value = NULL
   if (length(base_size_value) == 0 || is.na(base_size_value)) base_size_value <- 11
   tagList(
     uiOutput(ns("size_controls")),
-    uiOutput(ns("grid_controls")),
     fluidRow(
       column(6, add_color_customization_ui(ns)),
       column(6, base_size_ui(
@@ -16,7 +15,8 @@ pairwise_correlation_visualize_ggpairs_ui <- function(id, base_size_value = NULL
         default = base_size_value,
         help_text = "Adjust the base font size used for the correlation plot."
       ))
-    )
+    ),
+    uiOutput(ns("grid_controls"))
   )
 }
 
