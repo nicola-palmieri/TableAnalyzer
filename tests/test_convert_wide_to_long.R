@@ -174,8 +174,8 @@ test_that("convert_wide_to_long behaves correctly across 20 Excel scenarios", {
   
   # ---- Test 5 ----
   out5 <- results[[5]]
-  expect_null(out5$error)
-  expect_s3_class(out5$result, "tbl_df")
+  expect_match(conditionMessage(out5$error), "Duplicate measurements detected")
+  expect_null(out5$result)
   
   # ---- Test 7 ----
   out7 <- results[[7]]
@@ -187,4 +187,23 @@ test_that("convert_wide_to_long behaves correctly across 20 Excel scenarios", {
   expect_null(out19$error)
   expect_s3_class(out19$result, "tbl_df")
   
+})
+
+test_that("wide conversion preserves underscores in both header rows", {
+  path <- tempfile(fileext = ".xlsx")
+  on.exit(unlink(path), add = TRUE)
+  openxlsx::write.xlsx(rbind(
+    c("ID", "A_score", "A_score", "B_score", "B_score"),
+    c("", "run_1", "run_2", "run_1", "run_2"),
+    c("sample1", "10", "20", "30", "40")
+  ), path, colNames = FALSE)
+
+  actual <- convert_wide_to_long(path, replicate_col = "Run_ID")
+
+  expect_equal(actual, tibble::tibble(
+    ID = c("sample1", "sample1"),
+    Run_ID = c("run_1", "run_2"),
+    A_score = c("10", "20"),
+    B_score = c("30", "40")
+  ))
 })

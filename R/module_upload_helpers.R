@@ -44,6 +44,17 @@ convert_wide_to_long <- function(path, sheet = 1, replicate_col = "Replicate") {
     header2 <- ifelse(combined_headers, sub(".*_", "", header1), "")
     header1 <- ifelse(combined_headers, sub("_[^_]+$", "", header1), header1)
   }
+
+  measured <- header2 != ""
+  header_pairs <- data.frame(variable = header1[measured], replicate = header2[measured])
+  duplicate_header <- which(duplicated(header_pairs))
+  if (length(duplicate_header) > 0) {
+    duplicate <- header_pairs[duplicate_header[1], ]
+    stop(sprintf(
+      "Duplicate measurements detected for variable '%s' and replicate '%s'. Ensure header labels are unique before uploading.",
+      duplicate$variable, duplicate$replicate
+    ), call. = FALSE)
+  }
   
   clean_names <- ifelse(header2 == "", header1, paste0(header1, "_", header2))
   clean_names <- make.unique(clean_names, sep = "_")
@@ -53,13 +64,14 @@ convert_wide_to_long <- function(path, sheet = 1, replicate_col = "Replicate") {
   
   data <- readxl::read_excel(path, sheet = sheet, skip = 2, col_names = clean_names, guess_max = 1000000)
   
-  data_long <- data |>
-    tidyr::pivot_longer(
-      cols = tidyselect::all_of(measure_cols),
-      names_to   = c("Variable", replicate_col),
-      names_pattern = "^(.*)_([^_]*)$",
-      values_to  = "Value"
-    )
+  # Keep the original header pairs instead of reconstructing them from names.
+  spec <- tibble::tibble(
+    .name = measure_cols,
+    .value = "Value",
+    Variable = header1[measured]
+  )
+  spec[[replicate_col]] <- header2[measured]
+  data_long <- tidyr::pivot_longer_spec(data, spec)
   
   id_cols <- c(fixed_cols, replicate_col, "Variable")
   
