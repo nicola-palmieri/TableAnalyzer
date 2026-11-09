@@ -147,11 +147,17 @@ analysis_server <- function(id, filtered_data, modules = analysis_module_registr
       current_value <- current_run_signal()
       baseline_value <- run_baseline() %||% 0L
       if (is.null(current_value)) return()
+      if (current_value < baseline_value) {
+        # A newly mounted action button starts its counter at zero.
+        run_baseline(current_value)
+        has_run(FALSE)
+        return()
+      }
       if (current_value > baseline_value) {
         has_run(TRUE)
         data_changed_since_run(FALSE)
       }
-    }, ignoreInit = TRUE)
+    }, ignoreInit = TRUE, ignoreNULL = FALSE)
 
 
     analysis_empty_state <- function(title, message, icon = "&#128221;") {
