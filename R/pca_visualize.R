@@ -70,7 +70,7 @@ visualize_pca_ui <- function(id, filtered_data = NULL) {
         column(
           6,
           conditionalPanel(
-            condition = sprintf("input.%s != 'None'", ns("pca_color")),
+            condition = sprintf("input['%s'] != 'None'", ns("pca_color")),
             with_help_tooltip(
               div(
                 style = "padding-top: 24px;",
