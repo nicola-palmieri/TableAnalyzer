@@ -58,12 +58,12 @@ upload_server <- function(id) {
                error = function(e) list(result = NULL, error = e))
     }
 
-    render_upload_error <- function(message, clear_data = TRUE) {
-      if (clear_data) {
-        df(NULL)
-        editable_cols(NULL)
+    render_upload_error <- function(message, clear_sheets = FALSE) {
+      df(NULL)
+      editable_cols(NULL)
+      render_validation("")
+      if (clear_sheets) {
         output$sheet_selector <- renderUI(NULL)
-        render_validation("")
       }
       output$preview <- renderDT(
         data.frame(Error = message),
@@ -77,7 +77,7 @@ upload_server <- function(id) {
                                     error_prefix = "Error preparing data") {
       processed <- safe_preprocess_uploaded_table(data)
       if (!is.null(processed$error)) {
-        render_validation(format_safe_error_message(error_prefix, processed$error))
+        render_upload_error(format_safe_error_message(error_prefix, processed$error))
         return(FALSE)
       }
 
@@ -103,7 +103,7 @@ upload_server <- function(id) {
     handle_safe_result <- function(safe_result, error_prefix, success_message = NULL,
                                    prepare_error_prefix = "Error preparing data") {
       if (!is.null(safe_result$error)) {
-        render_validation(format_safe_error_message(error_prefix, safe_result$error))
+        render_upload_error(format_safe_error_message(error_prefix, safe_result$error))
         return(FALSE)
       }
       process_loaded_data(safe_result$result, success_message, prepare_error_prefix)
@@ -233,7 +233,7 @@ upload_server <- function(id) {
 
       ext <- tolower(tools::file_ext(input$file$name))
       if (!ext %in% c("xlsx", "xls", "xlsm")) {
-        render_upload_error("❌ Invalid file type. Please upload .xlsx/.xls/.xlsm.", clear_data = FALSE)
+        render_upload_error("❌ Invalid file type. Please upload .xlsx/.xls/.xlsm.", clear_sheets = TRUE)
         return()
       }
 
@@ -241,14 +241,14 @@ upload_server <- function(id) {
       if (!is.null(sheets_result$error)) {
         render_upload_error(
           format_safe_error_message("❌ No readable sheets found in workbook.", sheets_result$error),
-          clear_data = FALSE
+          clear_sheets = TRUE
         )
         return()
       }
 
       sheets <- sheets_result$result
       if (length(sheets) == 0) {
-        render_upload_error("❌ No worksheets found in workbook.", clear_data = FALSE)
+        render_upload_error("❌ No worksheets found in workbook.", clear_sheets = TRUE)
         return()
       }
 
