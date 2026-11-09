@@ -1,4 +1,4 @@
-@import url("theme-table-core.css");
-@import url("theme-table-home.css");
-@import url("theme-table-components.css");
-@import url("theme-table-datatables.css");
+@import url("theme-table-core.css?v=minimal-12");
+@import url("theme-table-home.css?v=minimal-12");
+@import url("theme-table-components.css?v=minimal-12");
+@import url("theme-table-datatables.css?v=minimal-12");

@@ -12,14 +12,6 @@ analysis_ui <- function(id) {
       p(class = "ta-sidebar-subtitle", "Select an analysis type to explore your data, then inspect the summaries on the right."),
       hr(),
       
-      # --- CSS: expand dropdown height for better visibility ---
-      tags$style(HTML(sprintf("
-        #%s + .selectize-control .selectize-dropdown,
-        #%s + .selectize-control .selectize-dropdown .selectize-dropdown-content {
-          max-height: none !important;
-        }
-      ", ns("analysis_type"), ns("analysis_type")))),
-      
       # --- Analysis type selector ---
       with_help_tooltip(
         selectInput(

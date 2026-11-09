@@ -1,47 +1,32 @@
-/* DATATABLES */
-.dataTables_wrapper{
-  color: var(--txt);
-  font-size: 12px;
-}
-.dataTables_wrapper .dataTables_length,
-.dataTables_wrapper .dataTables_filter{
-  margin-bottom: 10px;
-  font-size: inherit;
-}
+.dataTables_wrapper, .dt-container { color: var(--muted); font-size: 11px; }
+.dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter,
+.dt-container .dt-length, .dt-container .dt-search { margin-bottom: 16px; }
+.dataTables_wrapper label, .dt-container label { color: var(--muted); font-size: 11px; font-weight: 400; }
 .dataTables_wrapper .dataTables_filter input,
-.dataTables_wrapper .dataTables_length select{
-  background-color: #ffffff !important;
-  border: 1px solid rgba(15,23,42,.16) !important;
-  color: inherit !important;
-  border-radius: var(--radius-sm) !important;
-  font-size: inherit;
-  padding: 3px 6px;
-  min-height: 28px;
-}
-.dataTables_wrapper .dataTables_info,
-.dataTables_wrapper .dataTables_paginate{
-  color: inherit !important;
-  font-size: inherit;
-}
-table.dataTable{
-  background: var(--panel) !important;
+.dataTables_wrapper .dataTables_length select,
+.dt-container .dt-search input, .dt-container .dt-length select {
+  height: var(--control-height);
+  min-height: var(--control-height);
+  padding: var(--control-padding);
   color: var(--txt) !important;
-  font-size: 12.5px;
+  background: var(--panel) !important;
+  border: 1px solid var(--stroke-strong) !important;
+  border-radius: var(--radius-sm) !important;
+  font-size: var(--control-font-size);
+  line-height: var(--control-line-height);
 }
-table.dataTable thead th{
-  background: var(--panel-soft) !important;
-  border-bottom: 1px solid var(--stroke) !important;
-}
-table.dataTable tbody td{
-  border-top: 1px solid rgba(15,23,42,.08) !important;
-}
-.shiny-plot-output,
-.shiny-plot-output > img,
-.shiny-plot-output > svg,
-.shiny-plot-output > canvas,
-.plotly,
-.plotly .svg-container{
-  background: transparent !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
-}
+table.dataTable { width: 100%; color: var(--txt) !important; background: var(--panel) !important; border-color: var(--stroke); font-size: 12px; font-variant-numeric: tabular-nums; }
+table.dataTable thead th { padding: 12px 14px !important; color: #526177; background: var(--panel-soft) !important; border-bottom: 1px solid var(--stroke) !important; font-size: 11px; font-weight: 600; }
+table.dataTable tbody td { padding: 10px 14px !important; border-top: 0 !important; border-bottom: 1px solid #eef1f5 !important; box-shadow: none !important; }
+table.dataTable tbody tr:nth-child(even) { background: #fbfcfd; }
+table.dataTable tbody tr:hover { background: var(--accent-soft) !important; }
+table.dataTable tbody tr.selected { color: var(--txt) !important; background: var(--accent-soft-active) !important; }
+.dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_paginate { padding-top: 16px; color: var(--muted) !important; }
+.dataTables_wrapper .dataTables_paginate .paginate_button { min-width: var(--control-height); min-height: var(--control-height); padding: 5px 8px; color: var(--muted) !important; background: transparent !important; border: 1px solid transparent !important; border-radius: var(--radius-sm); box-shadow: none !important; font-size: var(--control-font-size); line-height: var(--control-line-height); }
+.dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.dataTables_wrapper .dataTables_paginate .paginate_button.current:hover { color: var(--accent) !important; background: var(--accent-soft) !important; border-color: var(--accent-border) !important; }
+.dataTables_wrapper .page-link { min-height: var(--control-height); padding: 5px 8px; color: var(--muted); border-color: var(--stroke); box-shadow: none; font-size: var(--control-font-size); line-height: var(--control-line-height); }
+.dataTables_wrapper .page-item.active .page-link { color: var(--accent); background: var(--accent-soft); border-color: var(--accent-border); }
+.dataTables_wrapper .page-item.disabled .page-link { color: #a3adbc; background: var(--panel); }
+.dataTables_scrollHead, .dt-scroll-head { border-radius: var(--radius-sm) var(--radius-sm) 0 0; }
+.shiny-plot-output, .shiny-plot-output > img, .shiny-plot-output > svg, .shiny-plot-output > canvas { background: transparent !important; border-radius: 0; box-shadow: none; }

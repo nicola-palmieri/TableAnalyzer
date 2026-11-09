@@ -172,7 +172,7 @@ color_dropdown_input <- function(ns, id = "color_choice", palette = basic_color_
                                  ncol = 4, selected = NULL) {
   selected_color <- if (is.null(selected)) palette[1] else selected
 
-  cell_size <- 26
+  cell_size <- 22
   gap_size <- 4
   padding_size <- 3
   button_size <- cell_size + (2 * padding_size)

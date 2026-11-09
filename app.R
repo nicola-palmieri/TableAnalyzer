@@ -41,11 +41,19 @@ ui <- navbarPage(
     "Table Analyzer"
   ),
   id = "main_nav",
-  theme = bs_theme(bootswatch = "flatly"),
+  theme = bs_theme(
+    version = 5,
+    bg = "#e8ebf0",
+    fg = "#1b2637",
+    primary = "#0b1d3a",
+    secondary = "#647184",
+    base_font = font_collection("-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"),
+    heading_font = font_collection("-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif")
+  ),
   
   # ---- Custom CSS ----
   header = tags$head(
-    tags$link(rel = "stylesheet", type = "text/css", href = "theme-table.css"),
+    tags$link(rel = "stylesheet", type = "text/css", href = "theme-table.css?v=minimal-12"),
     tags$script(HTML("
       const tabManager = function(tab, disable) {
         var selector = 'a[data-value=\"' + tab + '\"]';
