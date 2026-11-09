@@ -97,7 +97,7 @@ render_anova_results <- function(ns, model_info, module_label = "ANOVA") {
   do.call(tabsetPanel, c(list(id = ns("results_tabs")), tabs))
 }
 
-bind_anova_outputs <- function(ns, output, models_reactive) {
+bind_anova_outputs <- function(ns, output, models_reactive, download_guard = function() NULL) {
   observeEvent(models_reactive(), {
     model_info <- models_reactive()
     if (is.null(model_info)) return()
@@ -120,7 +120,8 @@ bind_anova_outputs <- function(ns, output, models_reactive) {
             download_id = paste0("download_", idx),
             model_entry = model_entry,
             response_name = response_name,
-            factors = factors
+            factors = factors,
+            download_guard = download_guard
           )
         })
       }
@@ -144,7 +145,8 @@ bind_anova_outputs <- function(ns, output, models_reactive) {
             model_entry = model_entry,
             response_name = response_name,
             factors = factors,
-            stratum_label = stratum_label
+            stratum_label = stratum_label,
+            download_guard = download_guard
           )
         })
       }
@@ -156,7 +158,7 @@ bind_anova_outputs <- function(ns, output, models_reactive) {
 
 bind_single_model_outputs <- function(output, summary_id, download_id,
                                       model_entry, response_name, factors,
-                                      stratum_label = NULL) {
+                                      stratum_label = NULL, download_guard = function() NULL) {
   output[[summary_id]] <- renderPrint({
     old_opts <- options(scipen = 6)
     on.exit(options(old_opts), add = TRUE)
@@ -173,6 +175,7 @@ bind_single_model_outputs <- function(output, summary_id, download_id,
       )
     },
     content = function(file) {
+      download_guard()
       if (is.null(model_entry) || !is.null(model_entry$error) || is.null(model_entry$model)) {
         stop("Model not available for download due to fitting error.")
       }

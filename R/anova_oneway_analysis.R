@@ -34,9 +34,10 @@ one_way_anova_ui <- function(id) {
   )
 }
 
-one_way_anova_server <- function(id, filtered_data) {
+one_way_anova_server <- function(id, filtered_data, reset_trigger = reactive(NULL)) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
+    require_current <- analysis_download_guard(filtered_data, reactive(input$run), reset_trigger)
     
     responses <- multi_response_server("response", filtered_data)
     strat_info <- stratification_server("strat", filtered_data)
@@ -199,7 +200,10 @@ one_way_anova_server <- function(id, filtered_data) {
           extra = c(response_tag, label)
         )
       },
-      content = function(file) download_all_anova_results(models(), file)
+      content = function(file) {
+        require_current()
+        download_all_anova_results(models(), file)
+      }
     )
     
     # -----------------------------------------------------
@@ -210,7 +214,7 @@ one_way_anova_server <- function(id, filtered_data) {
     })
     
     # Forwarding other outputs
-    bind_anova_outputs(ns, output, models)
+    bind_anova_outputs(ns, output, models, download_guard = require_current)
     
     # -----------------------------------------------------
     # Exportable ANOVA results object

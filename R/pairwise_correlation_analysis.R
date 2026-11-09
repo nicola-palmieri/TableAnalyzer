@@ -34,6 +34,7 @@ ggpairs_server <- function(id, data_reactive, reset_trigger = reactive(NULL)) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     df <- reactive(data_reactive())
+    require_current <- analysis_download_guard(df, reactive(input$run), reset_trigger)
 
     strat_info <- stratification_server("strat", df)
 
@@ -272,6 +273,7 @@ ggpairs_server <- function(id, data_reactive, reset_trigger = reactive(NULL)) {
     output$download_model <- downloadHandler(
       filename = function() paste0("Correlation_results_", Sys.Date(), ".txt"),
       content = function(file) {
+        require_current()
         res <- correlation_store()
         if (is.null(res)) return()
         sink(file)

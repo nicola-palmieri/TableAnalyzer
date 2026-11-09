@@ -4,7 +4,9 @@
 
 lmm_ui <- function(id) regression_ui(id, "lmm", allow_multi_response = TRUE)
 
-lmm_server <- function(id, data) regression_server(id, data, "lmm", allow_multi_response = TRUE)
+lmm_server <- function(id, data, reset_trigger = reactive(NULL)) {
+  regression_server(id, data, "lmm", allow_multi_response = TRUE, reset_trigger = reset_trigger)
+}
 
 # ===============================================================
 # 🧩 Helpers for LMM

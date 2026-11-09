@@ -103,6 +103,29 @@ resolve_reactive <- function(value, default = NULL) {
   if (is.null(resolved)) default else resolved
 }
 
+analysis_download_guard <- function(data, run, reset_trigger = NULL) {
+  current <- shiny::reactiveVal(FALSE)
+
+  shiny::observeEvent(list(
+    tryCatch(resolve_reactive(data), error = function(e) NULL),
+    resolve_reactive(reset_trigger)
+  ), {
+    current(FALSE)
+  }, ignoreNULL = FALSE, priority = 100)
+
+  shiny::observeEvent(run(), {
+    if (isTRUE(run() > 0)) current(TRUE)
+  })
+
+  function() {
+    shiny::validate(shiny::need(
+      isTRUE(current()),
+      "Data or analysis changed. Run the analysis again before downloading results."
+    ))
+    invisible(TRUE)
+  }
+}
+
 #### Export filename helpers ####
 
 sanitize_export_part <- function(value) {

@@ -40,12 +40,14 @@ regression_ui <- function(id, engine = c("lm", "lmm"), allow_multi_response = FA
   )
 }
 
-regression_server <- function(id, data, engine = c("lm", "lmm"), allow_multi_response = FALSE) {
+regression_server <- function(id, data, engine = c("lm", "lmm"), allow_multi_response = FALSE,
+                              reset_trigger = reactive(NULL)) {
   engine <- match.arg(engine)
   allow_multi_response <- isTRUE(allow_multi_response)
 
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
+    require_current <- analysis_download_guard(data, reactive(input$run), reset_trigger)
     strat_info <- stratification_server("strat", data)
 
     if (allow_multi_response) {
@@ -250,6 +252,7 @@ regression_server <- function(id, data, engine = c("lm", "lmm"), allow_multi_res
         )
       },
       content = function(file) {
+        require_current()
         mod <- models()
         if (is.null(mod)) stop("No models available. Please run the analysis first.")
         flat_models <- mod$flat_models

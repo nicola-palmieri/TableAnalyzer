@@ -33,10 +33,11 @@ pca_ui <- function(id) {
   )
 }
 
-pca_server <- function(id, filtered_data) {
+pca_server <- function(id, filtered_data, reset_trigger = reactive(NULL)) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     df <- reactive(filtered_data())
+    require_current <- analysis_download_guard(df, reactive(input$run_pca), reset_trigger)
 
     # Dynamically populate numeric variable list (re-rendered with UI)
     output$vars_ui <- renderUI({
@@ -227,6 +228,7 @@ pca_server <- function(id, filtered_data) {
     output$download_all <- downloadHandler(
       filename = function() paste0("PCA_results_", Sys.Date(), ".txt"),
       content = function(file) {
+        require_current()
         results <- pca_result()
         req(results)
 

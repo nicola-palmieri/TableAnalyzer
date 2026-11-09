@@ -30,10 +30,11 @@ descriptive_ui <- function(id) {
   )
 }
 
-descriptive_server <- function(id, filtered_data) {
+descriptive_server <- function(id, filtered_data, reset_trigger = reactive(NULL)) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     df <- filtered_data
+    require_current <- analysis_download_guard(df, reactive(input$run), reset_trigger)
 
     # ------------------------------------------------------------
     # Dynamic inputs
@@ -227,6 +228,7 @@ descriptive_server <- function(id, filtered_data) {
     output$download_summary <- downloadHandler(
       filename = function() paste0("Descriptive_Statistics_", Sys.Date(), ".txt"),
       content = function(file) {
+        require_current()
         results <- summary_data()
         req(results)
         sink(file)
