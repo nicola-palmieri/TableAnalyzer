@@ -88,8 +88,7 @@ ggpairs_server <- function(id, data_reactive, reset_trigger = reactive(NULL)) {
     compute_correlations <- function() {
       data <- req(df())
       numeric_vars <- names(data)[vapply(data, is.numeric, logical(1))]
-      selected_vars <- if (length(input$vars)) input$vars else numeric_vars
-      selected_vars <- intersect(selected_vars, numeric_vars)
+      selected_vars <- intersect(input$vars %||% character(0), numeric_vars)
 
       if (length(selected_vars) < 2) {
         return(list(

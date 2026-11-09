@@ -23,3 +23,22 @@ test_that("failed correlation reruns replace previous matrices with the error", 
     expect_equal(correlation_store()$matrices$Overall, cor(data()[c("x", "y")]))
   })
 })
+
+test_that("clearing correlation variables never falls back to all columns", {
+  data <- reactiveVal(data.frame(x = 1:6, y = c(2,1,5,3,8,6)))
+  testServer(ggpairs_server, args = list(data_reactive = data), {
+    session$setInputs(vars = c("x", "y"), `strat-stratify_var` = "None")
+    session$setInputs(run = 1)
+    expect_length(correlation_store()$matrices, 1)
+
+    session$setInputs(vars = character(), run = 2)
+    expect_length(correlation_store()$selected_vars, 0)
+    expect_length(correlation_store()$matrices, 0)
+    expect_length(correlation_store()$plots, 0)
+    expect_match(output$summary, "Need at least two numeric columns")
+
+    session$setInputs(vars = c("x", "y"), run = 3)
+    expect_length(correlation_store()$matrices, 1)
+    expect_null(correlation_store()$message)
+  })
+})
