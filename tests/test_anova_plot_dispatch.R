@@ -68,11 +68,46 @@ for (engine in c("oneway", "twoway")) {
       fixture$context$calls <- character()
       fixture$context$layouts <- list()
       fixture$context$warn_next <- TRUE
-      session$setInputs(plot_type = "barplot_mean_se", `strata_grid-rows` = 4L, `strata_grid-cols` = 4L)
+      session$setInputs(plot_type = "barplot_mean_se")
       expect_identical(fixture$context$calls, rep("barplot_mean_se", 2))
       expect_null(stored$warning)
       expect_identical(tail(fixture$context$layouts, 1)[[1]]$strata_rows, 1L)
       expect_identical(tail(fixture$context$layouts, 1)[[1]]$strata_cols, 1L)
+    })
+  })
+}
+
+for (engine in c("oneway", "twoway")) {
+  test_that(paste(engine, "ANOVA sends joint defaults to the selected builder"), {
+    server <- if (engine == "oneway") visualize_oneway_server else visualize_twoway_server
+    fixture <- dispatch_fixture(server)
+    filtered <- reactiveVal(data.frame(group = factor(c("a", "b")), value = 1:2))
+    model <- reactiveVal(list(type = paste0(engine, "_anova"), responses = letters[1:3],
+                              strata = list(var = "batch", levels = LETTERS[1:5])))
+    testServer(fixture$server, args = list(filtered_data = filtered, model_info = model), {
+      session$flushReact()
+      layout <- tail(fixture$context$layouts, 1)[[1]]
+      expect_equal(layout[c("strata_rows", "strata_cols", "resp_rows", "resp_cols")],
+                   list(strata_rows = 1L, strata_cols = 5L, resp_rows = 3L, resp_cols = 1L))
+    })
+  })
+
+  test_that(paste(engine, "ANOVA preserves an invalid manual grid and its warning"), {
+    server <- if (engine == "oneway") visualize_oneway_server else visualize_twoway_server
+    fixture <- dispatch_fixture(server)
+    filtered <- reactiveVal(data.frame(group = factor(c("a", "b")), value = 1:2))
+    model <- reactiveVal(list(type = paste0(engine, "_anova"), responses = "value", strata = NULL))
+    testServer(fixture$server, args = list(filtered_data = filtered, model_info = model), {
+      session$flushReact()
+      session$setInputs(`response_grid-rows` = 4L, `response_grid-cols` = 4L)
+      fixture$context$calls <- character()
+      fixture$context$warn_next <- TRUE
+      session$setInputs(plot_type = "boxplot")
+      expect_identical(fixture$context$calls, "boxplot")
+      expect_match(stored$warning, "Grid is too large")
+      expect_equal(grid_settings$values()$resp_rows, 4L)
+      expect_equal(grid_settings$values()$resp_cols, 4L)
+      expect_null(stored$plot)
     })
   })
 }

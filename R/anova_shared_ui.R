@@ -5,6 +5,9 @@ build_anova_layout_controls <- function(ns, input, info, grid_cache = NULL) {
   has_strata <- !is.null(info$strata) && !is.null(info$strata$var)
   strata_levels <- if (has_strata) info$strata$levels %||% character(0) else character(0)
   n_responses <- if (!is.null(info$responses)) length(info$responses) else 0
+  defaults <- compute_joint_grid(
+    max(1L, n_responses), max(1L, length(strata_levels)), input$plot_width, input$plot_height
+  )
 
   grid_state <- function(grid_id, axis) {
     cache_key <- paste0(sub("_grid$", "", grid_id), "_", axis)
@@ -22,7 +25,7 @@ build_anova_layout_controls <- function(ns, input, info, grid_cache = NULL) {
   }
 
   strata_inputs <- if (has_strata) {
-    strata_defaults <- compute_default_grid(max(1L, length(strata_levels)))
+    strata_defaults <- defaults$strata
     plot_grid_ui(
       id = ns("strata_grid"),
       rows_label = sprintf("Rows for strata (%s, n=%d)", info$strata$var, length(strata_levels)),
@@ -37,7 +40,7 @@ build_anova_layout_controls <- function(ns, input, info, grid_cache = NULL) {
   }
 
   response_inputs <- if (!is.null(n_responses) && n_responses > 1) {
-    response_defaults <- compute_default_grid(n_responses)
+    response_defaults <- defaults$responses
     plot_grid_ui(
       id = ns("response_grid"),
       rows_label = sprintf("Rows for responses (n=%d)", n_responses),

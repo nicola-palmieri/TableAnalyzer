@@ -25,11 +25,10 @@ initialize_anova_plot_context <- function(data, info, layout_values) {
   layout_input <- parse_anova_layout_inputs(layout_values)
 
   n_expected_strata <- if (has_strata) max(1L, length(strata_levels)) else 1L
-  strata_defaults <- if (has_strata) {
-    compute_default_grid(n_expected_strata)
-  } else {
-    list(rows = 1L, cols = 1L)
-  }
+  defaults <- compute_joint_grid(
+    length(info$responses), n_expected_strata, layout_input$panel_width, layout_input$panel_height
+  )
+  strata_defaults <- defaults$strata
   strata_layout <- basic_grid_layout(
     rows = layout_input$strata_rows,
     cols = layout_input$strata_cols,
@@ -48,7 +47,6 @@ initialize_anova_plot_context <- function(data, info, layout_values) {
     strat_var = strat_var,
     strata_levels = strata_levels,
     n_expected_strata = n_expected_strata,
-    strata_defaults = strata_defaults,
     strata_layout = strata_layout,
     layout_input = layout_input,
     initial_strata_panels = if (has_strata) 0L else 1L
@@ -60,7 +58,9 @@ parse_anova_layout_inputs <- function(layout_values) {
     strata_rows = suppressWarnings(as.numeric(layout_values$strata_rows)),
     strata_cols = suppressWarnings(as.numeric(layout_values$strata_cols)),
     resp_rows   = suppressWarnings(as.numeric(layout_values$resp_rows)),
-    resp_cols   = suppressWarnings(as.numeric(layout_values$resp_cols))
+    resp_cols   = suppressWarnings(as.numeric(layout_values$resp_cols)),
+    panel_width = layout_values$panel_width,
+    panel_height = layout_values$panel_height
   )
 }
 
@@ -138,7 +138,11 @@ finalize_anova_plot_result <- function(response_plots,
     strata_panel_count <- context$n_expected_strata
   }
 
-  response_defaults <- compute_default_grid(length(response_plots))
+  defaults <- compute_joint_grid(
+    length(response_plots), if (has_strata) max(1L, strata_panel_count) else 1L,
+    context$layout_input$panel_width, context$layout_input$panel_height
+  )
+  response_defaults <- defaults$responses
   response_layout <- basic_grid_layout(
     rows = context$layout_input$resp_rows,
     cols = context$layout_input$resp_cols,
@@ -210,7 +214,7 @@ finalize_anova_plot_result <- function(response_plots,
     warning = warning_text,
     panel_counts = panel_counts,
     defaults = list(
-      strata = context$strata_defaults,
+      strata = defaults$strata,
       responses = response_defaults
     )
   )

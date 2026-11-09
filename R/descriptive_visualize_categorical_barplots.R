@@ -75,7 +75,7 @@ visualize_categorical_barplots_server <- function(id, filtered_data, summary_inf
     
     df <- reactive(filtered_data())
     
-    grid <- plot_grid_server("plot_grid", cols_max = 100L)
+    grid <- single_grid_settings(input, session, "plot_grid")
     base_size <- base_size_server(input, default = 13)
     
     color_var <- reactive({
@@ -196,7 +196,8 @@ visualize_categorical_barplots_server <- function(id, filtered_data, summary_inf
           fill_colors = custom_colors(),
           base_size = base_size(),
           common_legend = legend_state$enabled,
-          legend_position = if (legend_state$enabled) legend_state$position else NULL
+          legend_position = if (legend_state$enabled) legend_state$position else NULL,
+          panel_width = stored$plot_width, panel_height = stored$plot_height
         )
       }
 
@@ -204,23 +205,25 @@ visualize_categorical_barplots_server <- function(id, filtered_data, summary_inf
         !is.null(msg) && grepl("Grid", msg, fixed = TRUE)
       }
 
-      res <- build_plot(grid$rows(), grid$cols())
-      if (isTRUE(allow_reset) && !is.null(res) && is_grid_warning(res$warning)) {
-        res <- build_plot(res$defaults$rows, res$defaults$cols)
+      panel_data <- data
+      if (!is.null(g_var) && g_var %in% names(panel_data)) {
+        group_values <- as.character(panel_data[[g_var]])
+        group_values[is.na(group_values) | trimws(group_values) == ""] <- "Missing"
+        panel_data[[g_var]] <- group_values
+        if (length(strata_levels)) panel_data <- panel_data[group_values %in% strata_levels, , drop = FALSE]
+      }
+      n_panels <- sum(vapply(panel_data[selected_cat_columns], function(x) any(!is.na(x) & trimws(as.character(x)) != ""), logical(1)))
+      layout <- grid$resolve(n_panels, stored$plot_width, stored$plot_height)
+      res <- build_plot(layout$rows, layout$cols)
+      if (isTRUE(allow_reset) && !grid$is_manual() && !is.null(res) && is_grid_warning(res$warning)) {
+        layout <- grid$resolve(res$panels, stored$plot_width, stored$plot_height)
+        res <- build_plot(layout$rows, layout$cols)
       }
 
       stored$warning <- res$warning
       grid_bad <- is_grid_warning(stored$warning)
       stored$plot   <- if (grid_bad) NULL else res$plot
       stored$layout <- if (grid_bad) NULL else res$layout
-
-      apply_grid_defaults_if_empty(
-        input,
-        session,
-        "plot_grid",
-        res$defaults,
-        n_items = res$panels
-      )
     }
 
     observeEvent(input$apply_plot, {
@@ -351,7 +354,8 @@ build_descriptive_categorical_plot <- function(df,
                                                fill_colors = NULL,
                                                base_size = 13,
                                                common_legend = FALSE,
-                                               legend_position = NULL) {
+                                               legend_position = NULL,
+                                               panel_width = 400, panel_height = 300) {
   if (is.null(df) || !is.data.frame(df) || nrow(df) == 0) return(NULL)
   
   factor_vars <- names(df)[vapply(df, function(x) {
@@ -484,7 +488,7 @@ build_descriptive_categorical_plot <- function(df,
   if (length(plots) == 0) return(NULL)
   
   n_panels <- length(plots)
-  defaults <- compute_default_grid(n_panels)
+  defaults <- compute_default_grid(n_panels, panel_width, panel_height)
 
   layout <- basic_grid_layout(
     rows = suppressWarnings(as.numeric(nrow_input)),

@@ -2,10 +2,58 @@
 # 🧩 Plot grid module
 # ===============================================================
 
-compute_default_grid <- function(n) {
+grid_candidates <- function(n, max_rows = 10L, max_cols = 10L) {
   n <- coerce_grid_value(n, default = 1L)
-  rows <- ceiling(sqrt(n))
-  list(rows = rows, cols = ceiling(n / rows))
+  rows <- seq_len(min(n, max_rows))
+  cols <- ceiling(n / rows)
+  keep <- cols <= max_cols & n > (rows - 1L) * cols
+  data.frame(rows = rows[keep], cols = as.integer(cols[keep]))
+}
+
+compute_joint_grid <- function(n_responses, n_strata = 1L,
+                               panel_width = 400, panel_height = 300) {
+  n_responses <- coerce_grid_value(n_responses, default = 1L)
+  n_strata <- coerce_grid_value(n_strata, default = 1L)
+  positive_size <- function(value, fallback) {
+    value <- suppressWarnings(as.numeric(value[1]))
+    if (length(value) == 0L || !is.finite(value) || value <= 0) fallback else value
+  }
+  panel_width <- positive_size(panel_width, 400)
+  panel_height <- positive_size(panel_height, 300)
+  responses <- grid_candidates(n_responses)
+  strata <- grid_candidates(n_strata)
+  if (nrow(responses) == 0L || nrow(strata) == 0L) {
+    # Keep widgets inside their bounds; existing validation explains the limit.
+    return(list(
+      responses = if (nrow(responses)) compute_default_grid(n_responses, panel_width, panel_height) else list(rows = 10L, cols = 10L),
+      strata = if (nrow(strata)) compute_default_grid(n_strata, panel_width, panel_height) else list(rows = 10L, cols = 10L)
+    ))
+  }
+  r <- rep(seq_len(nrow(responses)), each = nrow(strata))
+  s <- rep(seq_len(nrow(strata)), times = nrow(responses))
+  rows <- responses$rows[r] * strata$rows[s]
+  cols <- responses$cols[r] * strata$cols[s]
+  empty <- rows * cols - n_responses * n_strata
+  aspect <- cols * panel_width / (rows * panel_height)
+  target_aspect <- 1.6
+  aspect_error <- abs(log(aspect / target_aspect))
+  reasonable <- aspect >= target_aspect / 2.5 & aspect <= target_aspect * 2.5
+  eligible <- if (any(reasonable)) which(reasonable) else seq_along(rows)
+  # Among sensible shapes, empty cells matter first. Ties keep responses in rows.
+  ranking <- if (any(reasonable)) {
+    order(empty[eligible], aspect_error[eligible], responses$cols[r[eligible]], strata$rows[s[eligible]])
+  } else {
+    order(aspect_error[eligible], empty[eligible], responses$cols[r[eligible]])
+  }
+  best <- eligible[ranking[1]]
+  list(
+    responses = list(rows = responses$rows[r[best]], cols = responses$cols[r[best]]),
+    strata = list(rows = strata$rows[s[best]], cols = strata$cols[s[best]])
+  )
+}
+
+compute_default_grid <- function(n, panel_width = 400, panel_height = 300) {
+  compute_joint_grid(n, 1L, panel_width, panel_height)$responses
 }
 
 coerce_grid_value <- function(value,
@@ -59,50 +107,6 @@ basic_grid_layout <- function(rows = NULL,
   )
 }
 
-apply_grid_defaults_if_empty <- function(input, session, grid_id, defaults, n_items = NULL) {
-  if (is.null(defaults) || !is.list(defaults)) return()
-
-  rows_default <- suppressWarnings(as.integer(defaults$rows[1]))
-  cols_default <- suppressWarnings(as.integer(defaults$cols[1]))
-
-  if (any(!is.finite(c(rows_default, cols_default)))) return()
-
-  rows_id <- paste0(grid_id, "-rows")
-  cols_id <- paste0(grid_id, "-cols")
-
-  current_rows <- isolate(input[[rows_id]])
-  current_cols <- isolate(input[[cols_id]])
-
-  needs_reset <- function(value) {
-    if (length(value) == 0) return(TRUE)
-    v <- suppressWarnings(as.integer(value[1]))
-    if (is.na(v) || !is.finite(v)) return(TRUE)
-    v <= 0L
-  }
-
-  reset_rows <- needs_reset(current_rows)
-  reset_cols <- needs_reset(current_cols)
-
-  current_rows <- coerce_grid_value(current_rows, default = rows_default, min_value = 1L)
-  current_cols <- coerce_grid_value(current_cols, default = cols_default, min_value = 1L)
-
-  if (!is.null(n_items)) {
-    validation <- validate_grid(n_items, current_rows, current_cols)
-    if (!isTRUE(validation$valid)) {
-      reset_rows <- TRUE
-      reset_cols <- TRUE
-    }
-  }
-
-  if (reset_rows) {
-    updateNumericInput(session, rows_id, value = rows_default)
-  }
-
-  if (reset_cols) {
-    updateNumericInput(session, cols_id, value = cols_default)
-  }
-}
-
 plot_grid_ui <- function(id,
                          rows_label = "Grid rows",
                          cols_label = "Grid columns",
@@ -143,33 +147,4 @@ plot_grid_ui <- function(id,
       column(6, cols_input)
     )
   )
-}
-
-plot_grid_server <- function(id,
-                             rows_min = 1L,
-                             rows_max = 10L,
-                             cols_min = 1L,
-                             cols_max = 10L) {
-  moduleServer(id, function(input, output, session) {
-    sanitize <- function(x, min_value, max_value) {
-      if (length(x) == 0) return(NA_integer_)
-      v <- suppressWarnings(as.integer(x[1]))
-      if (is.na(v)) return(NA_integer_)
-      v <- max(as.integer(min_value), v)
-      v <- min(as.integer(max_value), v)
-      as.integer(v)
-    }
-    
-    rows_raw <- reactive(sanitize(input$rows, rows_min, rows_max))
-    cols_raw <- reactive(sanitize(input$cols, cols_min, cols_max))
-    
-    rows <- reactive(rows_raw())
-    cols <- reactive(cols_raw())
-    
-    list(
-      rows = rows,
-      cols = cols,
-      values = reactive(list(rows = rows(), cols = cols()))
-    )
-  })
 }

@@ -442,7 +442,7 @@ visualize_pca_server <- function(id, filtered_data, model_fit, reset_trigger = r
       )
     })
 
-    facet_grid_inputs <- plot_grid_server("facet_grid")
+    facet_grid_inputs <- single_grid_settings(input, session, "facet_grid")
 
     observeEvent(available_choices_all(), {
       all_choices <- available_choices_all()
@@ -465,6 +465,8 @@ visualize_pca_server <- function(id, filtered_data, model_fit, reset_trigger = r
 
       plot_grid_ui(
         id = session$ns("facet_grid"),
+        rows_value = isolate(facet_grid_inputs$cache$rows) %||% NA,
+        cols_value = isolate(facet_grid_inputs$cache$cols) %||% NA,
         rows_help = "Decide how many rows of panels to show when faceting the PCA plot.",
         cols_help = "Decide how many columns of panels to show when faceting the PCA plot."
       )
@@ -659,11 +661,12 @@ visualize_pca_server <- function(id, filtered_data, model_fit, reset_trigger = r
       validate(need(length(plot_list) > 0, "No PCA plots available."))
 
       panel_count <- length(plot_list)
-      defaults <- compute_default_grid(panel_count)
+      defaults <- compute_default_grid(panel_count, plot_w, plot_h)
 
+      recommended <- facet_grid_inputs$resolve(panel_count, plot_w, plot_h)
       use_custom_layout <- !is.null(facet_var) && panel_count > 1
-      rows_input <- if (use_custom_layout) facet_grid_inputs$rows() else NA
-      cols_input <- if (use_custom_layout) facet_grid_inputs$cols() else NA
+      rows_input <- if (use_custom_layout) recommended$rows else NA
+      cols_input <- if (use_custom_layout) recommended$cols else NA
 
       layout <- basic_grid_layout(
         rows = rows_input,
@@ -697,10 +700,8 @@ visualize_pca_server <- function(id, filtered_data, model_fit, reset_trigger = r
       )
     }, ignoreNULL = TRUE, ignoreInit = TRUE)
 
-    observeEvent(plot_info(), {
-      info <- plot_info()
-      apply_grid_defaults_if_empty(input, session, "facet_grid", info$defaults, n_items = info$panels)
-    }, ignoreNULL = TRUE)
+    # Build on Apply even while the visualization tab is hidden.
+    observe(plot_info())
 
     plot_dimensions <- reactive({
       info <- plot_info()

@@ -56,7 +56,6 @@ visualize_ggpairs_server <- function(id, filtered_data, model_fit, reset_trigger
     })
     
     apply_id <- reactiveVal(0L)
-    apply_reason <- reactiveVal("manual")
     apply_counter <- 0L
     bump_apply <- function() {
       apply_counter <<- apply_counter + 1L
@@ -79,7 +78,6 @@ visualize_ggpairs_server <- function(id, filtered_data, model_fit, reset_trigger
     }
 
     schedule_apply <- function() {
-      apply_reason("analysis")
       bump_apply()
     }
 
@@ -97,7 +95,6 @@ visualize_ggpairs_server <- function(id, filtered_data, model_fit, reset_trigger
     }, ignoreInit = TRUE)
     
     observeEvent(input$apply_plot, {
-      apply_reason("manual")
       bump_apply()
     })
     
@@ -130,7 +127,6 @@ visualize_ggpairs_server <- function(id, filtered_data, model_fit, reset_trigger
       filtered_data,
       correlation_info,
       apply_trigger = reactive(apply_id()),
-      apply_reason = reactive(apply_reason()),
       reset_trigger = reset_trigger
     )
 

@@ -26,7 +26,6 @@ pairwise_correlation_visualize_ggpairs_server <- function(
     filtered_data,
     correlation_info,
     apply_trigger = reactive(NULL),
-    apply_reason = reactive(NULL),
     reset_trigger = reactive(NULL)
 ) {
   moduleServer(id, function(input, output, session) {
@@ -68,7 +67,7 @@ pairwise_correlation_visualize_ggpairs_server <- function(
       reset_token = reset_trigger
     )
     
-    grid <- plot_grid_server("plot_grid")
+    grid <- single_grid_settings(input, session, "plot_grid")
 
     output$size_controls <- renderUI({
       width_value <- isolate(input$plot_width)
@@ -94,6 +93,8 @@ pairwise_correlation_visualize_ggpairs_server <- function(
       if (is.null(group_var())) return(NULL)
       plot_grid_ui(
         id = ns("plot_grid"),
+        rows_value = isolate(grid$cache$rows) %||% NA,
+        cols_value = isolate(grid$cache$cols) %||% NA,
         rows_help = "Choose how many rows of panels to use when multiple strata are plotted.",
         cols_help = "Choose how many columns of panels to use when multiple strata are plotted."
       )
@@ -110,9 +111,7 @@ pairwise_correlation_visualize_ggpairs_server <- function(
         colors    = custom_colors(),
         base_size = base_size(),
         plot_w    = sanitize(input$plot_width, 800),
-        plot_h    = sanitize(input$plot_height, 600),
-        rows      = grid$rows(),
-        cols      = grid$cols()
+        plot_h    = sanitize(input$plot_height, 600)
       )
     })
     
@@ -179,6 +178,7 @@ pairwise_correlation_visualize_ggpairs_server <- function(
         col <- resolve_single_color(s$colors)
         plot <- build_ggpairs_plot(pd, col, title = NULL, base_size = s$base_size)
         defaults <- compute_default_grid(1L)
+        grid$resolve(1L, s$plot_w, s$plot_h)
         return(list(
           plot = plot,
           layout = list(rows = defaults$rows, cols = defaults$cols),
@@ -210,11 +210,12 @@ pairwise_correlation_visualize_ggpairs_server <- function(
       validate(need(length(plot_list) > 0, "No data for strata."))
       
       n_panels <- length(plot_list)
-      defaults <- compute_default_grid(n_panels)
+      defaults <- compute_default_grid(n_panels, s$plot_w, s$plot_h)
       
+      recommended <- grid$resolve(n_panels, s$plot_w, s$plot_h)
       layout <- basic_grid_layout(
-        rows = s$rows,
-        cols = s$cols,
+        rows = recommended$rows,
+        cols = recommended$cols,
         default_rows = defaults$rows,
         default_cols = defaults$cols
       )
@@ -240,16 +241,10 @@ pairwise_correlation_visualize_ggpairs_server <- function(
       )
     }, ignoreNULL = TRUE, ignoreInit = TRUE)
 
-    observeEvent(plot_info(), {
-      info <- plot_info()
-      if (is.null(info)) return()
-      if (!is.null(apply_reason) && identical(apply_reason(), "analysis")) {
-        updateNumericInput(session, "plot_grid-rows", value = info$defaults$rows)
-        updateNumericInput(session, "plot_grid-cols", value = info$defaults$cols)
-      }
-    }, ignoreNULL = TRUE)
-
     # ---- Unified sizing -------------------------------------------------------
+    # Build on Apply even while the visualization tab is hidden.
+    observe(plot_info())
+
     plot_dimensions <- reactive({
       info <- plot_info()
       if (is.null(info)) {

@@ -91,42 +91,13 @@ visualize_oneway_server <- function(id, filtered_data, model_info) {
     plot_width_default <- subplot_defaults$width$value
     plot_height_default <- subplot_defaults$height$value
     
-    strata_grid <- plot_grid_server("strata_grid")
-    response_grid <- plot_grid_server("response_grid")
+    grid_settings <- anova_grid_settings_server(input, session, model_info)
+    grid_cache <- grid_settings$cache
 
-    grid_cache <- reactiveValues(
-      strata_rows = NULL,
-      strata_cols = NULL,
-      response_rows = NULL,
-      response_cols = NULL
-    )
-
-    update_cache <- function(key, value) {
-      if (!is.null(value) && !is.na(value)) {
-        grid_cache[[key]] <- value
-      }
-    }
-
-    observeEvent(strata_grid$rows(), {
-      update_cache("strata_rows", strata_grid$rows())
-    }, ignoreInit = TRUE)
-
-    observeEvent(strata_grid$cols(), {
-      update_cache("strata_cols", strata_grid$cols())
-    }, ignoreInit = TRUE)
-
-    observeEvent(response_grid$rows(), {
-      update_cache("response_rows", response_grid$rows())
-    }, ignoreInit = TRUE)
-
-    observeEvent(response_grid$cols(), {
-      update_cache("response_cols", response_grid$cols())
-    }, ignoreInit = TRUE)
-    
     output$layout_controls <- renderUI({
       info <- model_info()
       req(info)
-      build_anova_layout_controls(ns, input, info, grid_cache = grid_cache)
+      isolate(build_anova_layout_controls(ns, input, info, grid_cache = grid_cache))
     })
     
     compute_plot <- function(allow_reset = FALSE) {
@@ -189,12 +160,9 @@ visualize_oneway_server <- function(id, filtered_data, model_info) {
         )
       }
 
-      layout_inputs <- list(
-        strata_rows = strata_grid$rows(),
-        strata_cols = strata_grid$cols(),
-        resp_rows   = response_grid$rows(),
-        resp_cols   = response_grid$cols()
-      )
+      layout_inputs <- grid_settings$values()
+      layout_inputs$panel_width <- plot_width
+      layout_inputs$panel_height <- plot_height
 
       chosen_result <- build_result(layout_inputs)
 
@@ -202,13 +170,16 @@ visualize_oneway_server <- function(id, filtered_data, model_info) {
         !is.null(msg) && grepl("Grid", msg, fixed = TRUE)
       }
 
-      if (isTRUE(allow_reset) && !is.null(chosen_result) && is_grid_warning(chosen_result$warning)) {
+      if (isTRUE(allow_reset) && !grid_settings$is_manual() && !is.null(chosen_result) && is_grid_warning(chosen_result$warning)) {
         default_inputs <- list(
           strata_rows = chosen_result$defaults$strata$rows,
           strata_cols = chosen_result$defaults$strata$cols,
           resp_rows   = chosen_result$defaults$responses$rows,
           resp_cols   = chosen_result$defaults$responses$cols
         )
+        grid_settings$set_defaults(chosen_result$defaults)
+        default_inputs$panel_width <- plot_width
+        default_inputs$panel_height <- plot_height
         chosen_result <- build_result(default_inputs)
       }
       
@@ -216,22 +187,6 @@ visualize_oneway_server <- function(id, filtered_data, model_info) {
       grid_bad <- is_grid_warning(stored$warning)
       stored$plot   <- if (grid_bad) NULL else chosen_result$plot
       stored$layout <- if (grid_bad) NULL else chosen_result$layout
-
-      apply_grid_defaults_if_empty(
-        input,
-        session,
-        "strata_grid",
-        defaults = chosen_result$defaults$strata,
-        n_items = chosen_result$panel_counts$strata
-      )
-
-      apply_grid_defaults_if_empty(
-        input,
-        session,
-        "response_grid",
-        defaults = chosen_result$defaults$responses,
-        n_items = chosen_result$panel_counts$responses
-      )
     }
 
     observeEvent(input$apply_plot, {
