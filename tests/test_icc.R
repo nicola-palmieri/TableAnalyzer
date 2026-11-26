@@ -1,6 +1,6 @@
 library(testthat)
 
-source("../R/lmm_analysis.R")
+source("../R/mod_lmm_main.R")
 
 test_that("ICC uses total variance for single, crossed and nested intercepts", {
   set.seed(321)

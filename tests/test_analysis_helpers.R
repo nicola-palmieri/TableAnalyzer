@@ -2,8 +2,8 @@ library(testthat)
 library(dplyr)
 library(skimr)
 
-source("../R/descriptive_analysis.R")
-source("../R/anova_shared_data.R")
+source("../R/mod_descriptive_analysis.R")
+source("../R/shared_anova_data.R")
 
 test_that("descriptive summaries report grouped numeric metrics", {
   data <- tibble::tibble(

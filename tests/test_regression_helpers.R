@@ -1,8 +1,8 @@
 library(testthat)
 
-source("../R/regression_shared_utils.R")
-source("../R/regression_shared_formula.R")
-source("../R/regression_shared_validation.R")
+source("../R/shared_regression_utils.R")
+source("../R/shared_regression_formula.R")
+source("../R/shared_regression_validation.R")
 
 test_that("regression variables and interactions are protected for formulas", {
   expect_equal(reg_protect_vars(c("group name", "dose")), c("`group name`", "`dose`"))

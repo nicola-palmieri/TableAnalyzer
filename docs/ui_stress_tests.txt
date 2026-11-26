@@ -156,8 +156,8 @@ Visualize tab stress
 100) Run analysis and open Visualize; ensure correct UI panel loads.
 101) Switch analysis type without running; Visualize should show run-required state.
 102) Rerun analysis; Visualize should update to new results.
-103) Toggle plot type; confirm immediate update where expected.
-104) Apply settings; rerun analysis; settings persist if still valid.
+103) Toggle plot type; confirm the valid selection redraws automatically.
+104) Change figure appearance; confirm automatic redraw; rerun analysis and verify valid settings persist.
 105) Use plots with many facets; ensure scroll and layout ok.
 106) Multi-response + stratification; check grid configuration behavior.
 107) Open Visualize, switch tabs, return; UI state persists.
@@ -168,7 +168,7 @@ Grid layout stress
 109) Set grid to 1x1 for multi-response; verify warning or auto-adjust.
 110) Set grid to 10x10; check rendering and scroll.
 111) Set grid too small; verify validation/warning and stability.
-112) Change grid, apply, rerun analysis; ensure it persists or resets if invalid.
+112) Change grid; confirm automatic redraw; invalid manual grids warn while retaining the previous valid figure and dimensions.
 113) Switch from multi-response to single-response; grid controls update.
 114) Switch stratification on/off; grid controls update.
 

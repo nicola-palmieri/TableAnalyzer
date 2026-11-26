@@ -2,8 +2,8 @@ library(testthat)
 library(officer)
 library(flextable)
 
-source("../R/helpers.R")
-source("../R/regression_shared_export.R")
+source("../R/shared_analysis_helpers.R")
+source("../R/shared_regression_export.R")
 
 test_that("Word reports classify significance using unrounded p-values", {
   for (target_p in c(.04996, .05004, .00007)) {

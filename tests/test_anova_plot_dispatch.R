@@ -18,7 +18,7 @@ dispatch_fixture <- function(server) {
       warning <- if (context$warn_next) "Grid is too large for the selected panels." else NULL
       context$warn_next <- FALSE
       list(
-        plot = NULL, warning = warning,
+        plot = if (is.null(warning)) ggplot2::ggplot() else NULL, warning = warning,
         layout = list(strata = list(rows = 1L, cols = 1L), responses = list(rows = 1L, cols = 1L)),
         defaults = list(strata = list(rows = 1L, cols = 1L), responses = list(rows = 1L, cols = 1L)),
         panel_counts = list(strata = 1L, responses = 1L)
@@ -33,7 +33,7 @@ dispatch_fixture <- function(server) {
 }
 
 for (engine in c("oneway", "twoway")) {
-  test_that(paste(engine, "ANOVA builds only the selected plot on Apply"), {
+  test_that(paste(engine, "ANOVA automatically builds only the selected plot"), {
     server <- if (engine == "oneway") visualize_oneway_server else visualize_twoway_server
     fixture <- dispatch_fixture(server)
     filtered <- reactiveVal(data.frame(group = factor(c("a", "b")), value = 1:2))
@@ -45,14 +45,12 @@ for (engine in c("oneway", "twoway")) {
       expect_true(all(fixture$context$calls == "lineplot_mean_se"))
       for (i in seq_along(c("lineplot_mean_se", "barplot_mean_se", "boxplot"))) {
         kind <- c("lineplot_mean_se", "barplot_mean_se", "boxplot")[i]
-        session$setInputs(plot_type = kind)
         fixture$context$calls <- character()
-        session$setInputs(apply_plot = i)
+        session$setInputs(plot_type = kind)
         expect_identical(fixture$context$calls, kind)
       }
-      session$setInputs(plot_type = "unknown")
       fixture$context$calls <- character()
-      session$setInputs(apply_plot = 4L)
+      session$setInputs(plot_type = "unknown")
       expect_identical(fixture$context$calls, "lineplot_mean_se")
     })
   })
@@ -101,13 +99,14 @@ for (engine in c("oneway", "twoway")) {
       session$flushReact()
       session$setInputs(`response_grid-rows` = 4L, `response_grid-cols` = 4L)
       fixture$context$calls <- character()
+      last_valid_plot <- stored$plot
       fixture$context$warn_next <- TRUE
       session$setInputs(plot_type = "boxplot")
       expect_identical(fixture$context$calls, "boxplot")
       expect_match(stored$warning, "Grid is too large")
       expect_equal(grid_settings$values()$resp_rows, 4L)
       expect_equal(grid_settings$values()$resp_cols, 4L)
-      expect_null(stored$plot)
+      expect_identical(stored$plot, last_valid_plot)
     })
   })
 }

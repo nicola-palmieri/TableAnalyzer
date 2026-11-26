@@ -2,10 +2,10 @@ library(testthat)
 library(shiny)
 library(DT)
 
-source("../R/helpers.R")
-source("../R/submodule_colors.R")
-source("../R/module_upload_helpers.R")
-source("../R/module_upload.R")
+source("../R/shared_analysis_helpers.R")
+source("../R/shared_colors.R")
+source("../R/mod_upload_data.R")
+source("../R/mod_upload_main.R")
 
 test_that("rejected replacement files clear the previous dataset", {
   valid <- normalizePath("../data/toy_animal_trial_data_long.xlsx")

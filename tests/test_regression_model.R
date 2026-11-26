@@ -1,8 +1,8 @@
 library(testthat)
 
-source("../R/regression_shared_utils.R")
-source("../R/helpers.R")
-source("../R/regression_shared_model.R")
+source("../R/shared_regression_utils.R")
+source("../R/shared_analysis_helpers.R")
+source("../R/shared_regression_model.R")
 
 test_that("LM helpers fit and tidy a model with protected column names", {
   data <- data.frame(

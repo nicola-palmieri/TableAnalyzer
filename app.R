@@ -18,100 +18,38 @@ for (f in list.files("R", full.names = TRUE, pattern = "\\.R$")) source(f)
 # ---------------------------------------------------------------
 # UI
 # ---------------------------------------------------------------
-ui <- navbarPage(
-  title = tagList(
-    tags$img(
-      src = "logo.jpeg",
-      class = "ta-navbar-logo",
-      alt = "Table Analyzer logo"
-    ),
-    "Table Analyzer"
-  ),
-  id = "main_nav",
-  theme = bs_theme(
-    version = 5,
-    bg = "#e8ebf0",
-    fg = "#1b2637",
-    primary = "#0b1d3a",
-    secondary = "#647184",
-    base_font = font_collection("-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"),
-    heading_font = font_collection("-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif")
-  ),
-  
-  # ---- Custom CSS ----
+ui <- NicoShinyAppTemplate::app_navbar(
+  main = APP_BRAND_MAIN, accent = APP_BRAND_ACCENT, logo = APP_CONFIG$logo, id = "main_nav",
+  selected = "home_tab", fillable = FALSE, window_title = APP_NAME,
   header = tags$head(
-    tags$link(rel = "stylesheet", type = "text/css", href = "theme-table.css?v=minimal-17"),
-    tags$script(HTML("
-      const tabManager = function(tab, disable) {
-        var selector = 'a[data-value=\"' + tab + '\"]';
-        var $tab = $(selector);
-        var $li = $tab.closest('li');
-        if (disable) {
-          $tab.addClass('disabled');
-          $tab.attr('aria-disabled', 'true');
-          $li.addClass('disabled');
-        } else {
-          $tab.removeClass('disabled');
-          $tab.attr('aria-disabled', 'false');
-          $li.removeClass('disabled');
-        }
-      };
-
-      // Disable downstream tabs immediately on load to avoid flicker before Shiny initializes.
-      document.addEventListener('DOMContentLoaded', function() {
-        ['filter_tab', 'analysis_tab', 'visualize_tab'].forEach(function(tab) {
-          tabManager(tab, true);
-        });
-      });
-
-      Shiny.addCustomMessageHandler('toggleTabState', function(data) {
-        tabManager(data.tab, data.disable);
-      });
-
-      $(document).on('click', 'a.nav-link.disabled', function(e) {
-        e.preventDefault();
-        return false;
-      });
-    "))
+    tags$link(rel = "icon", type = "image/jpeg", href = APP_CONFIG$logo),
+    NicoShinyAppTemplate::app_busy_options()
   ),
-
-  tabPanel(
-    title = tagList(icon("home"), " Home"),
-    value = "home_tab",
-    home_ui("home")
-  ),
-
-  tabPanel(
-    title = tagList(icon("upload"), " Upload"),
-    value = "upload_tab",
-    fluidPage(upload_ui("upload"))
-  ),
-  tabPanel(
-    title = tagList(icon("filter"), " Filter"),
-    value = "filter_tab",
-    fluidPage(filter_ui("filter"))
-  ),
-  tabPanel(
-    title = tagList(icon("square-poll-horizontal"), " Analyze"),
-    value = "analysis_tab",
-    fluidPage(analysis_ui("analysis"))
-  ),
-  tabPanel(
-    title = tagList(icon("chart-area"), " Visualize"),
-    value = "visualize_tab",
-    fluidPage(visualize_ui("visualize"))
-  ),
+  bslib::nav_panel("Home", value = "home_tab", icon = icon("house"), mod_home_ui("home")),
+  bslib::nav_panel("Upload", value = "upload_tab", icon = icon("upload"),
+    NicoShinyAppTemplate::app_page_ui(mod_upload_ui("upload"))),
+  bslib::nav_panel("Filter", value = "filter_tab", icon = icon("filter"),
+    NicoShinyAppTemplate::app_page_ui(mod_filter_ui("filter"))),
+  bslib::nav_panel("Analyze", value = "analysis_tab", icon = icon("square-poll-horizontal"),
+    NicoShinyAppTemplate::app_page_ui(mod_analyze_ui("analysis"))),
+  bslib::nav_panel("Visualize", value = "visualize_tab", icon = icon("chart-area"),
+    NicoShinyAppTemplate::app_page_ui(mod_visualize_ui("visualize"))),
+  bslib::nav_panel("User guide", value = "guide_tab", icon = icon("book-open"),
+    NicoShinyAppTemplate::app_page_ui(NicoShinyAppTemplate::mod_user_guide_ui("guide")))
 )
 
 # ---------------------------------------------------------------
 # SERVER
 # ---------------------------------------------------------------
 server <- function(input, output, session) {
-  home_server("home")
-  uploaded  <- upload_server("upload")
-  filtered  <- filter_server("filter", uploaded)
-  analyzed  <- analysis_server("analysis", filtered)
-  visualize_server("visualize", filtered, analyzed$results, analyzed$selection)
+  uploaded  <- mod_upload_server("upload")
+  mod_home_server("home", has_data = reactive(!is.null(uploaded())))
+  observeEvent(input$go_home, {
+    bslib::nav_select("main_nav", selected = "home_tab", session = session)
+  })
+  filtered  <- mod_filter_server("filter", uploaded)
+  analyzed  <- mod_analyze_server("analysis", filtered)
+  mod_visualize_server("visualize", filtered, analyzed$results, analyzed$selection)
 
   observe({
     has_data <- !is.null(uploaded())
@@ -125,7 +63,7 @@ server <- function(input, output, session) {
     })
 
     if (!has_data && input$main_nav %in% tabs) {
-      updateNavbarPage(session, "main_nav", selected = "upload_tab")
+      bslib::nav_select("main_nav", selected = "upload_tab", session = session)
     }
   })
 }

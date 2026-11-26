@@ -108,7 +108,7 @@ test_that("static boxplot controls are labeled consistently and unchecked", {
 })
 
 for (engine in c("oneway", "twoway")) {
-  test_that(paste(engine, "boxplot checkbox affects the plot only after Apply"), {
+  test_that(paste(engine, "boxplot checkbox updates the plot automatically"), {
     fixture <- boxplot_fixture(two_way = engine == "twoway")
     fixture$info$type <- paste0(engine, "_anova")
     filtered <- reactiveVal(fixture$data)
@@ -129,16 +129,14 @@ for (engine in c("oneway", "twoway")) {
         expect_match(xml2::xml_text(xml2::xml_parent(checkbox)), "Overlay jittered data", fixed = TRUE)
       }
       session$setInputs(boxplot_show_jitter = TRUE)
-      expect_length(boxplot_points(stored$plot), 0L)
-      session$setInputs(apply_plot = 1L)
       expect_length(boxplot_points(stored$plot), 1L)
-      session$setInputs(boxplot_show_jitter = FALSE, apply_plot = 2L)
+      session$setInputs(boxplot_show_jitter = FALSE)
       expect_length(boxplot_points(stored$plot), 0L)
     })
   })
 }
 
-test_that("descriptive boxplot checkbox applies and removes the overlay", {
+test_that("descriptive boxplot checkbox automatically adds and removes the overlay", {
   fixture <- boxplot_fixture()
   filtered <- reactiveVal(fixture$data)
   summary <- reactiveVal(list(type = "descriptive", selected_vars = "value", group_var = "group"))
@@ -146,10 +144,8 @@ test_that("descriptive boxplot checkbox applies and removes the overlay", {
     session$setInputs(plot_width = 400, plot_height = 300)
     expect_length(boxplot_points(boxplot_panels(stored$plot)[[1]]), 0L)
     session$setInputs(show_points = TRUE)
-    expect_length(boxplot_points(boxplot_panels(stored$plot)[[1]]), 0L)
-    session$setInputs(apply_plot = 1L)
     expect_length(boxplot_points(boxplot_panels(stored$plot)[[1]]), 1L)
-    session$setInputs(show_points = FALSE, apply_plot = 2L)
+    session$setInputs(show_points = FALSE)
     expect_length(boxplot_points(boxplot_panels(stored$plot)[[1]]), 0L)
   })
 })

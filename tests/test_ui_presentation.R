@@ -1,0 +1,42 @@
+library(testthat)
+
+test_that("analysis choices and data-table controls stay complete and compact", {
+  skip_if_not_installed("shinytest2")
+  withr::local_envvar(NOT_CRAN = "true")
+  app <- shinytest2::AppDriver$new(app_dir = normalizePath(".."),
+    width = 1440, height = 1000, timeout = 60000)
+  on.exit(app$stop())
+  app$set_inputs(main_nav = "upload_tab")
+  app$set_inputs(`upload-data_source` = "example")
+  app$wait_for_js("document.querySelectorAll('#upload-preview tbody tr').length > 1")
+  app$set_inputs(main_nav = "analysis_tab")
+  app$wait_for_js("document.getElementById('analysis-analysis_type')?.selectize != null")
+  for (width in c(1440L, 390L)) {
+    app$set_window_size(width = width, height = 844)
+    app$wait_for_idle()
+    app$click(selector = ".app-complete-choices .selectize-input")
+    shots <- Sys.getenv("TABLE_UI_SCREENSHOTS", "")
+    if (nzchar(shots)) {
+      dir.create(shots, recursive=TRUE, showWarnings=FALSE)
+      app$get_chromote_session()$screenshot(file.path(shots,paste0("analysis-",width,".png")))
+    }
+    app$wait_for_js("document.querySelector('.app-complete-choices .selectize-dropdown').checkVisibility()",timeout=3000)
+    expect_true(app$get_js("(() => { const d=document.querySelector('.app-complete-choices .selectize-dropdown-content'); const r=d.getBoundingClientRect(); const options=[...d.querySelectorAll('[data-selectable]')]; return options.length===8 && d.scrollHeight<=d.clientHeight+1 && options.every(o=>{const b=o.getBoundingClientRect();return b.top>=r.top && b.bottom<=r.bottom+1 && b.bottom<=innerHeight;}); })()"))
+    expect_true(app$get_js("[...document.querySelectorAll('.app-complete-choices .selectize-dropdown,.app-complete-choices .optgroup')].every(e=>getComputedStyle(e).backgroundColor==='rgb(255, 255, 255)')"))
+    app$run_js("document.getElementById('analysis-analysis_type').selectize.close()")
+  }
+  app$set_window_size(width = 1440, height = 1000)
+  app$set_inputs(main_nav = "upload_tab")
+  app$set_inputs(`upload-data_source` = "example")
+  app$wait_for_js("document.querySelectorAll('#upload-preview tbody tr').length > 1")
+  expect_true(app$get_js("(() => {const t=document.querySelector('#upload-preview .upload-table-toolbar'); const a=t.querySelector('.dataTables_length').getBoundingClientRect(); const b=t.querySelector('.dataTables_filter').getBoundingClientRect(); return Math.abs(a.top-b.top)<5;})()"))
+  app$set_window_size(width = 390, height = 844)
+  expect_true(app$get_js("(() => {const p=document.querySelector('#upload-preview .dataTables_paginate');const items=[...p.querySelectorAll('li')].filter(e=>e.checkVisibility());const link=p.querySelector('.previous a');return items.length===3 && link.scrollWidth<=link.clientWidth+1 && document.documentElement.scrollWidth<=innerWidth;})()"))
+  app$run_js("document.querySelector('#upload-preview .dataTables_paginate .next a').click()")
+  app$wait_for_js("$('#upload-preview .dataTables_scrollBody table').DataTable().page.info().page === 1")
+  app$set_inputs(main_nav = "filter_tab")
+  app$wait_for_js("document.querySelector('#filter-filtered_preview .upload-table-toolbar') != null")
+  expect_true(app$get_js("document.documentElement.scrollWidth <= innerWidth"))
+  logs <- app$get_logs()
+  expect_false(any(logs$level == "error" | grepl("Warning: Error|Error in ", logs$message)))
+})

@@ -1,9 +1,9 @@
 library(testthat)
 library(shiny)
 
-source("../R/helpers.R")
-source("../R/anova_shared_utils.R")
-source("../R/anova_shared_model.R")
+source("../R/shared_analysis_helpers.R")
+source("../R/shared_anova_utils.R")
+source("../R/shared_anova_model.R")
 
 test_that("two-way ANOVA fits sum contrasts before computing Type III tests", {
   data <- data.frame(

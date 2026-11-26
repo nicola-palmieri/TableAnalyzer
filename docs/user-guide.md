@@ -8,7 +8,7 @@ This guide walks you through using Table Analyzer step by step. It is written fo
 
 1. Install R packages listed in the README (`install.packages(c(...))`).
 2. From the repo root, run `shiny::runApp(".")`.
-3. Use the tabs in order: **Upload -> Filter -> Analyze -> Visualize** (Filter is optional).
+3. Open **User guide** in the app for these instructions, then use the tabs in order: **Upload -> Filter -> Analyze -> Visualize** (Filter is optional).
 
 Tip: If a categorical variable does not appear in dropdowns, go to the Upload tab, click **Edit column types**, and change it from Numeric to Categorical.
 
@@ -41,7 +41,7 @@ Missing values are allowed, but each analysis handles them differently:
    - **Upload (wide format):** Two header rows; the app will reshape to long.
    - **Example dataset:** Loads the bundled demo.
 2. If uploading, select your Excel file. Pick the **Sheet** once detected.
-3. For wide format, set **Replicate column name** (defaults to `Replicate`) and the app will convert to long.
+3. For wide format, set **Replicate column name** (defaults to `Replicate`) and the app will convert to long. Upload controls appear directly in the sidebar, without expanders.
 4. Review the preview table and validation messages.
 5. **Edit column types:** Click **Edit column types** to reclassify numeric columns that represent groups (e.g., dose levels) as Categorical.  
    - If you cannot find a categorical variable in later dropdowns, come back here and change its type to **Categorical**.
@@ -56,7 +56,7 @@ What happens under the hood:
 ## Filter tab (step 2, optional)
 
 1. Skip this step if you want to analyze the full dataset.
-2. Select which columns to keep.
+2. Select which columns to filter; all columns remain in the resulting table. Filter controls appear directly in the sidebar, without expanders.
 3. Adjust filters:
    - Numeric: min/max boxes.
    - Categorical: multi-select pickers.
@@ -65,6 +65,9 @@ What happens under the hood:
    - **Drop rows with any NA in selected columns:** when checked, any row containing an NA in the columns you choose will be removed.
    - **Columns to check for NA:** pick which columns to enforce for NA removal (defaults to all).
 5. The filtered preview updates live; this subset is passed to analyses.
+
+Removing a column removes its filter. Clearing the column selection removes all
+filters; adding a column again starts with its full range or all categories.
 
 Tips:
 - Use filtering to remove obvious outliers before modeling.
@@ -122,7 +125,7 @@ Module walkthroughs and widgets:
 
 ## Visualize tab (step 4)
 
-The tab shows only the visuals that match the most recent analysis. Each panel has **Apply changes** (to rebuild the plot) and a download button (**Download plot** for descriptive charts, **Download results** for the other visuals).
+The tab shows only the visuals that match the most recent analysis. Figures omit titles and subtitles for manuscript use; axis labels, legends, facet/group strips and statistical footnotes remain. Valid appearance changes update the plot automatically. Use **Reset** to restore the current figure's appearance and automatic layout recommendations while keeping your uploaded data, filters and fitted analysis. The **download icon at the top right** of the plot panel saves the current valid figure as a PNG at 300 dpi. Analysis results have their own top-right download icon for reports; hover over an icon to see its download title. Use **Run analysis** in Analyze when you change the statistical model or its input data.
 
 ### Descriptive visualizations
 - **Plot type:** Categorical barplots, numeric boxplots, or numeric histograms.
@@ -201,3 +204,24 @@ If a control references a grouping variable that does not appear, return to **Up
 - **Performance:** Large Excel files load more slowly; reduce columns or rows if possible.
 
 Need more help? Open an issue with your dataset description (no sensitive data) and the steps you took.
+
+
+## Shared controls
+
+TableAnalyzer and MicrobiomeAnalyzer share their navbar branding, Home layout,
+sidebar width, compact widgets and figure styling.
+Click the application name to return Home while keeping the current session.
+
+Open a sidebar section by clicking its heading. Visualization controls follow
+**Analysis setup**, **Plot options**, **Plot size**, **Colors**, and **Text and
+legend**. Plot options also contains the available grid layout controls. Valid
+appearance changes redraw the figure automatically. The statistical methods and
+available analyses remain specific to TableAnalyzer; models still run with
+**Run analysis** in Analyze. If a manual grid is invalid, the app shows a warning
+and retains the previous valid figure and its dimensions.
+
+Question-mark help buttons explain individual controls. They work with the
+keyboard and can be dismissed with Escape. In **Colors**, open a swatch to choose
+from the shared palette; use arrow keys and Enter when operating the picker with
+the keyboard. Expand **Plot size** to change the existing pixel dimensions, and
+**Text and legend** to set the base font size and available legend controls.

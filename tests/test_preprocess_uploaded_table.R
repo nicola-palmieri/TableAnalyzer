@@ -2,7 +2,7 @@ library(testthat)
 library(dplyr)
 library(janitor)
 
-source("../R/module_upload_helpers.R")   # contains preprocess_uploaded_table()
+source("../R/mod_upload_data.R")   # contains preprocess_uploaded_table()
 
 test_that("preprocess_uploaded_table cleans column names and orders factors", {
   

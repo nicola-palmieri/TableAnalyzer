@@ -1,8 +1,8 @@
 library(testthat)
 library(shiny)
 
-source("../R/helpers.R")
-source("../R/module_analysis.R")
+source("../R/shared_analysis_helpers.R")
+source("../R/mod_analyze_main.R")
 
 test_that("analysis results are invalidated when filtered data changes", {
   filtered <- reactiveVal(data.frame(value = 1:3))

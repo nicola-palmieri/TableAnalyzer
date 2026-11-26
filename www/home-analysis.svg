@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="420" viewBox="0 0 640 420" fill="none">
+  <defs>
+    <radialGradient id="halo"><stop stop-color="#5FD4D0" stop-opacity=".13"/><stop offset="1" stop-color="#5FD4D0" stop-opacity="0"/></radialGradient>
+    <linearGradient id="teal" x2="1" y2="1"><stop stop-color="#89E5DC"/><stop offset="1" stop-color="#43A6BD"/></linearGradient>
+    <linearGradient id="pink" x2="1" y2="1"><stop stop-color="#FFACCF"/><stop offset="1" stop-color="#BD6CAF"/></linearGradient>
+    <linearGradient id="violet" x2="1" y2="1"><stop stop-color="#B7ACFF"/><stop offset="1" stop-color="#7789D4"/></linearGradient>
+  </defs>
+  <circle cx="354" cy="210" r="220" fill="url(#halo)"/>
+  <g stroke="#95B4D0" stroke-opacity=".13">
+    <circle cx="354" cy="210" r="155"/>
+    <circle cx="354" cy="210" r="115" stroke-dasharray="2 7"/>
+    <path d="M217 110l137 100 120-77M354 210l98 111M354 210l-105 95M354 210l37-136"/>
+  </g>
+  <!-- Data table: translucent cells and fine strokes, on a transparent canvas. -->
+  <g transform="translate(278 132) rotate(-8 76 78)">
+    <rect width="152" height="156" rx="14" fill="url(#teal)" fill-opacity=".12" stroke="#7AD6D2" stroke-width="1.6"/>
+    <path d="M1 38h150" stroke="#7AD6D2" stroke-opacity=".7"/>
+    <path d="M1 77h150M1 116h150M51 38v117M101 38v117" stroke="#79D7D3" stroke-opacity=".35"/>
+    <g fill="#97E8E1">
+      <rect x="15" y="17" width="38" height="4" rx="2" opacity=".8"/>
+      <rect x="66" y="17" width="21" height="4" rx="2" opacity=".5"/>
+      <rect x="112" y="17" width="23" height="4" rx="2" opacity=".5"/>
+      <circle cx="25" cy="58" r="3"/><circle cx="25" cy="97" r="3" opacity=".6"/><circle cx="25" cy="136" r="3" opacity=".8"/>
+      <rect x="64" y="56" width="24" height="4" rx="2" opacity=".65"/>
+      <rect x="64" y="95" width="17" height="4" rx="2" opacity=".5"/>
+      <rect x="64" y="134" width="27" height="4" rx="2" opacity=".7"/>
+    </g>
+    <rect x="110" y="48" width="32" height="20" rx="4" fill="#7AD6D2" fill-opacity=".2"/>
+    <rect x="110" y="87" width="32" height="20" rx="4" fill="#B0A5ED" fill-opacity=".22"/>
+    <rect x="110" y="126" width="32" height="20" rx="4" fill="#F4A1C8" fill-opacity=".2"/>
+  </g>
+  <!-- Distribution plot. -->
+  <g transform="translate(187 72) rotate(-12 40 40)">
+    <rect width="87" height="81" rx="12" fill="url(#violet)" fill-opacity=".12" stroke="#B0A5ED" stroke-width="1.5"/>
+    <path d="M15 17v49h58" stroke="#B0A5ED" stroke-opacity=".45"/>
+    <g stroke="#C5BEF9" stroke-width="1.5" stroke-linecap="round">
+      <path d="M33 25v32M28 25h10M28 57h10M29 40h8"/>
+      <rect x="26" y="33" width="14" height="15" rx="2" fill="url(#violet)" fill-opacity=".3"/>
+      <path d="M59 18v36M54 18h10M54 54h10M55 35h8"/>
+      <rect x="52" y="26" width="14" height="17" rx="2" fill="url(#violet)" fill-opacity=".3"/>
+    </g>
+  </g>
+  <!-- Relationship plot. -->
+  <g transform="translate(452 87) rotate(10 42 42)">
+    <rect width="86" height="86" rx="12" fill="url(#pink)" fill-opacity=".12" stroke="#F4A1C8" stroke-width="1.5"/>
+    <path d="M16 17v53h55" stroke="#F4A1C8" stroke-opacity=".4"/>
+    <path d="M23 61l44-37" stroke="#F4A1C8" stroke-opacity=".6" stroke-dasharray="3 4"/>
+    <g fill="#FFACCF"><circle cx="25" cy="54" r="3"/><circle cx="33" cy="57" r="2.5"/><circle cx="39" cy="40" r="3"/><circle cx="49" cy="43" r="2.5"/><circle cx="55" cy="28" r="3"/><circle cx="66" cy="32" r="2.5"/></g>
+  </g>
+  <!-- Group summary. -->
+  <g transform="translate(444 279) rotate(-8 46 39)">
+    <rect width="94" height="83" rx="12" fill="url(#teal)" fill-opacity=".12" stroke="#7AD6D2" stroke-width="1.5"/>
+    <path d="M15 17v50h65" stroke="#79D7D3" stroke-opacity=".4"/>
+    <rect x="25" y="40" width="12" height="26" rx="3" fill="url(#teal)" fill-opacity=".3" stroke="#7AD6D2"/>
+    <rect x="45" y="24" width="12" height="42" rx="3" fill="url(#violet)" fill-opacity=".3" stroke="#B0A5ED"/>
+    <rect x="65" y="32" width="12" height="34" rx="3" fill="url(#pink)" fill-opacity=".3" stroke="#F4A1C8"/>
+  </g>
+  <g transform="translate(217 286) rotate(12 29 27)" stroke="#B0A5ED" stroke-width="1.5">
+    <circle cx="29" cy="27" r="30" fill="url(#violet)" fill-opacity=".12"/>
+    <path d="M15 18h28M15 27h28M15 36h17" stroke="#C5BEF9" stroke-width="2" stroke-linecap="round"/>
+  </g>
+  <g fill="#9ACDDA">
+    <circle cx="185" cy="198" r="3" opacity=".6"/><circle cx="254" cy="218" r="2.5" opacity=".6"/>
+    <circle cx="450" cy="238" r="2" opacity=".7"/><circle cx="307" cy="78" r="2" opacity=".5"/>
+    <circle cx="391" cy="74" r="3" opacity=".4"/><circle cx="539" cy="377" r="2.5" opacity=".5"/>
+    <circle cx="294" cy="367" r="2.5" opacity=".4"/><circle cx="178" cy="302" r="1.5" opacity=".5"/>
+    <circle cx="584" cy="166" r="2" opacity=".4"/><circle cx="195" cy="57" r="1.5" opacity=".3"/>
+    <circle cx="384" cy="341" r="2" opacity=".5"/><circle cx="576" cy="268" r="1.5" opacity=".3"/>
+  </g>
+</svg>

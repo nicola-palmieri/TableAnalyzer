@@ -3,15 +3,31 @@ library(dplyr)
 library(ggplot2)
 library(shiny)
 
-source("../R/helpers.R")
-source("../R/submodule_theme.R")
-source("../R/submodule_colors.R")
-source("../R/anova_shared_plot_context.R")
-source("../R/anova_shared_utils.R")
-source("../R/anova_shared_data.R")
-source("../R/anova_shared_barplots.R")
-source("../R/anova_shared_lineplots.R")
-source("../R/regression_shared_validation.R")
+source("../R/shared_analysis_helpers.R")
+source("../R/shared_theme.R")
+source("../R/shared_colors.R")
+source("../R/shared_anova_plot_context.R")
+source("../R/shared_anova_utils.R")
+source("../R/shared_anova_data.R")
+source("../R/shared_anova_barplots.R")
+source("../R/shared_anova_lineplots.R")
+source("../R/shared_regression_validation.R")
+
+test_that("stratified ANOVA panels keep group identities as facet strips without titles", {
+  stats_df <- data.frame(treatment=factor(c("a","b")),.ta_mean=c(2,4),.ta_se=c(.2,.3))
+  bar <- build_single_factor_barplot(stats_df,"Day 14","treatment","steelblue",13,NULL)
+  line <- build_line_plot_panel(stats_df,"Day 14",NULL,"treatment",NULL,NULL)
+  for (p in list(bar,line)) {
+    central <- NicoShinyAppTemplate::plot_theme()
+    expect_equal(p$theme$axis.line$colour, central$axis.line$colour)
+    expect_equal(p$theme$axis.ticks$colour, central$axis.ticks$colour)
+    expect_equal(p$theme$panel.grid.major$colour, central$panel.grid.major$colour)
+    g <- ggplotGrob(p)
+    expect_true(any(grepl("^strip",g$layout$name)))
+    expect_s3_class(g$grobs[[match("title",g$layout$name)]],"zeroGrob")
+    expect_equal(ggplot_build(p)$data[[1]]$y,c(2,4))
+  }
+})
 
 test_that("barplot limits preserve zero for negative-only values", {
   limits <- ensure_barplot_zero_baseline(c(-11, -4))
@@ -105,4 +121,15 @@ test_that("missing values are not treated as observed factor levels", {
     ),
     class = "shiny.silent.error"
   )
+})
+
+
+test_that("grouped default colors follow the shared twin palette", {
+  levels <- c("control", "low", "high")
+  expect_equal(resolve_palette_for_levels(levels),
+    stats::setNames(NicoShinyAppTemplate::APP_PALETTE[1:3], levels))
+  custom <- c(high = "#FFFFFF", control = "#000000", low = "#FF0000")
+  expect_equal(resolve_palette_for_levels(levels, custom), custom[levels])
+  expect_equal(unname(resolve_palette_for_levels(letters[1:25])),
+    rep(NicoShinyAppTemplate::APP_PALETTE, length.out = 25))
 })

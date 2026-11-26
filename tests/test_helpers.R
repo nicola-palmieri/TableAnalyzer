@@ -1,6 +1,6 @@
 library(testthat)
 
-source("../R/helpers.R")
+source("../R/shared_analysis_helpers.R")
 
 test_that("format_safe_error_message normalizes common error inputs", {
   expect_equal(format_safe_error_message(NULL), "Error:")

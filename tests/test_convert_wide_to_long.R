@@ -6,7 +6,7 @@ library(tidyr)
 library(zoo)
 library(purrr)
 
-source("../R/module_upload_helpers.R")
+source("../R/mod_upload_data.R")
 
 test_that("convert_wide_to_long behaves correctly across 20 Excel scenarios", {
   test_dir <- tempfile("table-analyzer-excel-tests-")

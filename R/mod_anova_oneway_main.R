@@ -1,0 +1,213 @@
+# mod_anova_oneway: server coordination and reactive state.
+one_way_anova_server <- function(id, filtered_data, reset_trigger = reactive(NULL)) {
+  moduleServer(id, function(input, output, session) {
+    ns <- session$ns
+    require_current <- analysis_download_guard(filtered_data, reactive(input$run), reset_trigger)
+    
+    responses <- multi_response_server("response", filtered_data)
+    strat_info <- stratification_server("strat", filtered_data)
+    
+    # -----------------------------------------------------
+    # UI inputs
+    # -----------------------------------------------------
+    output$inputs <- renderUI({
+      req(filtered_data())
+      data <- filtered_data()
+      
+      cat_cols <- names(data)[sapply(data, is.factor) | sapply(data, is.character)]
+      
+      validate(
+        need(length(cat_cols) > 0,
+             "No categorical predictor available. Please upload a factor or character variable.")
+      )
+      
+      tagList(
+        multi_response_ui(ns("response")),
+        with_help_tooltip(
+          selectInput(
+            ns("group"),
+            "Categorical predictor",
+            choices = cat_cols,
+            selected = cat_cols[1]
+          ),
+          "Choose the grouping variable that defines the comparison categories."
+        )
+      )
+    })
+    
+    # -----------------------------------------------------
+    # Order of levels
+    # -----------------------------------------------------
+    output$level_order <- renderUI({
+      req(filtered_data(), input$group)
+      levels <- resolve_order_levels(filtered_data()[[input$group]])
+      
+      with_help_tooltip(
+        selectInput(
+          ns("order"),
+          "Order of levels (first = post-hoc reference)",
+          choices = levels,
+          selected = levels,
+          multiple = TRUE
+        ),
+        "Arrange the group levels; the first level is used as the reference for post-hoc comparisons."
+      )
+    })
+    
+    # -----------------------------------------------------
+    # Run models
+    # -----------------------------------------------------
+    models <- eventReactive(input$run, {
+      df <- filtered_data()
+      req(df, input$group)
+      
+      resp_vals <- responses()
+      
+      # ------------------------
+      # Validations
+      # ------------------------
+      
+      validate(
+        need(length(resp_vals) > 0,
+             "Select at least one response variable.")
+      )
+      
+      validate(
+        need(all(sapply(df[resp_vals], is.numeric)),
+             "All selected response variables must be numeric.")
+      )
+      
+      # Response variance
+      for (r in resp_vals) {
+        validate(
+          need(stats::var(df[[r]], na.rm = TRUE) > 0,
+               paste("Response", r, "has zero variance and cannot be analyzed."))
+        )
+      }
+      
+      # Group must have >= 2 levels
+      grp <- df[[input$group]]
+      validate(
+        need(dplyr::n_distinct(grp, na.rm = TRUE) > 1,
+             paste0("Categorical predictor '", input$group, "' must contain at least two levels."))
+      )
+      
+      # Order must have >= 2 items
+      validate(
+        need(length(input$order) > 1,
+             paste0("The level order for '", input$group, "' must contain at least two levels."))
+      )
+      
+      # Order must match data
+      actual_levels <- unique(grp)
+      missing_levels <- setdiff(input$order, actual_levels)
+      validate(
+        need(length(missing_levels) == 0,
+             paste0("Invalid level order for '", input$group,
+                    "'. Some selected levels are not present in the filtered data: ",
+                    paste(missing_levels, collapse = ", ")))
+      )
+      
+      # Stratification checks
+      s_info <- strat_info()
+      if (!is.null(s_info$var)) {
+        validate(
+          need(!identical(s_info$var, input$group),
+               paste0("Stratification variable '", s_info$var,
+                      "' cannot be the same as the categorical predictor."))
+        )
+
+        for (lev in s_info$levels) {
+          sub_df <- df[df[[s_info$var]] == lev, ]
+
+          k <- dplyr::n_distinct(sub_df[[input$group]], na.rm = TRUE)
+          validate(
+            need(k > 1,
+                 paste0("In stratum '", lev, "', categorical predictor '", input$group,
+                        "' contains fewer than two levels."))
+          )
+        }
+      }
+      
+      # -----------------------------------------------------
+      # Run the main stratified ANOVA preparation
+      # -----------------------------------------------------
+      prepare_stratified_anova(
+        df = df,
+        responses = resp_vals,
+        model = "oneway_anova",
+        factor1_var = input$group,
+        factor1_order = input$order,
+        stratification = strat_info()
+      )
+    })
+    
+    # -----------------------------------------------------
+    # Download handler
+    # -----------------------------------------------------
+    output$download_all <- downloadHandler(
+      filename = function() {
+        info <- models()
+        n_resp <- length(info$responses)
+        label <- if (!is.null(info$strata$var)) {
+          paste0("stratified_by_", janitor::make_clean_names(info$strata$var))
+        } else {
+          NULL
+        }
+        response_tag <- if (n_resp == 1) {
+          janitor::make_clean_names(info$responses[1])
+        } else {
+          paste0(n_resp, "resp")
+        }
+        build_export_filename(
+          analysis = "anova",
+          extra = c(response_tag, label)
+        )
+      },
+      content = function(file) {
+        require_current()
+        download_all_anova_results(models(), file)
+      }
+    )
+    
+    # -----------------------------------------------------
+    # Summary UI
+    # -----------------------------------------------------
+    output$summary_ui <- renderUI({
+      render_anova_results(ns, models())
+    })
+    
+    # Forwarding other outputs
+    bind_anova_outputs(output, models)
+    
+    # -----------------------------------------------------
+    # Exportable ANOVA results object
+    # -----------------------------------------------------
+    anova_results <- reactive({
+      mod <- models()
+      req(mod)
+      res <- compile_anova_results(mod)
+      
+      list(
+        analysis_type = "ANOVA",
+        type = "oneway_anova",
+        data_used = mod$data_used,
+        model = mod$models,
+        summary = res$summary,
+        posthoc = res$posthoc,
+        effects = res$effects,
+        stats = list(
+          n = nrow(mod$data_used),
+          vars = names(mod$data_used)
+        ),
+        errors = res$errors,
+        responses = mod$responses,
+        strata = mod$strata,
+        factors = mod$factors,
+        orders = mod$orders
+      )
+    })
+    
+    return(anova_results)
+  })
+}
