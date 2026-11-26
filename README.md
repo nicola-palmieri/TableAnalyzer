@@ -1,16 +1,19 @@
-# 📊 Table Analyzer v1.10
+# TableAnalyzer v1.10
 
-Table Analyzer is a modular R/Shiny application for analysing tabular datasets with modern statistical methods and generating publication-ready visualizations. It can process multiple variables in parallel, apply optional stratification, and produce fully auto-arranged plots without any manual positioning. Launching the app (via app.R) provides focused modules for uploading data, configuring analyses, refining inputs, and reviewing results — all powered by R directly in the browser.
+TableAnalyzer is an R/Shiny app for exploring Excel datasets, fitting statistical
+models and creating publication-ready figures and reports. It is the twin companion
+to [MicrobiomeAnalyzer](https://github.com/nicola-palmieri/MicrobiomeAnalyzer).
 
 ---
 
 ## Open the app
 
-The shinyapps.io deployment has been retired. Run Table Analyzer locally with R and Shiny using the installation and launch instructions below.
+R runs on your computer; the browser displays the Shiny interface. Follow the
+installation instructions below. The former shinyapps.io deployment has been retired.
 
 ---
 
-## ✨ Highlights
+## Highlights
 
 - **Excel-native uploads**
   - Accepts long-format workbooks or wide-format plates with two header rows (response × replicate). Wide sheets are reshaped automatically and validated for duplicate measurements.
@@ -32,79 +35,108 @@ The shinyapps.io deployment has been retired. Run Table Analyzer locally with R 
 
 ---
 
-## 🧭 App workflow
+## App workflow
 
-1. **Upload** (Tab “Upload”)
-   - Select the example dataset or upload Excel workbooks (`.xlsx`, `.xls`, `.xlsm`).
-  - For wide layouts, Table Analyzer reshapes the sheet to tidy long format by merging the two header rows (response name and replicate ID) into a single column name, then stacks the measurements into one column.
-   - Review validation messages and the live preview before proceeding.
-2. **Filter** (Tab “Filter”, optional)
-   - Skip this step if you want to analyze the full dataset; use it when you need to subset rows or columns first.
-3. **Analyze** (Tab “Analyze”)
-   - Choose a module and configure responses, predictors, covariates, interactions, stratification, and (for LMM) random intercepts.
-   - Click **Run analysis** to run the model; export everything with **Download results**.
-4. **Visualize** (Tab “Visualize”)
-   - Explore plots tailored to the active analysis, including multi-panel layouts for stratified fits and customizable color themes.
+1. **Upload:** choose an example or upload an Excel workbook; review the preview and column types. Wide-format plates are reshaped to long format.
+2. **Filter:** optionally select columns and refine rows before analysis.
+3. **Analyze:** select a method, configure its variables and study design, then run the analysis.
+4. **Visualize:** inspect the fitted analysis, customize its figures and download available plots or reports.
 
 ---
 
-## 📚 User guide
+## User guide
 
-For a step-by-step manual (including tips for basic users and how to reclassify columns via the Upload tab), see `docs/user-guide.md`.
+Read the [User guide](docs/user-guide.md) for input examples, controls and analysis workflows.
 
 ---
 
-## 🔧 Installation & local launch
+## Installation & local launch
 
-From the repository root, run once:
+Install R first, then open the extracted or cloned app folder in R/RStudio. Your
+working directory must be the repository root, containing `app.R` and `scripts/`.
+Development currently uses R 4.6.2.
 
 ```r
+# One-time setup
 source("scripts/install_dependencies.R")
-shiny::runApp(".")
+
+# Start the local app
+shiny::runApp(".", host = "127.0.0.1", launch.browser = TRUE)
 ```
 
-The download includes NicoShinyAppTemplate under `dependencies/NicoShinyAppTemplate`.
-Setup installs this local copy and any missing CRAN packages. Users do not need
-a separate template download or access to its private repository. Internet is
-needed only for missing CRAN dependencies; after setup the app runs locally.
-The template is maintained in its own repository; the included copy is generated
-and recorded in `dependencies/NicoShinyAppTemplate.json`.
+Setup installs missing CRAN packages and the included NicoShinyAppTemplate source.
+Internet is needed for missing CRAN packages. Once setup is complete, the Shiny
+app runs locally in your browser and works offline.
 
-### Run the unit tests
+### Included shared template
+
+Both apps include `dependencies/NicoShinyAppTemplate` and a version/file-hash
+manifest at `dependencies/NicoShinyAppTemplate.json`. Users do not need a separate
+template download, GitHub token or access to the template repository.
+
+The [template repository](https://github.com/nicola-palmieri/NicoShinyAppTemplate)
+is the maintained source. The app copy is generated for distribution; do not edit
+it independently. See the [bundled package documentation](dependencies/NicoShinyAppTemplate/README.md).
+
+---
+
+## Data expectations
+
+- Columns are automatically typed as numeric or categorical based on their contents on upload, so you can load tidy-long files or two-row-header wide sheets without pre-cleaning.
+- Missing values are accepted—modules fall back to complete-case subsets where necessary.
+- Stratification is optional; choose from the eligible categorical variables offered by the selected analysis.
+- Maximum upload size: ~200 MB (configured in `app.R`).
+
+---
+
+## Exports & reporting
+
+- Figures can be downloaded as PNG files at **300 dpi** with configurable dimensions.
+- Supported analyses export Word (`.docx`) reports, including relevant summaries and model tables.
+- LM/LMM reports include coefficients; mixed-model reports also include random-effect and ICC summaries.
+- Select the analysis and plotting options appropriate to your data before exporting.
+
+---
+
+## Development & tests
 
 ```r
 install.packages(c("openxlsx", "testthat"))
 source("tests/run_tests.R")
 ```
 
-Excel test workbooks are generated in temporary directories when the tests run.
-Home-page preview images can be regenerated from the bundled example data with
-`Rscript dev/generate_home_previews.R`.
+Tests use synthetic datasets and temporary Excel workbooks.
 
-## 📂 Data expectations
+Application modules live under `R/`; their data handling and statistical methods
+remain app-specific. Shared presentation is maintained in NicoShinyAppTemplate.
 
-- Columns are automatically typed as numeric or categorical based on their contents on upload, so you can load tidy-long files or two-row-header wide sheets without pre-cleaning.
-- Missing values are accepted—modules fall back to complete-case subsets where necessary.
-- Stratification is optional across modules; it works with categorical variables that have up to about ten levels.
-- Maximum upload size: ~200 MB (configured in `app.R`).
+In the shared AI Academy workspace, edit the central template checkout and run
+`Rscript ../../scripts/sync_shared_template.R` from the app folder before
+publishing updated app snapshots. Standalone users do not need that workspace.
+
+The bundled package tests can be run from either app folder:
+
+```r
+install.packages(c("testthat", "pkgload"))
+testthat::test_local("dependencies/NicoShinyAppTemplate")
+```
+
+Development checks use synthetic examples and fixtures; passing tests does not
+establish that a model is appropriate for every study.
 
 ---
 
-## 📦 Exports & reporting
-
-- Every module exposes a **Download results** button that bundles the outputs currently displayed; model tables use publication-style formatting with top and bottom rules for the header and a closing border at the table foot.
-- ANOVA/LM/LMM exports generate Word (`.docx`) reports; LM/LMM reports include ANOVA tables, model coefficients, random-effects variance (if applicable), and ICC summaries rendered with the same publication-style borders.
-- All plots download as publication-ready PNG files (300 dpi) with customizable width and height; PCA, correlation, and descriptive visuals can also be saved via each plot’s built-in controls.
-
----
-## 📝 How to cite
+## How to cite
 
 If you use Table Analyzer in a publication, please cite it as:
 
 > Palmieri, N. (2026). *Table Analyzer* (Version 1.10) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.19233119
 
+For a development checkout, also record the exact repository commit used.
+
 ---
-## 🔍 Transparency for users and reviewers
+
+## Transparency for users and reviewers
 
 Every analysis tab in Table Analyzer maps directly to familiar R functions. The table below summarizes what is executed and which options the UI fills in on your behalf.
 
