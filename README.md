@@ -6,7 +6,7 @@ Table Analyzer is a modular R/Shiny application for analysing tabular datasets w
 
 ## Open the app
 
-Live app: https://nicola-palmieri.shinyapps.io/tableanalyzer/
+The shinyapps.io deployment has been retired. Run Table Analyzer locally with R and Shiny using the installation and launch instructions below.
 
 ---
 
