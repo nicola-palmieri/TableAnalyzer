@@ -5,6 +5,8 @@ content_plot_size <- function(plot, kind = c("bar", "box", "pcoa"), width_px = 4
   b <- ggplot2::ggplot_build(plot)
   layout <- b$layout$layout
   nr <- max(layout$ROW); nc <- max(layout$COL)
+  angle <- plot$theme$axis.text.x$angle
+  compact <- kind != "pcoa" && length(angle) == 1L && is.finite(angle) && abs(angle) >= 70
   legend <- plot$theme$legend.position
   if (is.null(legend)) legend <- "right"
   guides <- if (kind == "pcoa") c("colour", "shape") else "fill"
@@ -21,7 +23,7 @@ content_plot_size <- function(plot, kind = c("bar", "box", "pcoa"), width_px = 4
     widths <- vapply(seq_len(nc), function(col) {
       panels <- as.character(layout$PANEL[layout$COL == col])
       n <- max(c(1, unname(counts[panels])), na.rm = TRUE)
-      max(220, 140 + 55 * n)
+      if (compact) max(140, 80 + 40 * n) else max(220, 140 + 55 * n)
     }, numeric(1))
   }
   side_legend <- n_legend > 0 && legend %in% c("right", "left")
@@ -33,7 +35,7 @@ content_plot_size <- function(plot, kind = c("bar", "box", "pcoa"), width_px = 4
   height <- (nr * if (kind == "pcoa") 300 else 260) + 60 + legend_rows * 20 + caption_lines * 15
   size <- list(width = as.integer(width), height = as.integer(ceiling(height * height_px / 300)),
        legend_rows = as.integer(legend_rows))
-  if (kind == "pcoa") {
+  if (kind == "pcoa" || compact) {
     # Guide titles/labels have physical sizes, independent of the subplot size.
     # Measure the actual combined guides rather than estimating their width from
     # the number of levels in the largest scale. Null units are panel space;
@@ -42,7 +44,7 @@ content_plot_size <- function(plot, kind = c("bar", "box", "pcoa"), width_px = 4
     size$width <- as.integer(ceiling(max(size$width,
       measured$fixed_width + max(sum(widths) * width_px / 400, measured$horizontal_guide)) / 10) * 10)
     size$height <- as.integer(ceiling(max(size$height,
-      measured$fixed_height + max(nr * 300 * height_px / 300, measured$side_guide))))
+      measured$fixed_height + max(nr * (if (kind == "pcoa") 300 else 260) * height_px / 300, measured$side_guide))))
   }
   size
 }
