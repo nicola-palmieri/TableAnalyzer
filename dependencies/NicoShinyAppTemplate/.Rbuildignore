@@ -1,0 +1,5 @@
+^\.git$
+^\.gitignore$
+^NicoShinyAppTemplate_.*\.tar\.gz$
+^NicoShinyAppTemplate\.Rcheck$
+(^|/)Rplots\.pdf$

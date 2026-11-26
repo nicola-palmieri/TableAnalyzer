@@ -56,19 +56,19 @@ For a step-by-step manual (including tips for basic users and how to reclassify 
 
 ## 🔧 Installation & local launch
 
-```r
-# Install packages (run once)
-install.packages(c(
-  "bslib", "car", "dplyr", "DT", "emmeans", "fitdistrplus",
-  "flextable", "GGally", "ggplot2", "ggrepel", "htmltools", "janitor",
-  "lme4", "lmerTest", "officer", "patchwork", "purrr", "readxl", "rlang",
-  "scales", "shiny", "skimr", "stringr", "tibble", "tidyr", "tidyselect",
-  "zoo"
-))
+From the repository root, run once:
 
-# Launch the app from the repository root
+```r
+source("scripts/install_dependencies.R")
 shiny::runApp(".")
 ```
+
+The download includes NicoShinyAppTemplate under `dependencies/NicoShinyAppTemplate`.
+Setup installs this local copy and any missing CRAN packages. Users do not need
+a separate template download or access to its private repository. Internet is
+needed only for missing CRAN dependencies; after setup the app runs locally.
+The template is maintained in its own repository; the included copy is generated
+and recorded in `dependencies/NicoShinyAppTemplate.json`.
 
 ### Run the unit tests
 

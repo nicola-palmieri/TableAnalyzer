@@ -1,0 +1,7 @@
+.Rhistory
+.RData
+.Ruserdata
+.Rproj.user/
+Rplots.pdf
+/NicoShinyAppTemplate_*.tar.gz
+/NicoShinyAppTemplate.Rcheck/

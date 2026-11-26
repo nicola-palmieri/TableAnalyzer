@@ -1,0 +1,16 @@
+test_that("shared plot actions preserve app IDs, accessible labels and optional dimensions", {
+  expect_warning(actions <- as.character(app_plot_actions_ui(shiny::NS("figure"), reset_id = "reset_plot",
+    download_id = "download", dimensions_id = "dimensions", reset_aria_label = "Reset figure controls")), "deprecated")
+  expect_match(actions, 'id="figure-reset_plot"', fixed = TRUE)
+  expect_match(actions, 'aria-label="Reset figure controls"', fixed = TRUE)
+  expect_match(actions, 'id="figure-download"', fixed = TRUE)
+  expect_match(actions, "Download PNG (300 dpi)", fixed = TRUE)
+  expect_match(actions, 'id="figure-dimensions"', fixed = TRUE)
+  expect_false(grepl("action-button", as.character(app_plot_actions_ui(identity, reset_id = NULL))))
+  expect_match(as.character(app_download_ui(identity, "image")), 'id="image"', fixed = TRUE)
+  expect_match(actions, 'aria-label="Download PNG (300 dpi)"', fixed = TRUE)
+  expect_false(grepl("shiny-download-link", as.character(app_plot_actions_ui(identity))))
+  header <- as.character(app_result_header_ui("Figure", app_download_ui(identity, "image")))
+  expect_match(header, "app-result-header", fixed = TRUE)
+  expect_match(header, 'title="Download PNG (300 dpi)"', fixed = TRUE)
+})
