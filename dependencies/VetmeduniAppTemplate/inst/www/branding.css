@@ -7,6 +7,7 @@
   --vetmeduni-green: #286e53;
   --vetmeduni-copper: #a86044;
   --vetmeduni-gray: #757575;
+  --wordmark-accent: #ffdab9;
   --bg1: #f4f4f4;
   --panel: #ffffff;
   --panel-soft: #fafafa;
@@ -74,8 +75,8 @@
 .home-institution { position: absolute; top: 26px; right: 30px; display: inline-flex; margin: 0; z-index: 1; }
 .home-institution img { width: 185px; max-width: 100%; height: auto; filter: brightness(0) invert(1); }
 .home-hero .home-wordmark .home-brand-name { color: #ffffff; }
-.home-hero .home-wordmark .app-wordmark-accent { color: #dcebe4; }
-.navbar .app-wordmark .app-wordmark-accent { color: #f0d5dd; }
+.home-hero .home-wordmark .app-wordmark-accent,
+.navbar .app-wordmark .app-wordmark-accent { color: var(--wordmark-accent); }
 .home-hero .home-wordmark .home-brand-version { color: #e2f0e9; }
 .home-hero-description { color: #e0e0e0; }
 .home-hero .home-start {
