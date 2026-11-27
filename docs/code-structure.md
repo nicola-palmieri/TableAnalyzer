@@ -36,6 +36,7 @@ use `plot_panel_label()` facet strips instead; categorical response names appear
 on their axes. UI headings and statistical footnotes remain separate from figure titles.
 
 Home uses the shared banner → workflow → informational analysis-card layout.
+The banner description mirrors MicrobiomeAnalyzer: “Create publication-ready statistics and plots from an Excel table. Explore your data, compare groups and fit statistical models.” Both descriptions lead with the outcome and input, followed by app-specific capabilities.
 Its workflow mirrors Upload, Filter, Analyze and Visualize; cards have an icon
 beside their title and a description below, without links or buttons.
 

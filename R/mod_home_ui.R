@@ -4,8 +4,8 @@ mod_home_ui <- function(id) {
     id, main = APP_BRAND_MAIN, accent = APP_BRAND_ACCENT, version = APP_VERSION,
     artwork = APP_CONFIG$artwork,
     description = paste(
-      "Explore tabular data, compare groups and fit statistical models.",
-      "Create publication-ready tables and figures in a guided workflow."
+      "Create publication-ready statistics and plots from an Excel table.",
+      "Explore your data, compare groups and fit statistical models."
     ),
     start_label = "Start an analysis", start_id = "go_upload",
     analyses = list(
