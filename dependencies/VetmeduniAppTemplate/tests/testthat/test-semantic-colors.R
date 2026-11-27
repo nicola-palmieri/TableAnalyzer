@@ -18,6 +18,8 @@ test_that("semantic feedback uses institutional accents with readable normal tex
   }
   expect_gte(color_contrast("#af2144", "#ffffff"), 4.5)
   expect_gte(color_contrast("#ffffff", "#286e53"), 4.5)
+  expect_gte(color_contrast("#ffdab9", "#af2144"), 4.5)
+  expect_gte(color_contrast("#ffdab9", "#286e53"), 4.5)
 })
 
 test_that("rendered dependencies and Bootstrap consume the same semantic definitions", {

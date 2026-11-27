@@ -13,6 +13,8 @@ library(shiny)
 options(shiny.autoreload = interactive())
 options(shiny.maxRequestSize = 200 * 1024^2)
 
+shiny::addResourcePath("guide-assets", normalizePath("docs/assets", winslash = "/", mustWork = TRUE))
+
 for (f in list.files("R", full.names = TRUE, pattern = "\\.R$")) source(f)
 
 # ---------------------------------------------------------------
@@ -22,7 +24,7 @@ ui <- VetmeduniAppTemplate::app_navbar(
   main = APP_BRAND_MAIN, accent = APP_BRAND_ACCENT, logo = APP_CONFIG$logo, id = "main_nav",
   selected = "home_tab", fillable = FALSE, window_title = APP_NAME,
   header = tags$head(
-    tags$link(rel = "icon", type = "image/jpeg", href = APP_CONFIG$logo),
+    tags$link(rel = "icon", type = "image/svg+xml", href = APP_CONFIG$logo),
     VetmeduniAppTemplate::app_busy_options()
   ),
   bslib::nav_panel("Home", value = "home_tab", icon = icon("house"), mod_home_ui("home")),

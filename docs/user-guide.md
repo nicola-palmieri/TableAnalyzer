@@ -1,7 +1,7 @@
 # Table Analyzer v1.10 — User Guide
 
 
-The interface uses the shared Vetmeduni design: burgundy navbar and green Home banner, white panels, black body text and burgundy actions and a burgundy Home banner with a green start button and the white Vetmeduni Austria logo. All branding assets are bundled for offline use.
+The interface uses the shared Vetmeduni design: a burgundy navbar, green Home banner and metric strips, burgundy primary actions, white panels and input fields, a light gray workspace and dark text. The white Vetmeduni Austria logo appears at the navbar far right. Feedback uses green for success/running states, copper for warnings, burgundy for errors and gray for information. All branding assets are bundled for offline use.
 
 This guide walks you through using Table Analyzer step by step. It is written for users with basic statistics knowledge. The goal is to get you from data upload to results and downloads with clear explanations of what each panel shows.
 
@@ -16,6 +16,20 @@ This guide walks you through using Table Analyzer step by step. It is written fo
 Tip: If a categorical variable does not appear in dropdowns, go to the Upload tab, click **Edit column types**, and change it from Numeric to Categorical.
 
 ---
+
+## Interface examples
+
+These screenshots show the current application using its bundled synthetic example. The same shared colors apply to every analysis and visualization; scientific plot colors remain independently configurable.
+
+[![TableAnalyzer Home with a burgundy navbar, green banner and institutional logo.](assets/home.png)](assets/home.png)
+
+[![Upload page with the bundled example workbook and table preview.](assets/upload.png)](assets/upload.png)
+
+[![One-way ANOVA controls and results in the current application.](assets/analysis.png)](assets/analysis.png)
+
+[![PCA controls and figure using the shared interface theme.](assets/pca.png)](assets/pca.png)
+
+[View the mobile Home example](assets/home-mobile.png).
 
 ## Data formats
 

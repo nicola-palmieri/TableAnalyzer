@@ -187,7 +187,7 @@ table { font-size: 12px; font-variant-numeric: tabular-nums; }
 }
 .home-workflow-grid h3 { font-size: 13px; margin: 4px 0 6px; }
 .home-workflow-grid p { font-size: 11px; line-height: 1.65; color: var(--muted); margin: 0; }
-.home-optional { color: #7f7f7f; font-weight: 400; font-size: 10px; padding-left: 8px; letter-spacing: 0; }
+.home-optional { color: #666666; font-weight: 400; font-size: 10px; padding-left: 8px; letter-spacing: 0; }
 .app-home :is(button, a):focus-visible { outline: 2px solid #9c9c9c; outline-offset: 4px; }
 .home-hero :is(button, a):focus-visible { outline-color: #d2d2d2; }
 .home-analyses { scroll-margin-top: 20px; }

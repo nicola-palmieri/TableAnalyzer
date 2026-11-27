@@ -19,3 +19,11 @@ The [Vetmeduni website](https://www.vetmeduni.ac.at/), inspected on 2026-11-27, 
 The white institutional logo sits at the navbar far right. On mobile, the logo stays in the navbar beside the menu toggle; the banner contains no institutional logo.
 
 Semantic accents are green for success/running, copper for warnings, burgundy for errors and gray for information. `R/semantic_colors.R` owns the accents plus dark text, pale backgrounds and borders. `inst/www/semantic-colors.css` consumes those definitions. The approved normal-state component colors are retained; focused controls receive an opaque outline. Scientific palettes and selectable plot colors are excluded from institutional recoloring.
+
+## Cross-application review (2026-11-27)
+
+Both applications share identical rendered navbar, Home banner, wordmark, workspace and primary-button colors. Shared feedback states and notifications meet normal-text contrast requirements. The browser audit sampled normal interface text across 24 MicrobiomeAnalyzer and 72 TableAnalyzer page/viewport cases (1440, 768 and 390 px), with no contrast failures or page overflow. TableAnalyzer coverage includes all seven analyses and all available visualization choices; LM/LMM diagnostics are checked within Analyze and their existing Visualize placeholders remain unchanged.
+
+Corrections: TableAnalyzer now uses an SVG icon/favicon preserving its original embedded illustration in institutional green tones; contradictory guide copy was aligned. Shared modal focus now matches sidebar focus, low-contrast explanatory hints were darkened, and duplicate semantic CSS rules were consolidated. SVG plot colors, selectable swatches, blue/navy scientific plot styling and unused developer preview artwork were deliberately preserved. No scientific calculation or plot-builder source was modified.
+
+Representative screenshots live in each app's `docs/assets/`. Each app's `scripts/review_colors.R` creates full browser evidence using the development-only `inst/review/colors.js` helper. Package contrast tests, bundled installation checks and source/installed integration checks cover the common dependency.

@@ -25,11 +25,12 @@ corresponding `mod_*_ui.R` and `mod_*_main.R` files; former `submodule_*.R`,
 `anova_shared_*.R` and `regression_shared_*.R` helpers use the `shared_*` prefix.
 Pure analysis/plot functions have the companion files described above.
 
-The navbar and browser-tab icon use `www/logo.jpeg`; the shared template clips
+The navbar and browser-tab icon use `www/logo.svg`; the shared template clips
 navbar logos to a 26px square with 6px rounded corners. The Home banner uses the
 decorative `www/home-analysis.svg`: transparent artwork with fine institutional green, gray
 and burgundy strokes, soft fills and an orbital composition matching MicrobiomeAnalyzer.
 Both assets are configured in `shared_app_config.R` and passed to the shared helpers.
+The SVG icon preserves the original table/chart/magnifier illustration, embedded from the existing JPEG and mapped to derived Vetmeduni green shades. Icon geometry and navbar dimensions remain unchanged. All six institutional/neutral colors, semantic feedback and focus styling are supplied by the shared template; scientific plot colors remain app-owned.
 
 Figures use the shared theme without plot titles or subtitles. Subgroup labels
 use `plot_panel_label()` facet strips instead; categorical response names appear
@@ -98,3 +99,11 @@ Table retains its explicit context-specific settings and custom overrides.
 `tests/helper-shared-dependencies.R` resolves the package in the same way as the
 app. Cross-app presentation and browser tests are maintained in the workspace
 integration suite.
+
+## Color consistency checks
+
+Run `Rscript scripts/review_colors.R [evidence-directory]` from the app root. It checks all seven analysis pages, all available visualization choices, shared feedback colors, the column-type modal, and desktop/tablet/mobile layouts. Screenshot/contrast evidence defaults to the system temporary folder. `--method=METHOD` repeats a selected analysis after a focused correction while retaining the previous case report. The runtime app does not load the audit helper.
+
+Institutional colors belong to VetmeduniAppTemplate; blue/navy values in plot builders and regression diagnostics are deliberate scientific colors and remain unchanged. The old JPEG is retained as source artwork inside the green SVG icon. Unused development preview images are not application chrome.
+
+The 2026-11-27 review covered 72 page/viewport cases (all seven analyses and all available plot types), with no sampled interface-text contrast failures or page overflow. Shared navbar, Home banner, workspace, wordmark and primary-button colors matched MicrobiomeAnalyzer exactly. Representative current screenshots are in `docs/assets/` and the guide. Statistical calculations and scientific palettes were not changed.

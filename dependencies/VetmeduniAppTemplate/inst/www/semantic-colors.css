@@ -1,31 +1,19 @@
 /* Values come from R/semantic_colors.R through the shared HTML dependency. */
-.alert-success, .shiny-notification-message {
+.alert-success, .shiny-notification.shiny-notification-message {
   color: var(--app-success-text); background: var(--app-success-background);
   border-color: var(--app-success-border);
 }
-.alert-warning, .ta-grid-warning, .shiny-notification-warning {
+.alert-warning, .ta-grid-warning, .shiny-notification.shiny-notification-warning {
   color: var(--app-warning-text); background: var(--app-warning-background);
   border-color: var(--app-warning-border);
 }
-.alert-danger, .shiny-notification-error {
+.alert-danger, .shiny-notification.shiny-notification-error {
   color: var(--app-error-text); background: var(--app-error-background);
   border-color: var(--app-error-border);
 }
 .alert-info, .alert-secondary, .shiny-notification {
   color: var(--app-info-text); background: var(--app-info-background);
   border-color: var(--app-info-border);
-}
-.shiny-notification.shiny-notification-message {
-  color: var(--app-success-text); background: var(--app-success-background);
-  border-color: var(--app-success-border);
-}
-.shiny-notification.shiny-notification-warning {
-  color: var(--app-warning-text); background: var(--app-warning-background);
-  border-color: var(--app-warning-border);
-}
-.shiny-notification.shiny-notification-error {
-  color: var(--app-error-text); background: var(--app-error-background);
-  border-color: var(--app-error-border);
 }
 .alert.app-state-running {
   color: var(--app-running-text); background: var(--app-running-background);
@@ -47,12 +35,7 @@ code { color: var(--txt); }
 .form-control::placeholder, .selectize-input input::placeholder {
   color: var(--vetmeduni-gray); opacity: 1;
 }
-.text-info, .text-info-emphasis { color: var(--app-info-text) !important; }
-.shiny-output-error { color: var(--app-error-text); }
 .shiny-file-input-progress .progress-bar { background: var(--app-running-accent); }
-.app-polish .shiny-plot-output.recalculating::after {
-  color: var(--app-running-text); background: var(--app-running-background);
-}
 /* Normal controls keep their approved colors; only keyboard focus is strengthened. */
 .btn:focus-visible, a:focus-visible, summary:focus-visible {
   outline: 2px solid var(--accent); outline-offset: 3px;
@@ -65,7 +48,8 @@ input[type="checkbox"]:focus-visible, input[type="radio"]:focus-visible,
   outline: 2px solid var(--accent); outline-offset: 2px;
 }
 /* Selectize suppresses outlines; this override applies only while it has focus. */
-.app-polish .selectize-control .selectize-input.focus {
+.app-polish .selectize-control .selectize-input.focus,
+.modal .selectize-control .selectize-input.focus {
   outline: 2px solid var(--accent) !important; outline-offset: 2px;
 }
 .navbar :is(a, button):focus-visible,
