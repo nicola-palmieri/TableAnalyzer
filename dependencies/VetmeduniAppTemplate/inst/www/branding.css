@@ -23,30 +23,30 @@
   --accent-focus: var(--vetmeduni-burgundy);
 }
 .navbar, .navbar-default {
-  --bs-navbar-color: #000000;
-  --bs-navbar-hover-color: #af2144;
-  --bs-navbar-active-color: #af2144;
-  --bs-navbar-brand-color: #000000;
-  --bs-navbar-brand-hover-color: #000000;
-  --bs-navbar-disabled-color: #757575;
-  background: #ffffff !important;
-  border-bottom: 1px solid #d8d8d8;
+  --bs-navbar-color: #ffffff;
+  --bs-navbar-hover-color: #ffffff;
+  --bs-navbar-active-color: #ffffff;
+  --bs-navbar-brand-color: #ffffff;
+  --bs-navbar-brand-hover-color: #ffffff;
+  --bs-navbar-disabled-color: #e5b6c3;
+  background: #af2144 !important;
+  border-bottom: 1px solid #8c1a36;
 }
 .navbar :is(.navbar-brand, .navbar-wordmark),
 .navbar .navbar-nav .nav-link,
-.navbar-default .navbar-nav > li > a { color: #000000; }
+.navbar-default .navbar-nav > li > a { color: #ffffff; }
 .navbar .navbar-nav .nav-link:is(:hover, :focus, .active) {
-  color: #af2144; background: #fbf1f4;
+  color: #ffffff; background: #8c1a36;
 }
 .navbar .navbar-nav .nav-link.disabled,
-.navbar .nav-link[aria-disabled="true"] { color: #757575 !important; }
-.navbar .navbar-nav .nav-link.active::after { background: #af2144; }
-.navbar .navbar-toggler { filter: none; border-color: #757575; }
+.navbar .nav-link[aria-disabled="true"] { color: #e5b6c3 !important; }
+.navbar .navbar-nav .nav-link.active::after { background: #ffffff; }
+.navbar .navbar-toggler { filter: none; border-color: #ffffff; }
 .navbar .navbar-toggler-icon { filter: none; }
 .navbar-toggler-icon {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cpath stroke='black' stroke-linecap='round' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E") !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cpath stroke='white' stroke-linecap='round' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E") !important;
 }
-.navbar :is(a, button):focus-visible { outline-color: #af2144; }
+.navbar :is(a, button):focus-visible { outline-color: #ffffff; }
 .home-hero {
   background: #af2144;
   border-color: #af2144;
@@ -56,7 +56,7 @@
 .home-institution img { width: 185px; max-width: 100%; height: auto; filter: brightness(0) invert(1); }
 .home-hero .home-wordmark .home-brand-name { color: #ffffff; }
 .home-hero .home-wordmark .app-wordmark-accent { color: #e5b6c3; }
-.navbar .app-wordmark .app-wordmark-accent { color: #af2144; }
+.navbar .app-wordmark .app-wordmark-accent { color: #f0d5dd; }
 .home-hero .home-wordmark .home-brand-version { color: #f0d5dd; }
 .home-hero-description { color: #e0e0e0; }
 .home-hero .home-start {
