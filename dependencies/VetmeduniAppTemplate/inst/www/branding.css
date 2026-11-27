@@ -72,7 +72,6 @@
   border-top: 0; min-height: 300px; padding: 34px 38px;
 }
 .home-institution { position: absolute; top: 26px; right: 30px; display: inline-flex; margin: 0; z-index: 1; }
-.home-hero-art { top: 65px; height: calc(100% - 65px); width: 46%; }
 .home-institution img { width: 185px; max-width: 100%; height: auto; filter: brightness(0) invert(1); }
 .home-hero .home-wordmark .home-brand-name { color: #ffffff; }
 .home-hero .home-wordmark .app-wordmark-accent { color: #dcebe4; }

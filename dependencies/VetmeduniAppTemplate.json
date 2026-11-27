@@ -1,11 +1,11 @@
 {
   "repository": "https://github.com/nicola-palmieri/VetmeduniAppTemplate",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "generated": true,
   "files": {
     ".Rbuildignore": "94f58270dde081fa3e607bb39f3349fa638afbdb",
     ".gitignore": "8b6ad3cbdccfcf18ea62c09cfdabfe2995d457bd",
-    "DESCRIPTION": "3a4476ef36eb9a687bc71c7a97082d5ff454c6f7",
+    "DESCRIPTION": "dff36190a18cae3fec05f2e8f4808d212b13d5d1",
     "LICENSE": "fdd043caaff05c15b46e885f475ab7ff908038b2",
     "NAMESPACE": "5d0ca904d2de79a9112726c70b69e5343a3dbd93",
     "R/color_controls.R": "a506d459cb4f608aa20b7394965f0ba9346d13f6",
@@ -35,7 +35,7 @@
     "inst/templates/README.md": "56c34be76687600a12cf3df7187ec7f1b901e1a5",
     "inst/templates/app.R": "24e5f61ff5e990de750440e8e8d39f9d814afa75",
     "inst/www/analysis.js": "c03a0a9cf758d5a676b60eb140d807f55e23c565",
-    "inst/www/branding.css": "d75980882e51da7a52f51f3af768c71a438a0bb1",
+    "inst/www/branding.css": "74bf64841cbf4ac2a71b1d58dd688565ccaa3c9d",
     "inst/www/color-controls.css": "88271af8f5b754c2f580ec416a0cde5c98a5fcfb",
     "inst/www/color-controls.js": "52d6f58b676e6153fb7bc8e43c0b6a5b621f43f7",
     "inst/www/navigation.js": "36b112e695e49953345198b1b1027b2c8de7212b",
