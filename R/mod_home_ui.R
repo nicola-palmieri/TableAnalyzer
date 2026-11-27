@@ -24,8 +24,7 @@ mod_home_ui <- function(id) {
       list(title = "Filter", description = "Refine records and select the variables relevant to your study.", optional = TRUE),
       list(title = "Analyze", description = "Choose a method, configure the statistical model and inspect the results."),
       list(title = "Visualize", description = "Style the figures and download plots or formatted model reports.")
-    ),
-    extra = shiny::p(class = "home-developer", "Developed by Nicola Palmieri")
+    )
   )
 }
 
