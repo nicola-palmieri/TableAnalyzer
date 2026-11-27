@@ -61,10 +61,14 @@ test_that("complete level order controls never filter incomplete selections", {
   })
 })
 
-test_that("palette allocation is deterministic and rejects ambiguous excess groups", {
+test_that("palette allocation extends deterministically without changing initial colours", {
   expect_identical(app_colours(c("A", "B", "A")), stats::setNames(APP_PALETTE[1:2], c("A", "B")))
   expect_length(app_colours(character()), 0)
-  expect_error(app_colours(letters), class = "user_error")
+  extended <- app_colours(paste0("G",1:101))
+  expect_length(extended,101)
+  expect_identical(unname(head(extended,20)),APP_PALETTE)
+  expect_identical(app_colours(paste0("G",1:100)),head(extended,100))
+  expect_true(all(grepl("^#[0-9A-Fa-f]{6}$",extended)))
 })
 
 test_that("plot helpers leave global defaults alone and export exact screen proportions", {

@@ -1,11 +1,11 @@
 {
   "repository": "https://github.com/nicola-palmieri/NicoShinyAppTemplate",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "generated": true,
   "files": {
     ".Rbuildignore": "369277ba71c6b2b699ec0f56f68a3d63222902d3",
     ".gitignore": "8b6ad3cbdccfcf18ea62c09cfdabfe2995d457bd",
-    "DESCRIPTION": "22f9e6b0e32eb6a53514eb6e8f1273d7dfceee56",
+    "DESCRIPTION": "481e2b2f40292636f9799348c1d495ef97df7e36",
     "LICENSE": "fdd043caaff05c15b46e885f475ab7ff908038b2",
     "NAMESPACE": "42d9108861512b6415538bdd7b47b680db0d6745",
     "R/color_controls.R": "ba3eef78a637051836a0eb50bda501eacc673550",
@@ -18,13 +18,13 @@
     "R/home.R": "9596e04528a3b8485c3493f8d1096b1c8ba4c3c7",
     "R/level_order.R": "69596d0f9499fc4fbd72f17d7f4993fab57514a9",
     "R/plot_actions.R": "5361ebdbdab337462069afdb2d0e5f28bc274697",
-    "R/plot_palette.R": "91b2a83a4e143ff6fd35c9baabf0092c5c947b9c",
+    "R/plot_palette.R": "be87175fc303e29c5e6270d4dfdf58290d09b9ce",
     "R/plot_size.R": "6e028e4b1ae030ad2cd1ca940a9bb2a89b1ab94e",
     "R/plot_snapshot.R": "c079ec945e9e1b13c49874cecbc0999ff56e901e",
     "R/plot_theme.R": "aa4b047b3aca4581972f35d6b880e12c3629e725",
     "R/ui.R": "5d4c2484ee273b7ab029918262d85931d4837c9f",
     "R/user_guide.R": "3c17c552e7e219a49bd593c584c086ea5edb9b5b",
-    "README.md": "c454df6b2a769ef3b2a2398851e461f948fa8bc6",
+    "README.md": "b2f00073c29ac3649d8812cd5efb3ac065b26736",
     "inst/examples/gallery/app.R": "788cca95a09545fc9a3e948080adce2616e66a68",
     "inst/templates/R/00_shared_dependencies.R": "a5b2560c21dcb5e8ab0061fe7599a93a865b50eb",
     "inst/templates/R/mod_home_main.R": "8d43d3f363ea7d36bc2816c5d2fc25a71b1b2e77",
@@ -47,6 +47,6 @@
     "tests/testthat.R": "fd7be68450368c5dbce664da6645e7967820aa06",
     "tests/testthat/test-plot-actions.R": "fdb3d475e68ae530efb2166f00305326dd5be6dd",
     "tests/testthat/test-presentation-adapters.R": "7171e9200b67cb3cdc70fe3f8aeabb90b1cedf76",
-    "tests/testthat/test-shared-contract.R": "83065fef67de89bd9edd36e77bc779fea877f907"
+    "tests/testthat/test-shared-contract.R": "9bc920ae668a72555ec55234f9367e49afd5b23a"
   }
 }
