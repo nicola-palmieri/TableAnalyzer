@@ -119,6 +119,11 @@
 .app-polish .ta-sidebar .app-plot-actions > .action-button:first-child {
   margin-top: 0;
 }
+/* Match consecutive actions even when the first button is rendered by uiOutput. */
+.app-polish .ta-sidebar .action-button + .action-button,
+.app-polish .ta-sidebar .shiny-html-output:has(> .action-button:only-child) + .action-button {
+  margin-top: var(--sidebar-action-gap);
+}
 /* Disabled actions stay neutral instead of inheriting active navy/hover colours. */
 .app-polish .btn:is(:disabled, [disabled], .disabled, [aria-disabled="true"]),
 .app-polish .btn:is(:disabled, [disabled], .disabled, [aria-disabled="true"]):is(:hover, :focus, :active) {
