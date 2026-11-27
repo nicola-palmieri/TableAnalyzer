@@ -119,6 +119,17 @@
 .app-polish .ta-sidebar .app-plot-actions > .action-button:first-child {
   margin-top: 0;
 }
+/* Disabled actions stay neutral instead of inheriting active navy/hover colours. */
+.app-polish .btn:is(:disabled, [disabled], .disabled, [aria-disabled="true"]),
+.app-polish .btn:is(:disabled, [disabled], .disabled, [aria-disabled="true"]):is(:hover, :focus, :active) {
+  background: #e4e9f0;
+  color: #68788c;
+  border-color: #d3dbe5;
+  opacity: 1;
+  box-shadow: none;
+  cursor: not-allowed;
+  pointer-events: none;
+}
 .app-polish .ta-sidebar .shiny-download-link {
   color: #fff; background: #254967; border-color: #254967; font-weight: 500;
 }
