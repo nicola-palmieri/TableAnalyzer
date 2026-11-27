@@ -15,7 +15,7 @@ plot_anova_barplot_meanse <- function(data,
   factor2 <- context$factor2
 
   allowed_positions <- c("bottom", "top", "left", "right")
-  legend_position_value <- if (!is.null(legend_position) && legend_position %in% allowed_positions) legend_position else "bottom"
+  legend_position_value <- if (!is.null(legend_position) && legend_position %in% allowed_positions) legend_position else "right"
 
   if (is.null(factor1) || length(context$responses) == 0) {
     return(NULL)

@@ -20,7 +20,7 @@ plot_anova_lineplot_meanse <- function(data,
   legend_position_value <- if (!is.null(legend_position) && legend_position %in% allowed_positions) {
     legend_position
   } else {
-    "bottom"
+    "right"
   }
 
   shared_y_limits <- if (isTRUE(share_y_axis)) {

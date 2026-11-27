@@ -98,7 +98,7 @@ visualize_twoway_server <- function(id, filtered_data, model_info) {
     # ------------------------------------------------------------------
     legend_state <- reactiveValues(
       enabled = FALSE,
-      position = "bottom"
+      position = "right"
     )
     
     common_legend_available <- reactive({
@@ -255,9 +255,9 @@ visualize_twoway_server <- function(id, filtered_data, model_info) {
       grid_settings$reset()
       updateCheckboxInput(session, "lineplot_use_dodge", value = FALSE)
       legend_state$enabled <- FALSE
-      legend_state$position <- "bottom"
+      legend_state$position <- "right"
       updateCheckboxInput(session, "use_common_legend", value = FALSE)
-      updateSelectInput(session, "common_legend_position", selected = "bottom")
+      updateSelectInput(session, "common_legend_position", selected = "right")
       local_reset_token((isolate(local_reset_token()) %||% 0L) + 1L)
     }
     observeEvent(input$reset, reset_plot_inputs(), ignoreInit = TRUE)

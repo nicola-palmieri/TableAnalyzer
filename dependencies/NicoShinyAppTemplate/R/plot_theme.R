@@ -9,7 +9,7 @@ PLOT_HEATMAP <- list(row_wrap = 34L, column_wrap = 44L, column_angle = 80, band_
 
 plot_theme <- function(base_size = PLOT_BASE_SIZE,
                        kind = c("standard", "bar", "box", "pcoa", "heatmap", "canvas", "void"),
-                       legend_position = "bottom") {
+                       legend_position = "right") {
   kind <- match.arg(kind)
   ink <- "#252525"
   if (kind %in% c("canvas", "void")) {

@@ -39,7 +39,7 @@ visualize_categorical_barplots_server <- function(id, filtered_data, summary_inf
     # --------------------------
     legend_state <- reactiveValues(
       enabled = FALSE,
-      position = "bottom"
+      position = "right"
     )
     
     observeEvent(input$use_common_legend, {
@@ -159,9 +159,9 @@ visualize_categorical_barplots_server <- function(id, filtered_data, summary_inf
       grid$reset()
       updateCheckboxInput(session, "show_proportions", value = FALSE)
       legend_state$enabled <- FALSE
-      legend_state$position <- "bottom"
+      legend_state$position <- "right"
       updateCheckboxInput(session, "use_common_legend", value = FALSE)
-      updateSelectInput(session, "common_legend_position", selected = "bottom")
+      updateSelectInput(session, "common_legend_position", selected = "right")
       local_reset_token((isolate(local_reset_token()) %||% 0L) + 1L)
     }
     observeEvent(input$reset, reset_plot_inputs(), ignoreInit = TRUE)

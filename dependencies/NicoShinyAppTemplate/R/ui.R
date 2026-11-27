@@ -78,7 +78,7 @@ app_plot_style_ui <- function(ns, base_size_id = "base_size", base_size = PLOT_B
       shiny::checkboxInput(ns(show_legend_id), "Show legend", TRUE),
       shiny::conditionalPanel(sprintf("input['%s']", ns(show_legend_id)),
         shiny::selectInput(ns(legend_position_id), "Legend position",
-          c(Bottom = "bottom", Right = "right", Top = "top", Left = "left"), "bottom")))) {
+          c(Bottom = "bottom", Right = "right", Top = "top", Left = "left"), "right")))) {
   shiny::tagList(
     app_expander("Colors", id = ns("colors_section"), colors),
     app_expander("Text and legend", id = ns("style_section"),

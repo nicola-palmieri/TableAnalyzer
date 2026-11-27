@@ -68,6 +68,8 @@ Setup installs missing CRAN packages and the included NicoShinyAppTemplate sourc
 Internet is needed for missing CRAN packages. Once setup is complete, the Shiny
 app runs locally in your browser and works offline.
 
+Legends default to the right, including after Reset. Other legend positions remain available.
+
 ### Included shared template
 
 Both apps include `dependencies/NicoShinyAppTemplate` and a version/file-hash

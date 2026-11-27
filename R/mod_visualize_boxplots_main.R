@@ -67,7 +67,7 @@ visualize_numeric_boxplots_server <- function(id, filtered_data, summary_info, i
     #======================================================
     # Common legend toggle
     #======================================================
-    legend_state <- reactiveValues(enabled = FALSE, position = "bottom")
+    legend_state <- reactiveValues(enabled = FALSE, position = "right")
     
     observeEvent(input$use_common_legend, {
       legend_state$enabled <- isTRUE(input$use_common_legend)
@@ -193,9 +193,9 @@ visualize_numeric_boxplots_server <- function(id, filtered_data, summary_info, i
       updateCheckboxInput(session, "show_outliers", value = FALSE)
       updateSelectInput(session, "outlier_label", selected = "")
       legend_state$enabled <- FALSE
-      legend_state$position <- "bottom"
+      legend_state$position <- "right"
       updateCheckboxInput(session, "use_common_legend", value = FALSE)
-      updateSelectInput(session, "common_legend_position", selected = "bottom")
+      updateSelectInput(session, "common_legend_position", selected = "right")
       local_reset_token((isolate(local_reset_token()) %||% 0L) + 1L)
     }
     observeEvent(input$reset, reset_plot_inputs(), ignoreInit = TRUE)
