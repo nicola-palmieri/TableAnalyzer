@@ -28,9 +28,9 @@
   --bs-navbar-active-color: #ffffff;
   --bs-navbar-brand-color: #ffffff;
   --bs-navbar-brand-hover-color: #ffffff;
-  --bs-navbar-disabled-color: #bdd5c9;
-  background: #286e53 !important;
-  border-bottom: 1px solid #205842;
+  --bs-navbar-disabled-color: #e5b6c3;
+  background: #af2144 !important;
+  border-bottom: 1px solid #8c1a36;
 }
 .navbar :is(.navbar-brand, .navbar-wordmark),
 .navbar .navbar-nav .nav-link,
@@ -43,7 +43,7 @@
 }
 .navbar .navbar-nav .nav-link.active,
 .navbar .navbar-nav > .nav-item:has(.dropdown-item.active) > .nav-link {
-  color: #205842; background: #ffffff; box-shadow: none; border-radius: 5px;
+  color: #8c1a36; background: #ffffff; box-shadow: none; border-radius: 5px;
 }
 /* Keep the selection indicator separate from Bootstrap's dropdown caret. */
 .navbar .navbar-nav .nav-link.active:not(.dropdown-toggle)::after { display: none; }
@@ -55,7 +55,7 @@
   background: transparent; content: "";
 }
 .navbar .navbar-nav .nav-link.disabled,
-.navbar .nav-link[aria-disabled="true"] { color: #bdd5c9 !important; }
+.navbar .nav-link[aria-disabled="true"] { color: #e5b6c3 !important; }
 .navbar .navbar-toggler { filter: none; border-color: #ffffff; }
 .navbar .navbar-toggler-icon { filter: none; }
 .navbar-toggler-icon {
@@ -72,7 +72,7 @@
 .home-institution img { width: 185px; max-width: 100%; height: auto; filter: brightness(0) invert(1); }
 .home-hero .home-wordmark .home-brand-name { color: #ffffff; }
 .home-hero .home-wordmark .app-wordmark-accent { color: #dcebe4; }
-.navbar .app-wordmark .app-wordmark-accent { color: #e2f0e9; }
+.navbar .app-wordmark .app-wordmark-accent { color: #f0d5dd; }
 .home-hero .home-wordmark .home-brand-version { color: #e2f0e9; }
 .home-hero-description { color: #e0e0e0; }
 .home-hero .home-start {
@@ -111,4 +111,4 @@
 
 .navbar .navbar-nav > .nav-item > .nav-link { margin: 6px 0; padding-top: 10px; padding-bottom: 10px; }
 .navbar .navbar-nav .nav-link.active:hover,
-.navbar .navbar-nav > .nav-item:has(.dropdown-item.active) > .nav-link:hover { color: #205842; background: #ffffff; }
+.navbar .navbar-nav > .nav-item:has(.dropdown-item.active) > .nav-link:hover { color: #8c1a36; background: #ffffff; }

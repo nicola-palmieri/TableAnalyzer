@@ -1,7 +1,7 @@
 # Table Analyzer v1.10 — User Guide
 
 
-The interface uses the shared Vetmeduni design: matching green navbar and Home banner, white panels, black body text and burgundy actions and a burgundy Home banner with a green start button and the white Vetmeduni Austria logo. All branding assets are bundled for offline use.
+The interface uses the shared Vetmeduni design: burgundy navbar and green Home banner, white panels, black body text and burgundy actions and a burgundy Home banner with a green start button and the white Vetmeduni Austria logo. All branding assets are bundled for offline use.
 
 This guide walks you through using Table Analyzer step by step. It is written for users with basic statistics knowledge. The goal is to get you from data upload to results and downloads with clear explanations of what each panel shows.
 

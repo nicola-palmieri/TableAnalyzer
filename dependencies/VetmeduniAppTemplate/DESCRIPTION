@@ -1,7 +1,7 @@
 Package: VetmeduniAppTemplate
 Type: Package
 Title: Shared Presentation Components for Shiny Analysis Applications
-Version: 0.2.3
+Version: 0.2.4
 Author: Nicola Palmieri
 Maintainer: VetmeduniAppTemplate maintainers <maintainer@example.invalid>
 Contact: Nicola Palmieri
