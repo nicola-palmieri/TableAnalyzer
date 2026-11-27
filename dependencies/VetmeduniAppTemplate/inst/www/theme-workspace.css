@@ -48,7 +48,7 @@
 }
 .app-polish .bslib-sidebar-layout > :is(.sidebar, .main) {
   background: #fff; border-color: #ebebeb; border-radius: 12px;
-  box-shadow: 0 2px 10px rgb(24 45 70 / 3%);
+  box-shadow: 0 2px 10px rgb(0 0 0 / 3%);
 }
 /* bslib's component sheet loads late: keep popup menus outside the panel's
  * bounds instead of making a short sidebar scroll over its own dropdown. */
@@ -75,13 +75,13 @@
 }
 .app-polish .ta-sidebar :is(.form-control:hover, .selectize-input:hover) { border-color: #c6c6c6; }
 .app-polish .ta-sidebar :is(.form-control:focus, .selectize-input.focus) {
-  border-color: #a4a4a4; box-shadow: 0 0 0 3px #587da312;
+  border-color: #a4a4a4; box-shadow: 0 0 0 3px #00000012;
 }
 .app-polish .selectize-control.multi .selectize-input > div {
   font-size: 12px; padding: 1px 5px; border-radius: 4px; background: #f2f2f2; color: #545454;
 }
 .app-polish .selectize-dropdown {
-  border-color: #e2e2e2; box-shadow: 0 6px 20px #1c345c12; border-radius: 7px;
+  border-color: #e2e2e2; box-shadow: 0 6px 20px #00000012; border-radius: 7px;
 }
 /* Shiny copies form-control onto Selectize wrappers and menus as well as inputs. */
 .app-polish .ta-sidebar .selectize-control {
@@ -101,7 +101,7 @@
 .app-polish .sidebar-expander > summary:hover { background: #f9f9f9; }
 .app-polish .ta-sidebar .sidebar-expander[open] > summary { margin-bottom: 4px; }
 .app-polish .sidebar-expander-body { padding: 0 2px 6px; }
-.app-polish .ta-sidebar h6 { margin: 10px 0 5px; font-size: 12px; color: #797979; font-weight: 500; }
+.app-polish .ta-sidebar h6 { margin: 10px 0 5px; font-size: 12px; color: #707070; font-weight: 500; }
 .app-polish .ta-sidebar .alert-info {
   background: transparent; border: 0; border-left: 2px solid #cdcdcd; border-radius: 0;
   color: #787878; padding: 2px 0 2px 8px; margin: 4px 0 8px; font-size: 12px; line-height: 1.4;
@@ -139,7 +139,7 @@
   color: #fff; background: #444444; border-color: #444444; font-weight: 500;
 }
 .app-polish .ta-sidebar .shiny-download-link:hover { color: #fff; background: #373737; border-color: #373737; }
-.app-polish .ta-sidebar small { display: block; margin-top: 4px; font-size: 11px; color: #868686; }
+.app-polish .ta-sidebar small { display: block; margin-top: 4px; font-size: 11px; color: #666666; }
 .app-polish .card { border-color: #ededed; border-radius: 9px; box-shadow: none; margin-top: 24px; }
 .app-polish .card-header { background: #fafafa; padding: 13px 16px; font-size: 13px; }
 .app-polish .card-body { font-size: 13px; }
@@ -170,9 +170,9 @@
 .app-polish .upload-data-section .card-body { display: block; overflow: visible; flex: 0 0 auto; }
 .upload-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; }
 .upload-section-heading h3 { font-size: 15px; margin: 0; white-space: nowrap; }
-.upload-section-heading h3 .fa { color: #7f7f7f; font-size: 13px; margin-right: 7px; }
-.upload-filename { font-size: 11px; color: #868686; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.upload-placeholder { color: #868686; font-size: 13px; margin: 4px 0; }
+.upload-section-heading h3 .fa { color: #666666; font-size: 13px; margin-right: 7px; }
+.upload-filename { font-size: 11px; color: #666666; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.upload-placeholder { color: #666666; font-size: 13px; margin: 4px 0; }
 .upload-source { display: inline-block; width: fit-content; align-self: flex-start; color: #6e6e6e; background: #f2f2f2; border-radius: 4px; padding: 3px 7px; margin-bottom: 10px; font-size: 11px; }
 .app-metric-strip { display: grid; grid-template-columns: var(--app-metric-columns,repeat(auto-fit,minmax(130px,1fr))); background: #1b1b1b; color: #fff; padding: 14px 0; border-radius: 7px; margin-bottom: 14px; }
 .upload-summary-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)) minmax(240px,2fr); background: #1b1b1b; color: #fff; padding: 14px 0; border-radius: 7px; margin-bottom: 14px; }
@@ -185,7 +185,7 @@
 .upload-read-check .form-group { margin-bottom: 0; }
 .upload-read-check .shiny-html-output { padding-bottom: 5px; font-size: 12px; }
 .upload-read-check .alert { font-size: 12px; padding: 8px 10px; }
-.upload-table-caption { color: #7f7f7f; font-size: 11px; line-height: 1.5; margin: 0 0 14px; }
+.upload-table-caption { color: #666666; font-size: 11px; line-height: 1.5; margin: 0 0 14px; }
 .upload-table-toolbar, .upload-table-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .upload-data-section .dataTables_wrapper .dataTables_filter input { max-width: 200px; }
 .upload-data-section table.dataTable { white-space: nowrap; }

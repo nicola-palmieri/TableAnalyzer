@@ -105,7 +105,6 @@
 }
 .app-help-icon:hover { color: #af2144; }
 .app-help-icon:hover::before { border-color: #af2144; }
-.app-help-tooltip { background: #202020; }
 @media (max-width: 767px) {
   .home-hero { padding: 28px 24px; min-height: 0; }
   .navbar > .container-fluid { position: relative; }

@@ -19,7 +19,7 @@
 }
 .app-help-icon::before { content: ''; position: absolute; inset: 4px; border: 1px solid #8f8f8f; border-radius: 50%; pointer-events: none; }
 .app-help-icon:hover { color: #1b1b1b; }
-.app-help-icon:hover::before { border-color: #1b1b1b; background: #edf2f740; }
+.app-help-icon:hover::before { border-color: #1b1b1b; background: #f4f4f440; }
 .app-help-icon:focus-visible { outline: 2px solid #656565; outline-offset: 3px; }
 .app-widget-tooltip {
   position: fixed;
@@ -30,7 +30,7 @@
   border-radius: 6px;
   background: #292929;
   color: #fff;
-  box-shadow: 0 3px 12px #0b1d3a26;
+  box-shadow: 0 3px 12px #00000026;
   font: 12px/1.5 system-ui, sans-serif;
   overflow-wrap: anywhere;
 }

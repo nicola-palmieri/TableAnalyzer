@@ -2,7 +2,8 @@ app_dependencies <- function() {
   htmltools::htmlDependency(name = "VetmeduniAppTemplate", version = as.character(getNamespaceVersion("VetmeduniAppTemplate")),
     src = c(file = system.file("www", package = "VetmeduniAppTemplate", mustWork = TRUE)),
     stylesheet = c("theme-table-core.css", "theme-table-components.css", "theme-table-datatables.css",
-      "theme-layout.css", "theme-workspace.css", "color-controls.css", "widget-help.css", "branding.css"),
+      "theme-layout.css", "theme-workspace.css", "color-controls.css", "widget-help.css", "branding.css", "semantic-colors.css"),
+    head = as.character(shiny::tags$style(app_semantic_css())),
     script = c("color-controls.js", "navigation.js", "widget-help.js", "analysis.js"),
     all_files = TRUE)
 }

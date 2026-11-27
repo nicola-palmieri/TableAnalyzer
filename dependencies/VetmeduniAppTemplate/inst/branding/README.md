@@ -8,7 +8,7 @@
 | Green | `#286e53` | Supporting accents and success states |
 | Copper | `#a86044` | Supporting accents and warnings |
 | Gray | `#757575` | Supporting accents |
-| Black / white | `#000000` / `#ffffff` | Logo, typography, surfaces and summary strips |
+| Black / white | `#000000` / `#ffffff` | Logo, typography and surfaces |
 
 The PDF's copper RGB entry differs from its HEX entry; the apps consistently use the printed HEX value `#a86044`. Light neutral surfaces and interaction tints supplement these colors. Scientific category palettes and user-selected plot colors retain their existing behavior.
 
@@ -17,3 +17,5 @@ The [Vetmeduni website](https://www.vetmeduni.ac.at/), inspected on 2026-11-27, 
 `inst/www/branding.css` applies this shared identity to both applications. The logo and all styling are served locally; opening the optional university link is the only action that visits the university website. The navbar's `institution = FALSE` option omits the institutional link/logo.
 
 The white institutional logo sits at the navbar far right. On mobile, the logo stays in the navbar beside the menu toggle; the banner contains no institutional logo.
+
+Semantic accents are green for success/running, copper for warnings, burgundy for errors and gray for information. `R/semantic_colors.R` owns the accents plus dark text, pale backgrounds and borders. `inst/www/semantic-colors.css` consumes those definitions. The approved normal-state component colors are retained; focused controls receive an opaque outline. Scientific palettes and selectable plot colors are excluded from institutional recoloring.

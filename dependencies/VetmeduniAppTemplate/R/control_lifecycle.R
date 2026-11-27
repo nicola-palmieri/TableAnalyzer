@@ -9,7 +9,7 @@ app_optional_value <- function(value) {
 }
 
 app_busy_options <- function(...) {
-  defaults <- list(spinner_delay = "350ms", spinner_color = "#496a88", spinner_size = "24px",
+  defaults <- list(spinner_delay = "350ms", spinner_color = APP_SEMANTIC_COLORS$running$accent, spinner_size = "24px",
     spinner_selector = ".app-polish .shiny-plot-output",
     fade_opacity = 1, fade_selector = ".app-polish .shiny-bound-output")
   do.call(shiny::busyIndicatorOptions, utils::modifyList(defaults, list(...)))

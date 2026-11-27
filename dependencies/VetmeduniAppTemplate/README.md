@@ -60,3 +60,7 @@ No open-source licence has been selected. The reserved `maintainer@example.inval
 ## Vetmeduni identity
 
 Branding follows the supplied [color guide](inst/branding/farbschema_vetmeduni.pdf) and [Vetmeduni website](https://www.vetmeduni.ac.at/). See [branding sources](inst/branding/README.md) for exact HEX values and logo provenance. `inst/www/branding.css` owns the visual identity; `app_navbar(institution = FALSE)` can omit the institutional logo. All assets are local. The new package name is `VetmeduniAppTemplate`; environment overrides are `VETMEDUNI_APP_TEMPLATE_MODE` and `VETMEDUNI_APP_TEMPLATE_PATH`. Reinstall with the app setup script after upgrading from the former package name.
+
+## Semantic feedback colors
+
+`R/semantic_colors.R` defines success, warning, error, information and running colors once. The shared dependency emits CSS variables consumed by `inst/www/semantic-colors.css`; Bootstrap and the plot spinner use the same definitions. Success/running use institutional green, warnings copper, errors burgundy and information gray. Dark foregrounds on pale surfaces meet 4.5:1 normal-text contrast. Focus outlines meet 3:1 against adjacent light surfaces; navbar/banner outlines remain white. The approved navbar, banner, buttons, metrics, controls, pagination and workspace keep their existing normal-state colors. Scientific plot palettes and color-picker choices are separate.

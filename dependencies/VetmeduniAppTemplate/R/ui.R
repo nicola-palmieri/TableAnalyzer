@@ -100,7 +100,9 @@ app_layout <- function(sidebar, ..., fill = FALSE, fillable = FALSE, border = FA
 
 app_theme <- function(...) {
   defaults <- list(version = 5, bg = "#f4f4f4", fg = "#202020", primary = "#af2144",
-    secondary = "#757575", success = "#286e53", warning = "#a86044",
+    secondary = "#757575", success = APP_SEMANTIC_COLORS$success$accent,
+    warning = APP_SEMANTIC_COLORS$warning$accent, danger = APP_SEMANTIC_COLORS$error$accent,
+    info = APP_SEMANTIC_COLORS$info$accent,
     base_font = bslib::font_collection("-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"),
     heading_font = bslib::font_collection("-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"))
   do.call(bslib::bs_theme, utils::modifyList(defaults, list(...)))
