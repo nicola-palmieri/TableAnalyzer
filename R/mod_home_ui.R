@@ -1,6 +1,6 @@
 # Home content is app specific; rendering and branding are shared with the twin.
 mod_home_ui <- function(id) {
-  NicoShinyAppTemplate::app_home_ui(
+  VetmeduniAppTemplate::app_home_ui(
     id, main = APP_BRAND_MAIN, accent = APP_BRAND_ACCENT, version = APP_VERSION,
     artwork = APP_CONFIG$artwork,
     description = paste(

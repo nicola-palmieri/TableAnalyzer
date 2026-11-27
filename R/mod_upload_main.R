@@ -41,7 +41,7 @@ mod_upload_server <- function(id) {
       df(data)
       output$preview <- renderDT(
         data,
-        options = NicoShinyAppTemplate::app_table_options(options = list(
+        options = VetmeduniAppTemplate::app_table_options(options = list(
           pageLength = 10, lengthChange = TRUE,
           lengthMenu = c(10, 25, 50, 100),
           columnDefs = list(

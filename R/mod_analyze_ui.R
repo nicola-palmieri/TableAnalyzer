@@ -13,8 +13,8 @@ mod_analyze_ui <- function(id, modules = analysis_module_registry()) {
         mod$ui(ns(mod$id))$config)
     )
   })
-  NicoShinyAppTemplate::app_layout(
-    sidebar = NicoShinyAppTemplate::app_sidebar(
+  VetmeduniAppTemplate::app_layout(
+    sidebar = VetmeduniAppTemplate::app_sidebar(
       title = "Statistical analysis",
       description = "Select an analysis type to explore your data, then inspect the summaries on the right.",
       id = ns("sidebar"),

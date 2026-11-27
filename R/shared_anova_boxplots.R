@@ -94,7 +94,7 @@ plot_anova_boxplot <- function(data,
       p <- p + scale_fill_manual(values = palette)
     }
 
-    NicoShinyAppTemplate::plot_panel_label(p,title_text,base_size)
+    VetmeduniAppTemplate::plot_panel_label(p,title_text,base_size)
   }
 
   response_plots <- list()

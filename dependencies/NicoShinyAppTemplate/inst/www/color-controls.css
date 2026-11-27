@@ -1,9 +1,0 @@
-.color-dropdown { position: relative; display: inline-block; width: 28px; }
-.color-dropdown-button { width: 28px; height: 28px; padding: 3px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #ccc; border-radius: 6px; background: #fff; cursor: pointer; }
-.color-dropdown-swatch { display: block; flex: 0 0 20px; width: 20px; height: 20px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-.color-dropdown-grid { display: none; position: absolute; top: 32px; left: 0; z-index: 999; background: #fff; border: 1px solid #ccc; border-radius: 6px; padding: 4px; grid-template-columns: repeat(var(--color-columns, 4), 24px); gap: 4px; width: max-content; box-shadow: 0 4px 12px #0002; }
-.color-dropdown-grid.open { display: grid; }
-.color-cell { width: 24px; height: 24px; padding: 0; border: 1px solid #999; border-radius: 4px; cursor: pointer; }
-.color-cell[aria-checked="true"] { box-shadow: inset 0 0 0 2px #fff, 0 0 0 1px #172b46; }
-.color-dropdown-button:focus-visible, .color-cell:focus-visible { outline: 2px solid #172b46; outline-offset: 2px; }
-.dataTables_scrollBody:focus-visible { outline: 2px solid #496a88; outline-offset: 2px; }

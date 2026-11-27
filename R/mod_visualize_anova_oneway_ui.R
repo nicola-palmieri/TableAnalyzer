@@ -5,12 +5,12 @@
 visualize_oneway_ui <- function(id) {
   ns <- NS(id)
   
-  NicoShinyAppTemplate::app_layout(
-    sidebar = NicoShinyAppTemplate::app_sidebar(
+  VetmeduniAppTemplate::app_layout(
+    sidebar = VetmeduniAppTemplate::app_sidebar(
       title = "One-way ANOVA",
       description = "Select visualization type and adjust subplot layout, axis scaling, and figure size.",
       id = ns("sidebar"),
-      NicoShinyAppTemplate::app_expander("Analysis setup", open = TRUE, id = ns("grouping_section"),
+      VetmeduniAppTemplate::app_expander("Analysis setup", open = TRUE, id = ns("grouping_section"),
       
       selectInput(
         ns("plot_type"),
@@ -23,7 +23,7 @@ visualize_oneway_ui <- function(id) {
         selected = "lineplot_mean_se"
       )
       ),
-      NicoShinyAppTemplate::app_expander("Plot options", id = ns("options_section"),
+      VetmeduniAppTemplate::app_expander("Plot options", id = ns("options_section"),
       
       conditionalPanel(
         condition = sprintf("input['%s'] === 'lineplot_mean_se'", ns("plot_type")),
@@ -51,15 +51,15 @@ visualize_oneway_ui <- function(id) {
       ),
       subplot_size_ui(ns),
       
-      ta_plot_style_ui(ns, default = NicoShinyAppTemplate::PLOT_BASE_SIZE),
+      ta_plot_style_ui(ns, default = VetmeduniAppTemplate::PLOT_BASE_SIZE),
       
       
-      NicoShinyAppTemplate::app_plot_actions_ui(ns)
+      VetmeduniAppTemplate::app_plot_actions_ui(ns)
     ),
     
     div(
       class = "ta-main-panel",
-      NicoShinyAppTemplate::app_result_header_ui("Plots", NicoShinyAppTemplate::app_download_ui(ns)),
+      VetmeduniAppTemplate::app_result_header_ui("Plots", VetmeduniAppTemplate::app_download_ui(ns)),
       uiOutput(ns("plot_container"))
     )
   )

@@ -442,5 +442,5 @@ build_line_plot_panel <- function(stats_df,
     p <- p + coord_cartesian(ylim = y_limits)
   }
 
-  NicoShinyAppTemplate::plot_panel_label(p,title_text,base_size)
+  VetmeduniAppTemplate::plot_panel_label(p,title_text,base_size)
 }

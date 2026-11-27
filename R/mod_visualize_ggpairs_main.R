@@ -88,11 +88,11 @@ pairwise_correlation_visualize_ggpairs_server <- function(
         group_var = group_var(),
         strata_order = strata_order(),
         colors    = custom_colors(),
-        base_size = NicoShinyAppTemplate::app_plot_numeric(input$plot_base_size, 11,
+        base_size = VetmeduniAppTemplate::app_plot_numeric(input$plot_base_size, 11,
           min = 6, max = 30, label = "Base size"),
-        plot_w = NicoShinyAppTemplate::app_plot_numeric(input$plot_width, 800,
+        plot_w = VetmeduniAppTemplate::app_plot_numeric(input$plot_width, 800,
           min = 200, max = 2000, label = "Plot width"),
-        plot_h = NicoShinyAppTemplate::app_plot_numeric(input$plot_height, 600,
+        plot_h = VetmeduniAppTemplate::app_plot_numeric(input$plot_height, 600,
           min = 200, max = 2000, label = "Plot height")
       )
     })
@@ -125,11 +125,11 @@ pairwise_correlation_visualize_ggpairs_server <- function(
           xmin = -Inf, xmax = Inf,
           ymin = -Inf, ymax = Inf
         )
-      NicoShinyAppTemplate::plot_panel_label(wrapped,title,base_size)
+      VetmeduniAppTemplate::plot_panel_label(wrapped,title,base_size)
     }
     
     # ---- Unified compute plot_info() -----------------------------------------
-    plot_info <- NicoShinyAppTemplate::app_plot_snapshot(function() {
+    plot_info <- VetmeduniAppTemplate::app_plot_snapshot(function() {
       s <- state()
       dat <- s$data
       info <- s$info

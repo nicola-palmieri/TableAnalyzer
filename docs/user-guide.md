@@ -1,5 +1,8 @@
 # Table Analyzer v1.10 — User Guide
 
+
+The interface uses the shared Vetmeduni design: white surfaces, black text, burgundy actions and a burgundy Home banner with a green start button and the white Vetmeduni Austria logo. All branding assets are bundled for offline use.
+
 This guide walks you through using Table Analyzer step by step. It is written for users with basic statistics knowledge. The goal is to get you from data upload to results and downloads with clear explanations of what each panel shows.
 
 ---
@@ -204,7 +207,6 @@ If a control references a grouping variable that does not appear, return to **Up
 - **Performance:** Large Excel files load more slowly; reduce columns or rows if possible.
 
 Need more help? Open an issue with your dataset description (no sensitive data) and the steps you took.
-
 
 ## Shared controls
 

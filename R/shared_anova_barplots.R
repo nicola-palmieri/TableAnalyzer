@@ -336,7 +336,7 @@ build_single_factor_barplot <- function(stats_df,
     y_limits = y_limits
   )
   
-  NicoShinyAppTemplate::plot_panel_label(plot_obj,title_text,base_size)
+  VetmeduniAppTemplate::plot_panel_label(plot_obj,title_text,base_size)
 }
 
 build_two_factor_barplot <- function(stats_df,
@@ -387,7 +387,7 @@ build_two_factor_barplot <- function(stats_df,
     y_limits = y_limits
   )
   
-  NicoShinyAppTemplate::plot_panel_label(plot_obj,title_text,base_size)
+  VetmeduniAppTemplate::plot_panel_label(plot_obj,title_text,base_size)
 }
 
 #### Section: Significance Annotation System (ggplot_build-based) ####

@@ -4,8 +4,8 @@
 
 mod_filter_ui <- function(id) {
   ns <- NS(id)
-  NicoShinyAppTemplate::app_layout(
-    sidebar = NicoShinyAppTemplate::app_sidebar(
+  VetmeduniAppTemplate::app_layout(
+    sidebar = VetmeduniAppTemplate::app_sidebar(
       title = "Filter",
       description = "Select the columns to focus on and adjust the filters to refine the dataset for analysis.",
       id = ns("sidebar"),

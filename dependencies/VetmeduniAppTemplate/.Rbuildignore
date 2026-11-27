@@ -1,0 +1,5 @@
+^\.git$
+^\.gitignore$
+^VetmeduniAppTemplate_.*\.tar\.gz$
+^VetmeduniAppTemplate\.Rcheck$
+(^|/)Rplots\.pdf$

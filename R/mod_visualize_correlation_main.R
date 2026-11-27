@@ -105,7 +105,7 @@ visualize_ggpairs_server <- function(id, filtered_data, model_fit, reset_trigger
 
       tagList(
         uiOutput(ns("plot_warning")),
-        NicoShinyAppTemplate::content_plot_ui(ns("plot"), list(width = ggpairs_state$width(), height = ggpairs_state$height()))
+        VetmeduniAppTemplate::content_plot_ui(ns("plot"), list(width = ggpairs_state$width(), height = ggpairs_state$height()))
       )
     })
 
@@ -125,7 +125,7 @@ visualize_ggpairs_server <- function(id, filtered_data, model_fit, reset_trigger
         dims <- ggpairs_state$dimensions()
         validate(need(!is.null(p), "No plot"))
         validate(need(!is.null(dims), "No layout"))
-        NicoShinyAppTemplate::save_plot_png(p, file,
+        VetmeduniAppTemplate::save_plot_png(p, file,
           width_px = dims$width, height_px = dims$height, dpi = 300)
       }
     )

@@ -10,7 +10,7 @@ regression_ui <- function(id, engine = c("lm", "lmm"), allow_multi_response = FA
 
   list(
     config = tagList(
-      NicoShinyAppTemplate::app_expander("Analysis setup", open = TRUE, id = ns("grouping_section"),
+      VetmeduniAppTemplate::app_expander("Analysis setup", open = TRUE, id = ns("grouping_section"),
       if (allow_multi_response) multi_response_ui(ns("response")) else uiOutput(ns("response_ui")),
       uiOutput(ns("fixed_selector")),
       uiOutput(ns("level_order")),
@@ -19,12 +19,12 @@ regression_ui <- function(id, engine = c("lm", "lmm"), allow_multi_response = FA
       uiOutput(ns("interaction_select")),
       uiOutput(ns("formula_preview"))
       ),
-      NicoShinyAppTemplate::app_expander("Advanced options",
+      VetmeduniAppTemplate::app_expander("Advanced options",
         stratification_ui("strat", ns)
       ),
       actionButton(ns("run"), "Run analysis", width = "100%")
     ),
-    download = NicoShinyAppTemplate::app_download_ui(ns, "download_model", label = "Download results"),
+    download = VetmeduniAppTemplate::app_download_ui(ns, "download_model", label = "Download results"),
     results = tagList(
       uiOutput(ns("results_ui"))
     )

@@ -96,7 +96,7 @@ visualize_pca_server <- function(id, filtered_data, model_fit, reset_trigger = r
 
     base_size <- base_size_server(
       input = input,
-      default = NicoShinyAppTemplate::PLOT_BASE_SIZE
+      default = VetmeduniAppTemplate::PLOT_BASE_SIZE
     )
 
     subplot_limits <- subplot_size_defaults()
@@ -118,7 +118,7 @@ visualize_pca_server <- function(id, filtered_data, model_fit, reset_trigger = r
       updateNumericInput(session, "loading_scale", value = 1.2)
       updateNumericInput(session, "plot_width", value = 800)
       updateNumericInput(session, "plot_height", value = 600)
-      updateNumericInput(session, "plot_base_size", value = NicoShinyAppTemplate::PLOT_BASE_SIZE)
+      updateNumericInput(session, "plot_base_size", value = VetmeduniAppTemplate::PLOT_BASE_SIZE)
       updateNumericInput(session, "facet_grid-rows", value = NA)
       updateNumericInput(session, "facet_grid-cols", value = NA)
       facet_grid_inputs$reset()
@@ -293,7 +293,7 @@ visualize_pca_server <- function(id, filtered_data, model_fit, reset_trigger = r
         ta_plot_theme_void() +
         annotate("text", x = 0.5, y = 0.5, label = message, size = 4, hjust = 0.5, vjust = 0.5) +
         coord_cartesian(xlim = c(0, 1), ylim = c(0, 1), clip = "off")
-      NicoShinyAppTemplate::plot_panel_label(p, if (has_title) title else NULL, base_size())
+      VetmeduniAppTemplate::plot_panel_label(p, if (has_title) title else NULL, base_size())
     }
 
     sanitize_suffix <- function(value) {
@@ -308,14 +308,14 @@ visualize_pca_server <- function(id, filtered_data, model_fit, reset_trigger = r
       }
     }
 
-    plot_info <- NicoShinyAppTemplate::app_plot_snapshot(function() {
-      NicoShinyAppTemplate::app_plot_numeric(input$plot_base_size, NicoShinyAppTemplate::PLOT_BASE_SIZE, min = 6, max = 30, label = "Base size")
+    plot_info <- VetmeduniAppTemplate::app_plot_snapshot(function() {
+      VetmeduniAppTemplate::app_plot_numeric(input$plot_base_size, VetmeduniAppTemplate::PLOT_BASE_SIZE, min = 6, max = 30, label = "Base size")
       req(input$plot_type)
       validate(need(input$plot_type == "biplot", "Unsupported plot type."))
 
       entry <- pca_entry()
       plot_w <- input$plot_width
-      plot_w <- NicoShinyAppTemplate::app_plot_numeric(
+      plot_w <- VetmeduniAppTemplate::app_plot_numeric(
         plot_w,
         default = plot_width_default,
         min = subplot_limits$width$min,
@@ -323,7 +323,7 @@ visualize_pca_server <- function(id, filtered_data, model_fit, reset_trigger = r
         label = "Plot width"
       )
       plot_h <- input$plot_height
-      plot_h <- NicoShinyAppTemplate::app_plot_numeric(
+      plot_h <- VetmeduniAppTemplate::app_plot_numeric(
         plot_h,
         default = plot_height_default,
         min = subplot_limits$height$min,
@@ -365,10 +365,10 @@ visualize_pca_server <- function(id, filtered_data, model_fit, reset_trigger = r
       color_var <- validate_choice(input$pca_color, all_pool)
       shape_var <- validate_choice(input$pca_shape, all_pool)
       label_var <- validate_choice(input$pca_label, all_pool)
-      label_size <- NicoShinyAppTemplate::app_plot_numeric(input$pca_label_size, 2,
+      label_size <- VetmeduniAppTemplate::app_plot_numeric(input$pca_label_size, 2,
         min = 0.5, max = 6, label = "Label size")
       show_loadings <- isTRUE(input$show_loadings)
-      loading_scale <- NicoShinyAppTemplate::app_plot_numeric(input$loading_scale, 1.2,
+      loading_scale <- VetmeduniAppTemplate::app_plot_numeric(input$loading_scale, 1.2,
         min = 0.1, max = 5, label = "Loading arrow scale")
 
       facet_info <- facet_selection()
@@ -440,7 +440,7 @@ visualize_pca_server <- function(id, filtered_data, model_fit, reset_trigger = r
         )
 
         if (!is.null(facet_var)) {
-          plot_obj <- NicoShinyAppTemplate::plot_panel_label(plot_obj,key,base_size())
+          plot_obj <- VetmeduniAppTemplate::plot_panel_label(plot_obj,key,base_size())
         }
 
         plot_obj
@@ -531,7 +531,7 @@ visualize_pca_server <- function(id, filtered_data, model_fit, reset_trigger = r
 
       tagList(
         uiOutput(ns("plot_warning")),
-        NicoShinyAppTemplate::content_plot_ui(ns("plot"), list(width = plot_dimensions()$w, height = plot_dimensions()$h))
+        VetmeduniAppTemplate::content_plot_ui(ns("plot"), list(width = plot_dimensions()$w, height = plot_dimensions()$h))
       )
     })
 
@@ -559,7 +559,7 @@ visualize_pca_server <- function(id, filtered_data, model_fit, reset_trigger = r
         info <- plot_info()
         req(!is.null(info))
         s <- plot_dimensions()
-        NicoShinyAppTemplate::save_plot_png(info$plot, file,
+        VetmeduniAppTemplate::save_plot_png(info$plot, file,
           width_px = s$w, height_px = s$h, dpi = 300)
       }
     )

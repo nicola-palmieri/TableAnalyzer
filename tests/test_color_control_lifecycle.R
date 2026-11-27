@@ -22,7 +22,7 @@ test_that("optional color controls clear and recover during ordinary no-data sta
     metadata_available(TRUE)
     session$flushReact()
     expect_match(output$color_custom_ui$html, "col_group_1", fixed = TRUE)
-    expect_equal(colors(), stats::setNames(NicoShinyAppTemplate::APP_PALETTE[1:2], c("A", "B")))
+    expect_equal(colors(), stats::setNames(VetmeduniAppTemplate::APP_PALETTE[1:2], c("A", "B")))
     source_data(NULL)
     metadata_available(FALSE)
     session$flushReact()

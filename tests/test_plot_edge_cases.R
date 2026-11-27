@@ -18,7 +18,7 @@ test_that("stratified ANOVA panels keep group identities as facet strips without
   bar <- build_single_factor_barplot(stats_df,"Day 14","treatment","steelblue",13,NULL)
   line <- build_line_plot_panel(stats_df,"Day 14",NULL,"treatment",NULL,NULL)
   for (p in list(bar,line)) {
-    central <- NicoShinyAppTemplate::plot_theme()
+    central <- VetmeduniAppTemplate::plot_theme()
     expect_equal(p$theme$axis.line$colour, central$axis.line$colour)
     expect_equal(p$theme$axis.ticks$colour, central$axis.ticks$colour)
     expect_equal(p$theme$panel.grid.major$colour, central$panel.grid.major$colour)
@@ -127,9 +127,9 @@ test_that("missing values are not treated as observed factor levels", {
 test_that("grouped default colors follow the shared twin palette", {
   levels <- c("control", "low", "high")
   expect_equal(resolve_palette_for_levels(levels),
-    stats::setNames(NicoShinyAppTemplate::APP_PALETTE[1:3], levels))
+    stats::setNames(VetmeduniAppTemplate::APP_PALETTE[1:3], levels))
   custom <- c(high = "#FFFFFF", control = "#000000", low = "#FF0000")
   expect_equal(resolve_palette_for_levels(levels, custom), custom[levels])
   expect_equal(unname(resolve_palette_for_levels(letters[1:25])),
-    rep(NicoShinyAppTemplate::APP_PALETTE, length.out = 25))
+    rep(VetmeduniAppTemplate::APP_PALETTE, length.out = 25))
 })

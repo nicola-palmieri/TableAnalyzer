@@ -4,8 +4,8 @@
 
 mod_upload_ui <- function(id) {
   ns <- NS(id)
-  NicoShinyAppTemplate::app_layout(
-    sidebar = NicoShinyAppTemplate::app_sidebar(
+  VetmeduniAppTemplate::app_layout(
+    sidebar = VetmeduniAppTemplate::app_sidebar(
       title = "Upload",
       description = "Choose whether to load the example dataset or upload your own Excel file.",
       id = ns("sidebar"),

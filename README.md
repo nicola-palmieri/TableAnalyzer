@@ -64,7 +64,7 @@ source("scripts/install_dependencies.R")
 shiny::runApp(".", host = "127.0.0.1", launch.browser = TRUE)
 ```
 
-Setup installs missing CRAN packages and the included NicoShinyAppTemplate source.
+Setup installs missing CRAN packages and the included VetmeduniAppTemplate source.
 Internet is needed for missing CRAN packages. Once setup is complete, the Shiny
 app runs locally in your browser and works offline.
 
@@ -72,13 +72,13 @@ Legends default to the right, including after Reset. Other legend positions rema
 
 ### Included shared template
 
-Both apps include `dependencies/NicoShinyAppTemplate` and a version/file-hash
-manifest at `dependencies/NicoShinyAppTemplate.json`. Users do not need a separate
+Both apps include `dependencies/VetmeduniAppTemplate` and a version/file-hash
+manifest at `dependencies/VetmeduniAppTemplate.json`. Users do not need a separate
 template download, GitHub token or access to the template repository.
 
-The [template repository](https://github.com/nicola-palmieri/NicoShinyAppTemplate)
+The [template repository](https://github.com/nicola-palmieri/VetmeduniAppTemplate)
 is the maintained source. The app copy is generated for distribution; do not edit
-it independently. See the [bundled package documentation](dependencies/NicoShinyAppTemplate/README.md).
+it independently. See the [bundled package documentation](dependencies/VetmeduniAppTemplate/README.md).
 
 ---
 
@@ -110,7 +110,7 @@ source("tests/run_tests.R")
 Tests use synthetic datasets and temporary Excel workbooks.
 
 Application modules live under `R/`; their data handling and statistical methods
-remain app-specific. Shared presentation is maintained in NicoShinyAppTemplate.
+remain app-specific. Shared presentation is maintained in VetmeduniAppTemplate.
 
 In the shared AI Academy workspace, edit the central template checkout and run
 `Rscript ../../scripts/sync_shared_template.R` from the app folder before
@@ -120,7 +120,7 @@ The bundled package tests can be run from either app folder:
 
 ```r
 install.packages(c("testthat", "pkgload"))
-testthat::test_local("dependencies/NicoShinyAppTemplate")
+testthat::test_local("dependencies/VetmeduniAppTemplate")
 ```
 
 Development checks use synthetic examples and fixtures; passing tests does not
@@ -151,3 +151,7 @@ Every analysis tab in Table Analyzer maps directly to familiar R functions. The 
 | Linear mixed model (LMM) | `lmerTest::lmer(response ~ fixed + covariates + interactions + (1\|random))` with sum-to-zero contrasts for categorical fixed effects; fixed-effect tests use `anova(type = 3)`, and ICC is derived from `lme4::VarCorr()`. | Same inputs as LM plus a random-intercept factor. Stratification runs a separate mixed model for each level. |
 | Pairwise correlations | `stats::cor(..., use = "pairwise.complete.obs")` for coefficients; visual diagnostics via `GGally::ggpairs()` with correlation, scatter, and density panels. | Numeric variables selected in the UI and optional stratification factor; each stratum is analyzed independently. |
 | Principal component analysis | `stats::prcomp(center = TRUE, scale. = TRUE)` applied to complete cases for the selected columns, with variance summaries from `summary(prcomp)` and loadings displayed. | Numeric variables selected for PCA. Rows missing any selected variable are removed before fitting, and the excluded count is reported. |
+
+## Institutional branding
+
+Both apps use VetmeduniAppTemplate 0.2.0: white surfaces, black typography and the Vetmeduni burgundy, green, copper and gray accents. Home has a burgundy banner, green start button and the locally bundled Vetmeduni Austria logo in white. The source color guide is included in `dependencies/VetmeduniAppTemplate/inst/branding/farbschema_vetmeduni.pdf`; shared visual rules live in `inst/www/branding.css`. The [university website](https://www.vetmeduni.ac.at/) is the visual reference. Scientific category palettes and custom plot colors keep their existing behavior.

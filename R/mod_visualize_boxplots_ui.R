@@ -5,7 +5,7 @@
 visualize_numeric_boxplots_ui <- function(id) {
   ns <- NS(id)
   tagList(
-    NicoShinyAppTemplate::app_expander("Plot options", id = ns("options_section"),
+    VetmeduniAppTemplate::app_expander("Plot options", id = ns("options_section"),
     with_help_tooltip(
       checkboxInput(ns("show_points"), "Overlay jittered data", FALSE),
       "Overlay raw observations with horizontal jitter."
@@ -35,16 +35,16 @@ visualize_numeric_boxplots_ui <- function(id) {
     ),
     
     
-    ta_plot_style_ui(ns, default = NicoShinyAppTemplate::PLOT_BASE_SIZE,
+    ta_plot_style_ui(ns, default = VetmeduniAppTemplate::PLOT_BASE_SIZE,
         help_text = "Adjust the base font size used for boxplot text.",
         legend = uiOutput(ns("common_legend_controls"))),
     
-    NicoShinyAppTemplate::app_plot_actions_ui(ns)
+    VetmeduniAppTemplate::app_plot_actions_ui(ns)
   )
 }
 
 visualize_numeric_boxplots_plot_ui <- function(id) {
   ns <- NS(id)
-  tagList(NicoShinyAppTemplate::app_result_header_ui("Plots",
-    NicoShinyAppTemplate::app_download_ui(ns)), uiOutput(ns("plot_container")))
+  tagList(VetmeduniAppTemplate::app_result_header_ui("Plots",
+    VetmeduniAppTemplate::app_download_ui(ns)), uiOutput(ns("plot_container")))
 }

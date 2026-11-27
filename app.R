@@ -18,24 +18,24 @@ for (f in list.files("R", full.names = TRUE, pattern = "\\.R$")) source(f)
 # ---------------------------------------------------------------
 # UI
 # ---------------------------------------------------------------
-ui <- NicoShinyAppTemplate::app_navbar(
+ui <- VetmeduniAppTemplate::app_navbar(
   main = APP_BRAND_MAIN, accent = APP_BRAND_ACCENT, logo = APP_CONFIG$logo, id = "main_nav",
   selected = "home_tab", fillable = FALSE, window_title = APP_NAME,
   header = tags$head(
     tags$link(rel = "icon", type = "image/jpeg", href = APP_CONFIG$logo),
-    NicoShinyAppTemplate::app_busy_options()
+    VetmeduniAppTemplate::app_busy_options()
   ),
   bslib::nav_panel("Home", value = "home_tab", icon = icon("house"), mod_home_ui("home")),
   bslib::nav_panel("Upload", value = "upload_tab", icon = icon("upload"),
-    NicoShinyAppTemplate::app_page_ui(mod_upload_ui("upload"))),
+    VetmeduniAppTemplate::app_page_ui(mod_upload_ui("upload"))),
   bslib::nav_panel("Filter", value = "filter_tab", icon = icon("filter"),
-    NicoShinyAppTemplate::app_page_ui(mod_filter_ui("filter"))),
+    VetmeduniAppTemplate::app_page_ui(mod_filter_ui("filter"))),
   bslib::nav_panel("Analyze", value = "analysis_tab", icon = icon("square-poll-horizontal"),
-    NicoShinyAppTemplate::app_page_ui(mod_analyze_ui("analysis"))),
+    VetmeduniAppTemplate::app_page_ui(mod_analyze_ui("analysis"))),
   bslib::nav_panel("Visualize", value = "visualize_tab", icon = icon("chart-area"),
-    NicoShinyAppTemplate::app_page_ui(mod_visualize_ui("visualize"))),
+    VetmeduniAppTemplate::app_page_ui(mod_visualize_ui("visualize"))),
   bslib::nav_panel("User guide", value = "guide_tab", icon = icon("book-open"),
-    NicoShinyAppTemplate::app_page_ui(NicoShinyAppTemplate::mod_user_guide_ui("guide")))
+    VetmeduniAppTemplate::app_page_ui(VetmeduniAppTemplate::mod_user_guide_ui("guide")))
 )
 
 # ---------------------------------------------------------------

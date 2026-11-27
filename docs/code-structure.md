@@ -1,7 +1,7 @@
 # TableAnalyzer code structure
 
 TableAnalyzer follows the same flat module convention as MicrobiomeAnalyzer.
-Both apps consume `NicoShinyAppTemplate`; its source is maintained once in the
+Both apps consume `VetmeduniAppTemplate`; its source is maintained once in the
 workspace `dependencies/` directory.
 
 | File pattern | Responsibility |
@@ -27,8 +27,8 @@ Pure analysis/plot functions have the companion files described above.
 
 The navbar and browser-tab icon use `www/logo.jpeg`; the shared template clips
 navbar logos to a 26px square with 6px rounded corners. The Home banner uses the
-decorative `www/home-analysis.svg`: transparent artwork with fine teal, violet
-and pink strokes, soft fills and an orbital composition matching MicrobiomeAnalyzer.
+decorative `www/home-analysis.svg`: transparent artwork with fine institutional green, gray
+and burgundy strokes, soft fills and an orbital composition matching MicrobiomeAnalyzer.
 Both assets are configured in `shared_app_config.R` and passed to the shared helpers.
 
 Figures use the shared theme without plot titles or subtitles. Subgroup labels

@@ -4,12 +4,12 @@
 
 visualize_descriptive_ui <- function(id) {
   ns <- NS(id)
-  NicoShinyAppTemplate::app_layout(
-    sidebar = NicoShinyAppTemplate::app_sidebar(
+  VetmeduniAppTemplate::app_layout(
+    sidebar = VetmeduniAppTemplate::app_sidebar(
       title = "Descriptive statistics",
       description = "Explore distributions, variability, and normality across variables.",
       id = ns("sidebar"),
-      NicoShinyAppTemplate::app_expander("Analysis setup", open = TRUE, id = ns("grouping_section"),
+      VetmeduniAppTemplate::app_expander("Analysis setup", open = TRUE, id = ns("grouping_section"),
       with_help_tooltip(
         selectInput(
           ns("plot_type"),

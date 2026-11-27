@@ -14,5 +14,5 @@ local({
     "tidyselect","xml2","zoo")
   missing <- packages[!vapply(packages,requireNamespace,logical(1),quietly=TRUE)]
   if (length(missing)) install.packages(missing,repos="https://cloud.r-project.org")
-  install.packages(file.path(app_dir,"dependencies","NicoShinyAppTemplate"),repos=NULL,type="source")
+  install.packages(file.path(app_dir,"dependencies","VetmeduniAppTemplate"),repos=NULL,type="source")
 })

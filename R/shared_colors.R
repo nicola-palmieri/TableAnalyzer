@@ -3,7 +3,7 @@
 # ===============================================================
 
 # ---- Palette ----
-basic_color_palette <- NicoShinyAppTemplate::barplot_color_palette
+basic_color_palette <- VetmeduniAppTemplate::barplot_color_palette
 
 # ---- UI ----
 add_color_customization_ui <- function(ns) {
@@ -156,13 +156,13 @@ render_color_inputs <- function(ns, data, color_var, level_order = NULL, input =
 
 color_dropdown_input <- function(ns, id = "color_choice", palette = basic_color_palette,
                                  ncol = 4, selected = NULL) {
-  NicoShinyAppTemplate::app_color_dropdown(
+  VetmeduniAppTemplate::app_color_dropdown(
     ns, id = id, palette = palette, ncol = ncol, selected = selected
   )
 }
 
 with_help_tooltip <- function(widget, text) {
-  NicoShinyAppTemplate::app_help_ui(widget, text)
+  VetmeduniAppTemplate::app_help_ui(widget, text)
 }
 
 resolve_palette_for_levels <- function(levels, custom = NULL) {
@@ -186,7 +186,7 @@ resolve_palette_for_levels <- function(levels, custom = NULL) {
 
   # The twin apps share their categorical defaults. Table retains cycling for
   # analyses with more than 20 groups; the picker remains the named 16 colors.
-  palette <- rep(NicoShinyAppTemplate::APP_PALETTE, length.out = n_levels)
+  palette <- rep(VetmeduniAppTemplate::APP_PALETTE, length.out = n_levels)
 
   stats::setNames(palette, unique_levels)
 }

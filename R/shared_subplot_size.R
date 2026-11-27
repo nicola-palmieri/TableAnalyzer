@@ -42,7 +42,7 @@ subplot_size_ui <- function(
   width_label  <- if (is.null(width_label)) defaults$width$label else width_label
   height_label <- if (is.null(height_label)) defaults$height$label else height_label
 
-  NicoShinyAppTemplate::app_plot_size_ui(
+  VetmeduniAppTemplate::app_plot_size_ui(
     ns, width_id = width_id, height_id = height_id,
     width_value = width_value, height_value = height_value,
     width_label = width_label, height_label = height_label,

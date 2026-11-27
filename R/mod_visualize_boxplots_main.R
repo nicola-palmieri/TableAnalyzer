@@ -19,7 +19,7 @@ visualize_numeric_boxplots_server <- function(id, filtered_data, summary_info, i
     df <- reactive(filtered_data())
     
     grid <- single_grid_settings(input, session, "plot_grid")
-    base_size <- base_size_server(input, default = NicoShinyAppTemplate::PLOT_BASE_SIZE)
+    base_size <- base_size_server(input, default = VetmeduniAppTemplate::PLOT_BASE_SIZE)
     
     #======================================================
     # Outlier label dropdown (depends on data)
@@ -110,11 +110,11 @@ visualize_numeric_boxplots_server <- function(id, filtered_data, summary_info, i
     # Automatic appearance snapshots
     #======================================================
     compute_plot <- function(allow_reset = FALSE) {
-      plot_width <- NicoShinyAppTemplate::app_plot_numeric(input$plot_width, 400,
+      plot_width <- VetmeduniAppTemplate::app_plot_numeric(input$plot_width, 400,
         min = 200, max = 2000, label = "Plot width")
-      plot_height <- NicoShinyAppTemplate::app_plot_numeric(input$plot_height, 300,
+      plot_height <- VetmeduniAppTemplate::app_plot_numeric(input$plot_height, 300,
         min = 200, max = 2000, label = "Plot height")
-      NicoShinyAppTemplate::app_plot_numeric(input$plot_base_size, NicoShinyAppTemplate::PLOT_BASE_SIZE, min = 6, max = 30, label = "Base size")
+      VetmeduniAppTemplate::app_plot_numeric(input$plot_base_size, VetmeduniAppTemplate::PLOT_BASE_SIZE, min = 6, max = 30, label = "Base size")
       
       data <- df()
       info <- summary_info()
@@ -187,7 +187,7 @@ visualize_numeric_boxplots_server <- function(id, filtered_data, summary_info, i
     reset_plot_inputs <- function() {
       updateNumericInput(session, "plot_width", value = 400)
       updateNumericInput(session, "plot_height", value = 300)
-      updateNumericInput(session, "plot_base_size", value = NicoShinyAppTemplate::PLOT_BASE_SIZE)
+      updateNumericInput(session, "plot_base_size", value = VetmeduniAppTemplate::PLOT_BASE_SIZE)
       grid$reset()
       updateCheckboxInput(session, "show_points", value = FALSE)
       updateCheckboxInput(session, "show_outliers", value = FALSE)
@@ -200,7 +200,7 @@ visualize_numeric_boxplots_server <- function(id, filtered_data, summary_info, i
     }
     observeEvent(input$reset, reset_plot_inputs(), ignoreInit = TRUE)
 
-    plot_snapshot <- NicoShinyAppTemplate::app_plot_snapshot(
+    plot_snapshot <- VetmeduniAppTemplate::app_plot_snapshot(
       build = function() compute_plot(allow_reset = TRUE),
       ready = function() {
         info <- summary_info()
@@ -248,7 +248,7 @@ visualize_numeric_boxplots_server <- function(id, filtered_data, summary_info, i
 
       tagList(
         uiOutput(ns("grid_warning")),
-        NicoShinyAppTemplate::content_plot_ui(ns("plot"), list(
+        VetmeduniAppTemplate::content_plot_ui(ns("plot"), list(
           width = stored$plot_width * (stored$layout$ncol %||% 1),
           height = stored$plot_height * (stored$layout$nrow %||% 1)))
       )
@@ -290,7 +290,7 @@ visualize_numeric_boxplots_server <- function(id, filtered_data, summary_info, i
         width_px <- (stored$plot_width  * nc)
         height_px <- (stored$plot_height * nr)
         
-        NicoShinyAppTemplate::save_plot_png(p, file,
+        VetmeduniAppTemplate::save_plot_png(p, file,
           width_px = width_px, height_px = height_px, dpi = 300)
       }
     )

@@ -26,7 +26,7 @@ visualize_oneway_server <- function(id, filtered_data, model_info) {
       reset_token = local_reset_token
     )
     
-    base_size <- base_size_server(input = input, default = NicoShinyAppTemplate::PLOT_BASE_SIZE)
+    base_size <- base_size_server(input = input, default = VetmeduniAppTemplate::PLOT_BASE_SIZE)
     subplot_defaults <- subplot_size_defaults()
     plot_width_default <- subplot_defaults$width$value
     plot_height_default <- subplot_defaults$height$value
@@ -45,11 +45,11 @@ visualize_oneway_server <- function(id, filtered_data, model_info) {
       data <- df()
       info <- model_info()
       
-      plot_width <- NicoShinyAppTemplate::app_plot_numeric(input$plot_width,
+      plot_width <- VetmeduniAppTemplate::app_plot_numeric(input$plot_width,
         plot_width_default, min = 200, max = 2000, label = "Plot width")
-      plot_height <- NicoShinyAppTemplate::app_plot_numeric(input$plot_height,
+      plot_height <- VetmeduniAppTemplate::app_plot_numeric(input$plot_height,
         plot_height_default, min = 200, max = 2000, label = "Plot height")
-      NicoShinyAppTemplate::app_plot_numeric(input$plot_base_size, NicoShinyAppTemplate::PLOT_BASE_SIZE, min = 6, max = 30, label = "Base size")
+      VetmeduniAppTemplate::app_plot_numeric(input$plot_base_size, VetmeduniAppTemplate::PLOT_BASE_SIZE, min = 6, max = 30, label = "Base size")
 
       if (is.null(info) || is.null(data) || nrow(data) == 0) {
         return(list(plot = NULL, warning = "No data or ANOVA results available."))
@@ -125,7 +125,7 @@ visualize_oneway_server <- function(id, filtered_data, model_info) {
     reset_plot_inputs <- function() {
       updateNumericInput(session, "plot_width", value = plot_width_default)
       updateNumericInput(session, "plot_height", value = plot_height_default)
-      updateNumericInput(session, "plot_base_size", value = NicoShinyAppTemplate::PLOT_BASE_SIZE)
+      updateNumericInput(session, "plot_base_size", value = VetmeduniAppTemplate::PLOT_BASE_SIZE)
       updateSelectInput(session, "plot_type", selected = "lineplot_mean_se")
       updateCheckboxInput(session, "lineplot_show_lines", value = TRUE)
       updateCheckboxInput(session, "lineplot_show_jitter", value = FALSE)
@@ -136,7 +136,7 @@ visualize_oneway_server <- function(id, filtered_data, model_info) {
     }
     observeEvent(input$reset, reset_plot_inputs(), ignoreInit = TRUE)
 
-    plot_snapshot <- NicoShinyAppTemplate::app_plot_snapshot(
+    plot_snapshot <- VetmeduniAppTemplate::app_plot_snapshot(
       build = function() compute_plot(allow_reset = TRUE),
       ready = function() {
         info <- model_info()
@@ -167,7 +167,7 @@ visualize_oneway_server <- function(id, filtered_data, model_info) {
 
       tagList(
         uiOutput(ns("plot_warning")),
-        NicoShinyAppTemplate::content_plot_ui(ns("plot"), list(
+        VetmeduniAppTemplate::content_plot_ui(ns("plot"), list(
           width = (stored$plot_width %||% plot_width_default) * (stored$layout$strata$cols %||% 1) * (stored$layout$responses$cols %||% 1),
           height = (stored$plot_height %||% plot_height_default) * (stored$layout$strata$rows %||% 1) * (stored$layout$responses$rows %||% 1)))
       )
@@ -222,7 +222,7 @@ visualize_oneway_server <- function(id, filtered_data, model_info) {
         width_px <- ((stored$plot_width  %||% plot_width_default) * total_cols)
         height_px <- ((stored$plot_height %||% plot_height_default) * total_rows)
         
-        NicoShinyAppTemplate::save_plot_png(p, file,
+        VetmeduniAppTemplate::save_plot_png(p, file,
           width_px = width_px, height_px = height_px, dpi = 300)
       }
     )

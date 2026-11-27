@@ -1,4 +1,4 @@
-# App-specific identity. Presentation implementations live in NicoShinyAppTemplate.
+# App-specific identity. Presentation implementations live in VetmeduniAppTemplate.
 APP_CONFIG <- list(name = "TableAnalyzer", main = "Table", accent = "Analyzer", version = "v1.10",
   logo = "logo.jpeg", artwork = "home-analysis.svg")
 APP_NAME <- APP_CONFIG$name
