@@ -28,9 +28,9 @@
   --bs-navbar-active-color: #ffffff;
   --bs-navbar-brand-color: #ffffff;
   --bs-navbar-brand-hover-color: #ffffff;
-  --bs-navbar-disabled-color: #e5b6c3;
-  background: #af2144 !important;
-  border-bottom: 1px solid #8c1a36;
+  --bs-navbar-disabled-color: #bdd5c9;
+  background: #286e53 !important;
+  border-bottom: 1px solid #205842;
 }
 .navbar :is(.navbar-brand, .navbar-wordmark),
 .navbar .navbar-nav .nav-link,
@@ -43,12 +43,7 @@
 }
 .navbar .navbar-nav .nav-link.active,
 .navbar .navbar-nav > .nav-item:has(.dropdown-item.active) > .nav-link {
-  box-shadow: none; border-radius: 0;
-}
-.navbar .navbar-nav .nav-link.active::before,
-.navbar .navbar-nav > .nav-item:has(.dropdown-item.active) > .nav-link::before {
-  position: absolute; left: 12px; right: 12px; bottom: 6px;
-  height: 2px; background: #ffffff; content: "";
+  color: #205842; background: #ffffff; box-shadow: none; border-radius: 5px;
 }
 /* Keep the selection indicator separate from Bootstrap's dropdown caret. */
 .navbar .navbar-nav .nav-link.active:not(.dropdown-toggle)::after { display: none; }
@@ -60,7 +55,7 @@
   background: transparent; content: "";
 }
 .navbar .navbar-nav .nav-link.disabled,
-.navbar .nav-link[aria-disabled="true"] { color: #e5b6c3 !important; }
+.navbar .nav-link[aria-disabled="true"] { color: #bdd5c9 !important; }
 .navbar .navbar-toggler { filter: none; border-color: #ffffff; }
 .navbar .navbar-toggler-icon { filter: none; }
 .navbar-toggler-icon {
@@ -68,22 +63,23 @@
 }
 .navbar :is(a, button):focus-visible { outline-color: #ffffff; }
 .home-hero {
-  background: #af2144;
-  border-color: #af2144;
-  border-top: 4px solid #af2144;
+  background: #286e53;
+  border-color: #286e53;
+  border-top: 0; min-height: 300px; padding: 34px 38px;
 }
-.home-institution { display: inline-flex; margin-bottom: 28px; }
+.home-institution { position: absolute; top: 26px; right: 30px; display: inline-flex; margin: 0; z-index: 1; }
+.home-hero-art { top: 65px; height: calc(100% - 65px); width: 46%; }
 .home-institution img { width: 185px; max-width: 100%; height: auto; filter: brightness(0) invert(1); }
 .home-hero .home-wordmark .home-brand-name { color: #ffffff; }
-.home-hero .home-wordmark .app-wordmark-accent { color: #e5b6c3; }
-.navbar .app-wordmark .app-wordmark-accent { color: #f0d5dd; }
-.home-hero .home-wordmark .home-brand-version { color: #f0d5dd; }
+.home-hero .home-wordmark .app-wordmark-accent { color: #dcebe4; }
+.navbar .app-wordmark .app-wordmark-accent { color: #e2f0e9; }
+.home-hero .home-wordmark .home-brand-version { color: #e2f0e9; }
 .home-hero-description { color: #e0e0e0; }
 .home-hero .home-start {
-  color: #ffffff; background: #286e53; border-color: #ffffff;
+  color: #ffffff; background: #af2144; border-color: #ffffff;
 }
 .home-hero .home-start:hover {
-  color: #ffffff; background: #205842; border-color: #ffffff;
+  color: #ffffff; background: #8c1a36; border-color: #ffffff;
 }
 .home-hero :is(button, a):focus-visible { outline-color: #ffffff; }
 .home-workflow { background: #ffffff; }
@@ -108,6 +104,11 @@
 .app-help-icon:hover::before { border-color: #af2144; }
 .app-help-tooltip { background: #202020; }
 @media (max-width: 767px) {
-  .home-institution { margin-bottom: 22px; }
-  .home-institution img { width: 160px; }
+  .home-hero { padding: 88px 24px 28px; min-height: 0; }
+  .home-institution { top: 24px; right: 24px; }
+  .home-institution img { width: 150px; }
 }
+
+.navbar .navbar-nav > .nav-item > .nav-link { margin: 6px 0; padding-top: 10px; padding-bottom: 10px; }
+.navbar .navbar-nav .nav-link.active:hover,
+.navbar .navbar-nav > .nav-item:has(.dropdown-item.active) > .nav-link:hover { color: #205842; background: #ffffff; }
