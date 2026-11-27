@@ -106,10 +106,23 @@ app_theme <- function(...) {
   do.call(bslib::bs_theme, utils::modifyList(defaults, list(...)))
 }
 
+app_institution_ui <- function(class = "navbar-institution", width = 168) {
+  shiny::tags$a(class = class, href = "https://www.vetmeduni.ac.at/",
+    target = "_blank", rel = "noopener noreferrer",
+    `aria-label` = "Vetmeduni Austria website (opens in a new tab)",
+    shiny::tags$img(src = paste0("VetmeduniAppTemplate-",
+      getNamespaceVersion("VetmeduniAppTemplate"), "/vetmeduni-logo.svg"),
+      alt = "Vetmeduni Austria", width = width))
+}
+
 app_navbar <- function(..., title = NULL, main = "Analysis", accent = "App", version = NULL,
-    logo = NULL, id = "page", theme = app_theme(), header = NULL) {
+    logo = NULL, id = "page", theme = app_theme(), header = NULL, institution = TRUE) {
   if (is.null(title)) title <- app_brand_ui(main, accent, version, logo)
   page <- bslib::page_navbar(..., title = title, id = id, theme = theme, header = header)
+  if (isTRUE(institution)) {
+    page <- htmltools::tagQuery(page)$find(".navbar")$find(".container-fluid")$
+      append(app_institution_ui())$allTags()
+  }
   # Root dependencies precede descendants when htmltools collects assets. Put
   # Bootstrap/widget dependencies first so our common overrides load last.
   dependencies <- htmltools::resolveDependencies(htmltools::findDependencies(page))

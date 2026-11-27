@@ -14,6 +14,6 @@ The PDF's copper RGB entry differs from its HEX entry; the apps consistently use
 
 The [Vetmeduni website](https://www.vetmeduni.ac.at/), inspected on 2026-11-27, supplies the reference for white surfaces, black typography, simple borders and colored accents. Its current Vetmeduni Austria SVG wordmark is bundled as `inst/www/vetmeduni-logo.svg`; paths and proportions are preserved. Home retains a Vetmeduni green (#286e53) banner with a Vetmeduni burgundy (#af2144) start button; white logo/type and light tints of the institutional accents provide contrast. CSS displays the original black logo as white without changing its paths. The logo remains Vetmeduni's institutional identity, not part of an app's own icon or a replacement for it.
 
-`inst/www/branding.css` applies this shared identity to both applications. The logo and all styling are served locally; opening the optional university link is the only action that visits the university website. Home's `institution = FALSE` option omits the institutional link/logo when using the component without it.
+`inst/www/branding.css` applies this shared identity to both applications. The logo and all styling are served locally; opening the optional university link is the only action that visits the university website. The navbar's `institution = FALSE` option omits the institutional link/logo.
 
-The white institutional logo sits at the banner top right. On mobile, a reserved top row prevents overlap with the app title.
+The white institutional logo sits at the navbar far right. On mobile, the logo stays in the navbar beside the menu toggle; the banner contains no institutional logo.

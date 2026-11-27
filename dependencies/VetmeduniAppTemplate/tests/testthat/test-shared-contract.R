@@ -13,11 +13,12 @@ test_that("two applications configure the same home and navbar components", {
     expect_match(markup$html, paste0('id="home-', app$key, '"'), fixed = TRUE)
     expect_match(markup$html, 'id="home-upload"', fixed = TRUE)
     expect_match(markup$html, 'aria-labelledby="home-title"', fixed = TRUE)
-    expect_match(markup$html, 'alt="Vetmeduni Austria"', fixed = TRUE)
+    expect_false(grepl('alt="Vetmeduni Austria"', markup$html, fixed = TRUE))
     expect_identical(sum(vapply(markup$dependencies, function(x) x$name == "VetmeduniAppTemplate", logical(1))), 1L)
     navbar <- app_navbar(bslib::nav_panel("Home", value = "home", home),
       main = app$main, accent = app$accent, window_title = paste0(app$main, app$accent))
     expect_match(as.character(navbar), 'data-home-input="go_home"', fixed = TRUE)
+    expect_match(as.character(navbar), 'class="navbar-institution"', fixed = TRUE)
   }
   expect_match(as.character(app_wordmark_ui(main = "<custom>", accent = "&")), "&lt;custom&gt;", fixed = TRUE)
   expect_false(grepl('home-institution', as.character(app_home_ui("home", institution = FALSE)), fixed = TRUE))

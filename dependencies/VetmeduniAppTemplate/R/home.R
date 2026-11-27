@@ -12,7 +12,7 @@ app_home_ui <- function(id, main = "Analysis", accent = "App", version = NULL,
     description = NULL, analyses = list(), workflow = list(), artwork = NULL,
     start_label = "Start an analysis", start_id = "upload", analyses_title = NULL,
     workflow_title = "From your files to your figures", class = NULL, extra = NULL,
-    institution = TRUE) {
+    institution = FALSE) {
   ns <- shiny::NS(id)
   cards <- lapply(analyses, function(item) {
     if (inherits(item, c("shiny.tag", "shiny.tag.list"))) return(item)
@@ -31,12 +31,7 @@ app_home_ui <- function(id, main = "Analysis", accent = "App", version = NULL,
       `aria-labelledby` = ns("title"),
       if (!is.null(artwork)) shiny::tags$img(class = "home-hero-art", src = artwork, alt = "", `aria-hidden` = "true"),
       shiny::div(class = "home-hero-copy",
-        if (isTRUE(institution)) shiny::tags$a(class = "home-institution",
-          href = "https://www.vetmeduni.ac.at/", target = "_blank", rel = "noopener noreferrer",
-          `aria-label` = "Vetmeduni Austria website (opens in a new tab)",
-          shiny::tags$img(src = paste0("VetmeduniAppTemplate-",
-            getNamespaceVersion("VetmeduniAppTemplate"), "/vetmeduni-logo.svg"),
-            alt = "Vetmeduni Austria", width = 185)),
+        if (isTRUE(institution)) app_institution_ui("home-institution", 185),
         shiny::h1(id = ns("title"), class = "home-wordmark",
           `aria-label` = paste(paste0(main, accent), version),
           app_wordmark_ui("home-brand-name", main, accent),
