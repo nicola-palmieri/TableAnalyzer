@@ -28,7 +28,6 @@ visualize_ggpairs_ui <- function(id) {
         condition = sprintf("output['%s']", ns("show_placeholder")),
         helpText("Run the pairwise correlation analysis to configure plots.")
       ),
-      br(),
       NicoShinyAppTemplate::app_plot_actions_ui(ns)
     ),
     div(

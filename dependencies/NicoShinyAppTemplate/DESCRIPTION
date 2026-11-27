@@ -1,7 +1,7 @@
 Package: NicoShinyAppTemplate
 Type: Package
 Title: Shared Presentation Components for Shiny Analysis Applications
-Version: 0.1.12
+Version: 0.1.13
 Author: Nicola Palmieri
 Maintainer: NicoShinyAppTemplate maintainers <maintainer@example.invalid>
 Contact: Nicola Palmieri

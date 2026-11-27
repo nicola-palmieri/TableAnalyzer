@@ -15,7 +15,6 @@ pca_ui <- function(id) {
           "Splitting the data by groups would produce different coordinate systems, making the loadings and scores incomparable across groups."
         ))
       ),
-      br(),
       actionButton(ns("run_pca"), "Run analysis", width = "100%")
     ),
     download = NicoShinyAppTemplate::app_download_ui(ns, "download_all", label = "Download results"),

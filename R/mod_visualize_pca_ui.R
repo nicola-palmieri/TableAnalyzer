@@ -169,7 +169,6 @@ visualize_pca_ui <- function(id, filtered_data = NULL) {
       ta_plot_style_ui(ns, default = NicoShinyAppTemplate::PLOT_BASE_SIZE,
         help_text = "Adjust the base font size used for PCA plots."),
       
-      br(),
       NicoShinyAppTemplate::app_plot_actions_ui(ns)
     ),
     div(

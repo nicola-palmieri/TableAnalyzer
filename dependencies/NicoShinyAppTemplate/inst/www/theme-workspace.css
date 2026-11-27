@@ -110,6 +110,15 @@
 .app-polish .ta-sidebar :is(input[type="checkbox"], input[type="radio"]) { margin-top: 3px; }
 .app-polish .ta-sidebar .btn { min-height: 30px; font-size: 13px; border-color: #dce3ec; }
 .app-polish .ta-sidebar .action-button:is([id$="-reset"], [id$="-remove"], [id$="-reset_plot"], [id$="-reset_model"]) { margin-top: 10px; margin-bottom: 5px; }
+/* One gap from the final expander to Run or Reset, including wrapped actions. */
+.app-polish .ta-sidebar { --sidebar-action-gap: 12px; }
+.app-polish .ta-sidebar .app-plot-actions,
+.app-polish .ta-sidebar .sidebar-expander + .action-button {
+  margin-top: var(--sidebar-action-gap);
+}
+.app-polish .ta-sidebar .app-plot-actions > .action-button:first-child {
+  margin-top: 0;
+}
 .app-polish .ta-sidebar .shiny-download-link {
   color: #fff; background: #254967; border-color: #254967; font-weight: 500;
 }
