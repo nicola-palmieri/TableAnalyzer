@@ -17,7 +17,7 @@ app_brand_ui <- function(main, accent = "", version = NULL, logo = NULL,
 app_plot_alt <- function(title, roles = list(), samples = NULL, input = NULL) {
   labels <- c(inner = "Inner grouping", outer = "Outer grouping", rows = "Facet rows",
     facet_rows = "Facet rows", cols = "Facet columns", facet_cols = "Facet columns",
-    facet = "Facet columns", colour = "Colour", shape = "Shape")
+    facet = "Facet columns", colour = "Color", shape = "Shape")
   descriptions <- vapply(intersect(names(roles), names(labels)), function(role) {
     value <- roles[[role]]
     if (is.null(value) || !length(value) || value %in% c("None", ".none")) return("")

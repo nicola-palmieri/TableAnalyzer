@@ -28,8 +28,8 @@
   }
   function describe(widget) {
     const title = name(widget);
-    widget.querySelector('.color-dropdown-button').setAttribute('aria-label', 'Choose colour for ' + title + '; current ' + widget.dataset.selected);
-    widget.querySelector('.color-dropdown-grid').setAttribute('aria-label', 'Colour for ' + title);
+    widget.querySelector('.color-dropdown-button').setAttribute('aria-label', 'Choose color for ' + title + '; current ' + widget.dataset.selected);
+    widget.querySelector('.color-dropdown-grid').setAttribute('aria-label', 'Color for ' + title);
   }
   function prepare() {
     document.querySelectorAll(selector).forEach(widget => {

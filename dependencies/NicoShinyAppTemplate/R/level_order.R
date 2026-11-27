@@ -8,6 +8,10 @@ merge_level_order <- function(current, default) {
   c(current[current %in% default], default[!default %in% current])
 }
 
+level_order_label <- function(reference = FALSE) {
+  if (isTRUE(reference)) "Order of levels (first = reference)" else "Order of levels"
+}
+
 mod_level_order_ui <- function(id, slot = NULL) {
   shiny::div(class = "level-order", shiny::uiOutput(shiny::NS(id)(
     if (is.null(slot)) "lists" else paste0("slot_", slot))))
@@ -46,7 +50,7 @@ mod_level_order_server <- function(id, variables, placements = NULL, reset = NUL
         shiny::tagList(lapply(vars, function(v) {
           shiny::div(class = "level-order-control",
             shiny::selectInput(session$ns(paste0("order_", slot, "_", level_order_key(v))),
-              paste0(v, if (has_reference) ": order of levels (first = reference)" else ": order of levels"),
+              level_order_label(has_reference),
               choices = ord[[v]], selected = ord[[v]], multiple = TRUE)
           )
         }))

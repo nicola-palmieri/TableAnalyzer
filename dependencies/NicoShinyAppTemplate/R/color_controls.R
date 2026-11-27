@@ -13,13 +13,13 @@ barplot_color_dropdown <- function(ns, id = 'color_choice', palette = barplot_co
     `data-selected` = selected_color, `data-columns` = ncol,
     style = sprintf('--color-columns:%d;', ncol),
     shiny::tags$button(type = 'button', id = ns(paste0(id, '_button')),
-      class = 'color-dropdown-button', `aria-label` = paste('Choose colour; current', selected_color),
+      class = 'color-dropdown-button', `aria-label` = paste('Choose color; current', selected_color),
       `aria-haspopup` = 'menu', `aria-expanded` = 'false',
       `aria-controls` = ns(paste0(id, '_grid')),
       shiny::span(class = 'color-dropdown-swatch', `aria-hidden` = 'true',
         style = sprintf('background-color:%s;', selected_color))),
     shiny::div(id = ns(paste0(id, '_grid')), class = 'color-dropdown-grid',
-      role = 'menu', `aria-label` = 'Colour choices',
+      role = 'menu', `aria-label` = 'Color choices',
       lapply(names(palette), function(col_name) {
         hex <- palette[[col_name]]
         shiny::tags$button(type = 'button', class = 'color-cell', role = 'menuitemradio',
