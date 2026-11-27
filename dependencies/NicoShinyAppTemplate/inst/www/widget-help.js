@@ -19,7 +19,8 @@
   function textFor(id, label, sharedReference) {
     for (let i = resolvers.length - 1; i >= 0; --i) {
       const text = resolvers[i](id, label, sharedReference);
-      if (text) return text;
+      // An app can explicitly omit help for an obvious control.
+      if (text === false || text) return text;
     }
     if (/order_|order of levels/i.test(id + ' ' + label)) {
       const reference = /first\s*=\s*reference/i.test(label);
