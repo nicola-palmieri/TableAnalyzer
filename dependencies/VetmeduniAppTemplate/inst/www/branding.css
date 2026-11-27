@@ -35,12 +35,32 @@
 .navbar :is(.navbar-brand, .navbar-wordmark),
 .navbar .navbar-nav .nav-link,
 .navbar-default .navbar-nav > li > a { color: #ffffff; }
-.navbar .navbar-nav .nav-link:is(:hover, :focus, .active) {
-  color: #ffffff; background: #8c1a36;
+.navbar .navbar-nav .nav-link:is(:focus, .active) {
+  color: #ffffff; background: transparent;
+}
+.navbar .navbar-nav .nav-link:hover {
+  color: #ffffff; background: rgb(255 255 255 / 7%);
+}
+.navbar .navbar-nav .nav-link.active,
+.navbar .navbar-nav > .nav-item:has(.dropdown-item.active) > .nav-link {
+  box-shadow: none; border-radius: 0;
+}
+.navbar .navbar-nav .nav-link.active::before,
+.navbar .navbar-nav > .nav-item:has(.dropdown-item.active) > .nav-link::before {
+  position: absolute; left: 12px; right: 12px; bottom: 6px;
+  height: 2px; background: #ffffff; content: "";
+}
+/* Keep the selection indicator separate from Bootstrap's dropdown caret. */
+.navbar .navbar-nav .nav-link.active:not(.dropdown-toggle)::after { display: none; }
+.navbar .navbar-nav .nav-link.dropdown-toggle::after {
+  position: static; display: inline-block; width: 0; height: 0;
+  margin-left: .3em; vertical-align: .255em;
+  border-top: .3em solid; border-right: .3em solid transparent;
+  border-bottom: 0; border-left: .3em solid transparent;
+  background: transparent; content: "";
 }
 .navbar .navbar-nav .nav-link.disabled,
 .navbar .nav-link[aria-disabled="true"] { color: #e5b6c3 !important; }
-.navbar .navbar-nav .nav-link.active::after { background: #ffffff; }
 .navbar .navbar-toggler { filter: none; border-color: #ffffff; }
 .navbar .navbar-toggler-icon { filter: none; }
 .navbar-toggler-icon {
