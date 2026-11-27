@@ -92,7 +92,7 @@
 .home-analysis-card:nth-child(2) .home-card-icon { color: #286e53; background: #eef5f1; }
 .home-analysis-card:nth-child(3) .home-card-icon { color: #a86044; background: #faf1ed; }
 .home-analysis-card:nth-child(4) .home-card-icon { color: #757575; background: #f3f3f3; }
-.app-metric-strip, .upload-summary-grid { background: #000000; }
+.app-metric-strip, .upload-summary-grid { background: #286e53; }
 .app-metric-strip :is(.app-metric-label, .app-metric-detail),
 .upload-summary-grid .upload-metric-label { color: #e0e0e0; }
 .app-polish .ta-sidebar :is(.form-control:focus, .selectize-input.focus) {
